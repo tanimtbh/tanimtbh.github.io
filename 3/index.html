@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fixed header</title>
+  <style>
+ html{
+            Margin:2px;
+            Padding:0;
+            Border:0;
+            background-color: #EECD86;
+            height: auto;
+            }
+
+.main-container {
+      display: flex;
+      flex-direction: column;
+      position:absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      height: 100%;
+      height: 100vh;
+    }
+
+    
+.header-wrap {
+      flex-grow: 0;
+      margin: 1px;
+      
+
+    }
+
+    header{
+        display: flex;
+        flex-wrap: wrap;
+        flex-grow: 0;
+        justify-content:space-between;
+        align-items: center;
+        border: #7A3E48 2px solid;
+      }
+
+      @media only screen and (max-width: 600px) {
+        header{
+        display: flex;
+        flex-direction:column;
+        flex-wrap: wrap;
+        justify-content:space-between;
+        align-items: center;
+        border: #7A3E48 2px solid;
+
+
+     
+      }
+
+      .nav-link{
+        text-decoration: none;
+        font-size: 16px;
+        margin-left:0px;
+        margin-right: 10px;
+        color:#3D3242;
+        
+      }
+            }
+     
+#header-img{
+
+        max-width: 300px;
+        max-height: 300px;
+
+        }
+#header-img:hover{
+        max-width: 300px;
+        max-height: 300px;
+        border-radius: 38px;
+        box-shadow: inset -39px -38px 100px -21px #BBB3E6;
+        }     
+
+.nav-link{
+text-decoration: none;
+font-size: 16px;
+margin-left:0px;
+margin-right: 10px;
+color:#3D3242;
+
+}
+.nav-link:hover {
+text-decoration: underline;
+font-size: 19px;
+color:#241e27;
+}
+#form{
+margin-left:auto ;
+margin-right: auto;
+position: relative;
+text-align: center;
+}
+input[type=submit] {
+
+background-color:#E18942;
+color: white;
+padding: 14px 20px;
+margin: 8px 0;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+}
+input[type=submit]:hover {
+background-color: rgb(72, 25, 117);
+}
+input[type=email] {
+padding: 12px 20px;
+margin: 8px 0;
+display: inline-block;
+border: 2px solid #E18942;
+border-radius: 4px;
+box-sizing: border-box;
+}
+
+#main{
+margin-left:auto;
+margin-right: auto;
+text-align: center;
+}
+
+#video{
+        box-shadow:  -2px 6px 24px 4px #030303;
+}
+
+.content {
+      flex-grow: 1;
+      overflow: auto;
+        }
+
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="header-wrap">
+    <header id="header">
+        <img id="header-img" src="/3/img/logo.png" alt="">
+         <nav id="nav-bar">
+             <a class="nav-link" href="#features">| Features</a>
+             <a class="nav-link" href="#how-it-works">| How It Works</a>
+             <a class="nav-link" href="#pricing">| Pricing</a>
+         </nav>
+     </header>
+    </div>
+    <div class="content">
+        <form id="form" action=" https://www.freecodecamp.com/email-submit">
+            <input id="email" type="email" placeholder="Enter Your Email">
+            <input id="submit" type="submit">
+        </form>
+    
+    <main id="main">
+          
+        <iframe id="video" width="420" height="345" src="https://www.youtube.com/embed/tgbNymZ7vqY">
+        </iframe>
+   </main>
+    </div>
+  </div>
+</body>
+</html>
