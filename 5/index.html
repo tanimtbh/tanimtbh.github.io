@@ -54,22 +54,36 @@
     align-items:center;
 }
 
-#welcome-section {
-    height: 100vh;
+#profile-link{
     background-color: #000;
     background-image: linear-gradient(
-    62deg
-    , #3a3d40 0%, #181719 100%);
+    62deg, #3a3d40 0%, #181719 100%);
     display: flex;
     flex-direction:column;
     justify-content:center;
     align-items:center;
 }
-.my_name {
+#profile-link> p{
     font-family: 'Raleway', sans-serif;
-    font-weight: 700;
+    font-style: italic;
     text-align: center;
-    font-size: 6rem;
+    font-size: 1.7rem;
+    color: rgb(187, 180, 154);
+}
+.my_name {
+    
+    font-family: 'Raleway', sans-serif;
+    font-weight: 700px;
+    text-align: center;
+    font-size: 5rem;
+    color: cornsilk;
+}
+.lets {
+    margin-top: 3rem;
+    font-family: 'Raleway', sans-serif;
+    font-weight: 700px;
+    text-align: center;
+    font-size: 3rem;
     color: cornsilk;
 }
 #welcome-section > p {
@@ -123,7 +137,7 @@
       }
     .projects-intro{
         max-width: 640px;
-        margin: 0 auto 6rem auto;
+        margin: 0 auto 3rem auto;
         border-bottom: 0.2rem solid #f0f0f0;
         font-size: 2.5rem;
         font-family: 'Raleway', sans-serif;
@@ -147,15 +161,18 @@
     margin: 10px;
 }
 .project-image{
-    height: 280px;
-    width: 280px;
+    height: 270px;
+    width: 300px;
 }
 .project-title{
  text-align: center;
 }
-.code {
+.code{
     color: #303841;
-    transition: color 0.3s ease-out;
+    transition: color 0.3s ease-in;
+}
+.project-tile:hover .code{ 
+    color: rgb(245, 180, 14);
 }
   </style>
   <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
@@ -253,7 +270,15 @@
    </section>
 
    <section id="profile-link">
-
+    <h1 class="lets">Let's work together...</h1>
+    <p>What you want to do?</p>
+    <div class="social-links">
+        <a href="https://facebook.com/freecodecamp" target="_blank" class="btn contact-details"><i class="fab fa-facebook-square"></i> Facebook</a>
+        <a id="profile-link" href="https://github.com/freecodecamp" target="_blank" class="btn contact-details"><i class="fab fa-github"></i> GitHub</a>
+        <a href="https://twitter.com/freecodecamp" target="_blank" class="btn contact-details"><i class="fab fa-twitter"></i> Twitter</a>
+        <a href="mailto:example@example.com" class="btn contact-details"><i class="fas fa-at"></i> Send a mail</a>
+        <a href="tel:555-555-5555" class="btn contact-details"><i class="fas fa-mobile-alt"></i> Call me</a>
+    </div>
    </section>
 </main>
 </body>
