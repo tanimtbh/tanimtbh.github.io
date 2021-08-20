@@ -113,6 +113,9 @@ body > main{
 #main-doc{
     padding:10px;
 }
+#fload-pc{
+    display: none;
+}
 
 }
 
@@ -123,6 +126,9 @@ body > main{
     display: flex;
 
 
+}
+#fload-mobile{
+    display: none;
 }
 #navbar{
     min-width:300px;
@@ -418,7 +424,10 @@ body > main{
 
      </main>
     </div>
-    <a href="#Introduction" class="float">
+    <a href="#navbar" id="fload-mobile" class="float">
+        <i class="fas fa-arrow-up my-float"></i>
+    </a>
+    <a href="#Introduction" id="fload-pc" class="float">
         <i class="fas fa-arrow-up my-float"></i>
     </a>
 </body>
