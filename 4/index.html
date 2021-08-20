@@ -6,6 +6,10 @@
   <title>TaNiM</title>
   
   <style>
+* {
+    box-sizing: border-box;
+    overflow: hidden;
+  }
  html{
             Margin:2px;
             Padding:0;
@@ -15,8 +19,12 @@
             color: #4d4e53;
             font-family: 'Open Sans', Arial, sans-serif;
             line-height: 1.5;
-            overflow-x: hidden;
+            position: relative;
+            display: block;
             }
+body{
+    position: relative;
+}
 code {
             display: block;
             text-align: left;
@@ -35,7 +43,6 @@ section > header{
             font-size: 29px;
             text-align: left;
             white-space: pre-line;
-            position: relative;
             word-break: normal;
             word-wrap: normal;
 }
@@ -44,18 +51,113 @@ section > p{
             font-size: 16px;
             text-align: left;
             white-space: pre-line;
-            position: relative;
             word-break: normal;
             word-wrap: normal;
 }
 body > main{
     margin: 4px;
 }
+
+.nav-link{
+        text-decoration: none;
+        font-size: 16px; 
+        color: #4d4e53; 
+        display:block; 
+        
+      }
+.nav-link:hover {
+        font-size: 19px;
+        color:#ffffff;
+        background-color:#707070;
+        border: 1px solid #707070;
+        padding: 3px;
+        border-radius: 7px;
+        }
+#navbar >ul{
+    list-style-type: none;
+}
+@media only screen and (max-width: 600px){
+    * {
+    box-sizing: border-box;
+    overflow: scroll;
+    }
+    #main_wraper{
+    display: flex;
+    flex-direction: column;
+    
+
+}
+#navbar{
+  
+
+}
+#nav_links{
+    text-align: center;
+}
+#main-doc{
+    padding:10px;
+}
+
+}
+
+
+
+@media only screen and (min-width: 600px){
+    #main_wraper{
+    display: flex;
+
+
+}
+#navbar{
+    min-width:300px;
+    height: 100vh;
+    overflow: scroll;
+
+}
+
+#main-doc{
+    padding:10px;
+    height: 100vh;
+    overflow: scroll;
+}
+
+.navbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.navbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+
+}
   </style>
   <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
 </head>
 <body>
-     <main id="main-doc">
+  <div id="main_wraper">
+    <nav id="navbar" class="navbar">
+        <header>JS Documentation</header>
+        <ul id="nav_links">
+            <li><a class="nav-link" href="#Introduction">Introduction</a></li>
+            <li><a class="nav-link" href="#What_you_should_already_know">What you should already know</a></li>
+            <li><a class="nav-link" href="#JavaScript_and_Java">JavaScript and Java</a></li>
+            <li><a class="nav-link" href="#Hello_world">Hello world</a></li>
+            <li><a class="nav-link" href="#Variables">Variables</a></li>
+            <li><a class="nav-link" href="#Declaring_variables">Declaring variables</a></li>
+            <li><a class="nav-link" href="#Variable_scope">Variable scope</a></li>
+            <li><a class="nav-link" href="#Global_variables">Global variables</a></li>
+            <li><a class="nav-link" href="#Constants">Constants</a></li>
+            <li><a class="nav-link" href="#Data_types">Data types</a></li>
+            <li><a class="nav-link" href="#if...else_statement">if...else statement</a></li>
+            <li><a class="nav-link" href="#while_statement">while statement</a></li>
+            <li><a class="nav-link" href="#Function_declarations">Function declarations</a></li>
+            <li><a class="nav-link" href="#Reference">Reference</a></li>
+        </ul>
+    </nav>
+    <main id="main-doc">
             <section id="Introduction" class="main-section">
                     <header>Introduction</header>
                         <p>JavaScript is a cross-platform, object-oriented scripting language. It is a small and lightweight language. Inside a host environment (for example, a web browser), JavaScript can be connected to the objects of its environment to provide programmatic control over them.
@@ -299,5 +401,6 @@ body > main{
 
 
      </main>
+    </div>
 </body>
 </html>
