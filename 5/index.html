@@ -46,15 +46,14 @@
     height: 100vh;
     background-color: #000;
     background-image: linear-gradient(
-    62deg
-    , #3a3d40 0%, #181719 100%);
+    62deg, #3a3d40 0%, #181719 100%);
     display: flex;
     flex-direction:column;
     justify-content:center;
     align-items:center;
 }
 
-#profile-link{
+#profile-links{
     background-color: #000;
     background-image: linear-gradient(
     62deg, #3a3d40 0%, #181719 100%);
@@ -174,6 +173,31 @@
 .project-tile:hover .code{ 
     color: rgb(245, 180, 14);
 }
+.social-links{
+   margin-bottom: 1rem;
+}
+.social-links> a{
+        text-decoration: none;
+        color:#ffffff;
+        font-size: 1.6rem;
+        padding: 1rem;
+}
+footer{
+    border-top: 5px solid #be3144;
+    background-color: #303841;
+    font-weight: 300;
+    color:#ffffff;
+    font-size: 1.6rem;
+    padding: 1rem;
+    text-align: center;
+}
+.wywtd{
+    margin-bottom: 1rem;
+
+}
+@media only screen and (max-width: 600px) {
+     
+      }
   </style>
   <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
 </head>
@@ -192,7 +216,7 @@
           <a href="#projects">Work</a>
         </li>
         <li>
-          <a href="#profile-link">Contact</a>
+          <a href="#profile-links">Contact</a>
         </li>
       </ul>
    </nav>
@@ -269,17 +293,20 @@
     </div>
    </section>
 
-   <section id="profile-link">
+   <section id="profile-links">
     <h1 class="lets">Let's work together...</h1>
-    <p>What you want to do?</p>
+    <p class="wywtd">What you want to do?</p>
     <div class="social-links">
-        <a href="https://facebook.com/freecodecamp" target="_blank" class="btn contact-details"><i class="fab fa-facebook-square"></i> Facebook</a>
-        <a id="profile-link" href="https://github.com/freecodecamp" target="_blank" class="btn contact-details"><i class="fab fa-github"></i> GitHub</a>
-        <a href="https://twitter.com/freecodecamp" target="_blank" class="btn contact-details"><i class="fab fa-twitter"></i> Twitter</a>
-        <a href="mailto:example@example.com" class="btn contact-details"><i class="fas fa-at"></i> Send a mail</a>
-        <a href="tel:555-555-5555" class="btn contact-details"><i class="fas fa-mobile-alt"></i> Call me</a>
+        <a id="profile-link" href="https://www.facebook.com/tanimtbh/" target="_blank" ><i class="fab fa-facebook-square"></i> Facebook</a>
+        <a id="profile-link"  href="https://github.com/tanimtbh/" target="_blank" ><i class="fab fa-github"></i> GitHub</a>
+        <a id="profile-link"  href="https://twitter.com/hole_team" target="_blank" ><i class="fab fa-twitter"></i> Twitter</a>
+        <a id="profile-link"  href="mailto:tanimtbh@gmail.com" ><i class="fas fa-at"></i> Send a mail</a>
+        <a id="profile-link" href="tel:555-555-5555" ><i class="fas fa-mobile-alt"></i> Call me</a>
     </div>
    </section>
+   <footer>
+       <p>Created By ©TaNim For Freecodecamp Test</p>
+   </footer>
 </main>
 </body>
 </div>
