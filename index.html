@@ -1,31 +1,328 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        #image{
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-    </style>
-</head>
-<body>
-    <main id="main">
-     <h1 id="title"> Dr. Norman Borlaug</h1>
-        <div id="img-div">
-            <h4 id="img-caption">The man who saved a billion lives</h4>
-            <img id="image" src="/img/tribute-page-main-image.jpg" alt="" srcset="">
-        </div>
-        <div id="tribute-info">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaNiM</title>
+  
+  <style>
+* {
+    margin: 0;
+    padding: 0;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    font-family: 'Raleway', sans-serif;
+}
+.main-container{
+      display: flex;
+      flex-direction: column;
+      position:absolute;
 
-        </div>
-        <a id="tribute-link" href="#" target="_blank" rel="noopener noreferrer">Wikipedia entry</a>
-    </main>
+}
+
+#navbar {
+    display:flex;
+    align-items: center;
+    justify-content:space-between;
+    flex-wrap: wrap;
+    flex-grow: 0;
+    flex-shrink: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    background: #be3144; 
+    box-shadow: 0 2px 0 #4b121a;
+    z-index: 10;
+}
+.main{
+    flex-grow: 1;
+    position: relative;
+    overflow-y: auto;
+}
+#welcome-section {
+    height: 100vh;
+    background-color: #000;
+    background-image: linear-gradient(
+    62deg, #3a3d40 0%, #181719 100%);
+    display: flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+}
+
+#profile-links{
+  height: 100vh;
+    background-color: #000;
+    background-image: linear-gradient(
+    62deg, #3a3d40 0%, #181719 100%);
+    display: flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+}
+#profile-links> p{
+    font-family: 'Raleway', sans-serif;
+    font-style: italic;
+    text-align: center;
+    font-size: 1.7rem;
+    color: rgb(187, 180, 154);
+}
+.my_name {
+    
+    font-family: 'Raleway', sans-serif;
+    font-weight: 700px;
+    text-align: center;
+    font-size: 5rem;
+    color: cornsilk;
+}
+.lets {
+    margin-top: 3rem;
+    font-family: 'Raleway', sans-serif;
+    font-weight: 700px;
+    text-align: center;
+    font-size: 3rem;
+    color: cornsilk;
+}
+#welcome-section > p {
+    font-size: 3rem;
+    font-weight: 200;
+    font-style: italic;
+    color:#be3144;
+}
+.nav-list> li >a{
+        text-decoration: none;
+        color:#ffffff;
+        display: block;
+        font-size: 1.7rem;
+        padding: 1rem;
+      }
+.nav-list> li >a:hover{
+        text-decoration: none;
+        background-color:#45567d;
+        color:#ffffff;
+        display: block;
+        font-size: 2.2rem;
+        padding: 1rem;
+      }
+
+    .nav-list {
+        display: flex;
+        list-style-type: none;
+        font-size: 16px;
+        padding-right: 50px;
+
+        
+        
+      }
+      .logo{
+        text-decoration: none;
+        color:#ffffff;
+        font-size: 2.2rem;
+        padding: 1rem;
+        font-family: 'Lucida Console';
+
+      }
+      .profile-pic{
+        width:200px;
+        border-radius: 50%;
+        object-fit:cover;
+      }
+      #projects{
+        background-color: #45567d;
+        display: flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+      }
+    .projects-intro{
+        max-width: 640px;
+        margin: 0 auto 3rem auto;
+        border-bottom: 0.2rem solid #f0f0f0;
+        font-size: 2.5rem;
+        font-family: 'Raleway', sans-serif;
+        font-weight: 700;
+        text-align: center;
+        color: #f0f0f0;
+        padding-top: 100px;
+}
+.projects-grid{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.project-tile{
+    background: #303841;
+    border-radius: 5px;
+    text-decoration: none;
+    color:#ffffff;
+    font-size: 1.7rem;
+    padding: 0.1rem;
+    margin: 10px;
+    transition: background 0.3s;
+}
+
+.project-tile:hover{
+
+  background: #be3144;
+
+}
+.project-image{
+    height: 270px;
+    width: 300px;
+    object-fit:cover;
+    
+}
+.project-title{
+ text-align: center;
+}
+.code{
+    color: #303841;
+    transition: color 0.3s ease-in;
+}
+.project-tile:hover .code{ 
+    color: rgb(245, 180, 14);
+}
+
+.social-links{
+   margin-bottom: 1rem;
+}
+.social-links> a{
+        text-decoration: none;
+        color:#ffffff;
+        font-size: 1.6rem;
+        padding: 1rem;
+}
+footer{
+    border-top: 5px solid #be3144;
+    background-color: #303841;
+    font-weight: 300;
+    color:#ffffff;
+    font-size: 1.6rem;
+    padding: 1rem;
+    text-align: center;
+}
+.wywtd{
+    margin-bottom: 1rem;
+
+}
+#profile-link:hover{
+  color: #be3144;
+  font-weight: 900;
+
+}
+  </style>
+  <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
+</head>
+
+
+<body>
+<div class="main-container">
+    
+   <nav id="navbar">
+    <p class="logo">&lt;/TaNiM&gt;</p>
+    <ul class="nav-list">
+        <li>
+          <a href="#welcome-section">About</a>
+        </li>
+        <li>
+          <a href="#projects">Work</a>
+        </li>
+        <li>
+          <a href="#profile-links">Contact</a>
+        </li>
+      </ul>
+   </nav>
+ <main class="main">
+   <section id="welcome-section">
+       <img class="profile-pic" src="img/Daco_2569650.png" alt="">
+       <h1 class="my_name">Hey I am TaNiM </h1>
+       <p>a web developer</p>
+  
+   </section>
+
+   <section id="projects">
+    <h2 class="projects-intro">These are some of my projects</h2>
+    <div class="projects-grid">
+        <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
+            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
+            <p class="project-title">
+              <span class="code">&lt;</span>
+              Tribute Page
+              <span class="code">/&gt;</span>
+            </p>
+          </a> 
+
+          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
+            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
+            <p class="project-title">
+              <span class="code">&lt;</span>
+              Tribute Page
+              <span class="code">/&gt;</span>
+            </p>
+          </a> 
+
+          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
+            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
+            <p class="project-title">
+              <span class="code">&lt;</span>
+              Tribute Page
+              <span class="code">/&gt;</span>
+            </p>
+          </a> 
+
+          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
+            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
+            <p class="project-title">
+              <span class="code">&lt;</span>
+              Tribute Page
+              <span class="code">/&gt;</span>
+            </p>
+          </a> 
+          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
+            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
+            <p class="project-title">
+              <span class="code">&lt;</span>
+              Tribute Page
+              <span class="code">/&gt;</span>
+            </p>
+          </a> 
+          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
+            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
+            <p class="project-title">
+              <span class="code">&lt;</span>
+              Tribute Page
+              <span class="code">/&gt;</span>
+            </p>
+          </a> 
+          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
+            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
+            <p class="project-title">
+              <span class="code">&lt;</span>
+              Tribute Page
+              <span class="code">/&gt;</span>
+            </p>
+          </a> 
+    </div>
+   </section>
+
+   <section id="profile-links">
+    <h1 class="lets">Let's work together...</h1>
+    <p class="wywtd">What you want to do?</p>
+    <div class="social-links">
+        <a id="profile-link" href="https://www.facebook.com/tanimtbh/" target="_blank" ><i class="fab fa-facebook-square"></i> Facebook</a>
+        <a id="profile-link"  href="https://github.com/tanimtbh/" target="_blank" ><i class="fab fa-github"></i> GitHub</a>
+        <a id="profile-link"  href="https://twitter.com/hole_team" target="_blank" ><i class="fab fa-twitter"></i> Twitter</a>
+        <a id="profile-link"  href="mailto:tanimtbh@gmail.com" ><i class="fas fa-at"></i> Send a mail</a>
+        <a id="profile-link" href="tel:555-555-5555" ><i class="fas fa-mobile-alt"></i> Call me</a>
+    </div>
+   </section>
+   <footer>
+       <p>Created By ©TaNim | Freecodecamp Test</p>
+   </footer>
+</main>
 </body>
+</div>
 </html>
