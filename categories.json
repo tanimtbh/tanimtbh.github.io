@@ -1,0 +1,181 @@
+[
+            {
+                "_id": "Business",
+                "name": "Business tanim",
+                "description": "By Aline",
+                "subcategories": [
+                    {
+                        "_id": 1,
+                        "name": "Business Development"
+                    },
+                    {
+                        "_id": 2,
+                        "name": "Finance"
+                    },
+                    {
+                        "_id": 3,
+                        "name": "Growth Hacking"
+                    },
+                    {
+                        "_id": 4,
+                        "name": "Innovation"
+                    },
+                    {
+                        "_id": 5,
+                        "name": "Leadership & Management"
+                    },
+                    {
+                        "_id": 6,
+                        "name": "Operations"
+                    },
+                    {
+                        "_id": 7,
+                        "name": "Productivity"
+                    },
+                    {
+                        "_id": 8,
+                        "name": "Project Management"
+                    },
+                    {
+                        "_id": 9,
+                        "name": "Privacy"
+                    },
+                    {
+                        "_id": 10,
+                        "name": "Sales"
+                    },
+                    {
+                        "_id": 11,
+                        "name": "Startups"
+                    }
+                ]
+            },
+            {
+                "_id": "Communications",
+                "name": "Communications",
+                "description": "By Aline",
+                "subcategories": [
+                    {
+                        "_id": 100,
+                        "name": "Branding"
+                    },
+                    {
+                        "_id": 101,
+                        "name": "Digital Marketing"
+                    },
+                    {
+                        "_id": 102,
+                        "name": "PR"
+                    },
+                    {
+                        "_id": 103,
+                        "name": "SEO/SEM"
+                    },
+                    {
+                        "_id": 104,
+                        "name": "Social Media Marketing"
+                    }
+                ]
+            },
+            {
+                "_id": "Design",
+                "name": "Design",
+                "description": "By Aline",
+                "subcategories": [
+                    {
+                        "_id": 200,
+                        "name": "Behavioural Science"
+                    },
+                    {
+                        "_id": 201,
+                        "name": "Graphic Design"
+                    },
+                    {
+                        "_id": 202,
+                        "name": "Prototyping"
+                    },
+                    {
+                        "_id": 203,
+                        "name": "User Research"
+                    },
+                    {
+                        "_id": 204,
+                        "name": "UX/UI"
+                    }
+                ]
+            },
+            {
+                "_id": "Society & Lifestyle",
+                "name": "Society & Lifestyle",
+                "description": "By Aline",
+                "subcategories": [
+                    {
+                        "_id": 300,
+                        "name": "Arts & Entertainment"
+                    },
+                    {
+                        "_id": 301,
+                        "name": "Education"
+                    },
+                    {
+                        "_id": 302,
+                        "name": "Equality"
+                    },
+                    {
+                        "_id": 303,
+                        "name": "Personal Development"
+                    },
+                    {
+                        "_id": 304,
+                        "name": "Philosophy"
+                    },
+                    {
+                        "_id": 305,
+                        "name": "Politics"
+                    },
+                    {
+                        "_id": 306,
+                        "name": "Sustainability"
+                    }
+                ]
+            },
+            {
+                "_id": "Technology",
+                "name": "Technology",
+                "description": "By Aline",
+                "subcategories": [
+                    {
+                        "_id": 400,
+                        "name": "AI & Machine Learning"
+                    },
+                    {
+                        "_id": 401,
+                        "name": "Cloud & IOT"
+                    },
+                    {
+                        "_id": 402,
+                        "name": "Data Science"
+                    },
+                    {
+                        "_id": 403,
+                        "name": "Embedded Systems"
+                    },
+                    {
+                        "_id": 404,
+                        "name": "Engineering"
+                    },
+                    {
+                        "_id": 405,
+                        "name": "Programming"
+                    },
+                    {
+                        "_id": 406,
+                        "name": "Software & Tools"
+                    },
+                    {
+                        "_id": 407,
+                        "name": "VR/AR"
+                    }
+                ]
+            }
+        ];
