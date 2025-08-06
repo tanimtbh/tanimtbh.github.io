@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PyCode Lab - Scientific Problem Solver</title>
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <h1>PyCode Lab</h1>
+        <p>Scientific Problem Solving Platform</p>
+    </header>
+    <div class="problem-section">
+        <div class="problem-selector">
+            <select id="problemSelect">
+                <option value="0">Problem 1: Sum of Numbers</option>
+                <option value="1">Problem 2: Factorial Calculator</option>
+                <option value="2">Problem 3: Prime Number Check</option>
+                <option value="3">Problem 4: Fibonacci Sequence</option>
+                <option value="4">Problem 5: Palindrome Check</option>
+            </select>
+        </div>
+
+        <div id="problemContent">
+            <h3 class="problem-title">Sum of Numbers</h3>
+            <div class="problem-description">
+                Write a function that calculates the sum of all numbers from 1 to n (inclusive).
+            </div>
+            <div class="problem-example">
+                <strong>Example:</strong><br />
+                Input: n = 5<br />
+                Output: 15 (1+2+3+4+5)
+            </div>
+        </div>
+    </div>
+    <div class="code-section">
+        <div class="editor-container">
+            <textarea id="codeEditor"
+                ># Write your solution here
+def sum_numbers(n):
+    # Your code here
+    pass
+# Test your function
+result = sum_numbers(5)
+print(result)</textarea>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-run" id="runBtn">▶ Run Code</button>
+            <button class="btn btn-clear" id="clearBtn">🗑 Clear</button>
+            <div class="status" id="status">Initializing...</div>
+        </div>
+    </div>
+    <div class="output-section">
+        <div class="output-header">
+            <h3 class="output-title">Output</h3>
+        </div>
+        <div class="output-content" id="output">Initializing Pyodide...</div>
+        <div id="successMessage" style="display: none;"></div>
+    </div>
+    <!-- For matplotlib visual output -->
+    <div id="visualOutputSection" class="visual-output-section">
+        <button id="closeVisualPlot" class="visual-plot-close" title="Close plot">&times;</button>
+        <div id="visualPlot"></div>
+    </div>
+</div>
+
+<!-- Worker Manager -->
+<script src="worker-manager.js"></script>
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+<!-- Main Application JS -->
+<script src="main.js"></script>
+</body>
+</html>

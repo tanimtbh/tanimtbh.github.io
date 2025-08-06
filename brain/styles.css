@@ -1,0 +1,388 @@
+:root {
+    --primary-glow: #00ffff;
+    --secondary-glow: #00ff88;
+    --accent-glow: #ff0080;
+    --bg-dark: #0a0a0f;
+    --bg-card: #1a1a2e;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --border-glow: rgba(0, 255, 255, 0.3);
+    --success-glow: #00ff00;
+    --error-glow: #ff4444;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--bg-dark) 0%, #16213e 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr auto auto;
+    gap: 20px;
+    min-height: 100vh;
+}
+
+.header {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    background: rgba(26, 26, 46, 0.8);
+    border-radius: 15px;
+    border: 2px solid var(--border-glow);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    margin-bottom: 10px;
+    animation: glow-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow-pulse {
+    from {
+        filter: brightness(1);
+    }
+    to {
+        filter: brightness(1.2);
+    }
+}
+
+.problem-section {
+    background: rgba(26, 26, 46, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 2px solid var(--border-glow);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.code-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.problem-selector {
+    margin-bottom: 20px;
+}
+
+.problem-selector select {
+    width: 100%;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--border-glow);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.problem-selector select:focus {
+    outline: none;
+    border-color: var(--primary-glow);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+}
+
+.problem-title {
+    font-size: 1.5rem;
+    color: var(--primary-glow);
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.problem-description {
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+}
+
+.problem-example {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--secondary-glow);
+    margin: 15px 0;
+    font-family: "Courier New", monospace;
+}
+
+.editor-container {
+    flex: 1;
+    border: 2px solid var(--border-glow);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+    background: #263238;
+}
+
+.CodeMirror {
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
+}
+
+.controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-run {
+    background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+    color: var(--bg-dark);
+    border: 2px solid transparent;
+}
+
+.btn-run:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+}
+
+.btn-clear {
+    background: transparent;
+    color: var(--text-primary);
+    border: 2px solid var(--border-glow);
+}
+
+.btn-clear:hover {
+    background: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.status {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 100px;
+}
+
+.status.loading {
+    background: rgba(255, 165, 0, 0.2);
+    color: #ffa500;
+    border: 1px solid #ffa500;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status.ready {
+    background: rgba(0, 255, 136, 0.2);
+    color: var(--secondary-glow);
+    border: 1px solid var(--secondary-glow);
+}
+
+.status.error {
+    background: rgba(255, 68, 68, 0.2);
+    color: var(--error-glow);
+    border: 1px solid var(--error-glow);
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.output-section {
+    grid-column: 1 / -1;
+    background: rgba(26, 26, 46, 0.9);
+    border-radius: 15px;
+    padding: 25px;
+    border: 2px solid var(--border-glow);
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.output-title {
+    font-size: 1.2rem;
+    color: var(--primary-glow);
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.output-content {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-glow);
+    border-radius: 8px;
+    padding: 15px;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+.success-message {
+    background: linear-gradient(
+        45deg,
+        var(--success-glow),
+        var(--secondary-glow)
+    );
+    color: var(--bg-dark);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 15px;
+    animation: success-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes success-glow {
+    from {
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
+    to {
+        box-shadow: 0 0 30px rgba(0, 255, 0, 0.8);
+    }
+}
+
+/* Visual Output */
+.visual-output-section {
+    background: rgba(26, 26, 46, 0.95);
+    margin-top: 18px;
+    border-radius: 15px;
+    padding: 18px 25px 20px 25px;
+    border: 2px solid var(--primary-glow);
+    /* transition for smooth appear/disappear */
+    transition: opacity 0.3s;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.17);
+    display: none; /* hidden by default */
+    position: relative;
+    text-align: center;
+}
+
+.visual-output-section.active {
+    display: block;
+    opacity: 1;
+}
+
+.visual-plot-close {
+    position: absolute;
+    right: 10px;
+    top: 7px;
+    border: none;
+    background: transparent;
+    color: #08ffff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 6px;
+    transition: background 0.22s;
+}
+
+.visual-plot-close:hover {
+    background: rgba(0, 255, 255, 0.14);
+    color: #fff;
+}
+
+.visual-output-section img {
+    max-width: 100%;
+    max-height: 380px;
+    border-radius: 13px;
+    border: 1px solid var(--border-glow);
+    margin: 0 auto;
+    display: block;
+}
+
+@media (max-width:768px){
+    .visual-output-section img { 
+        max-height:200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+        padding: 10px;
+        gap: 15px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .problem-section {
+        padding: 20px;
+    }
+    
+    .CodeMirror {
+        font-size: 16px;
+    }
+    
+    .controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .btn {
+        width: 100%;
+        padding: 15px;
+        font-size: 18px;
+    }
+    
+    .output-content {
+        font-size: 16px;
+        max-height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 5px;
+    }
+    
+    .header,
+    .problem-section,
+    .output-section {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+    }
+}
