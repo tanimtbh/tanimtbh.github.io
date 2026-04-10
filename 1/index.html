@@ -1,40 +1,196 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        #main{
-            display: grid;
-        }
-        #image{
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        #title{
-            color: blueviolet;
-            background-color:rgb(167, 166, 165);
-            text-align: center ;
-            border: darkblue 2px dotted;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>aiortc + NATS test</title>
+  <style>
+    body { font-family: system-ui; max-width: 900px; margin: 1rem auto; padding: 1rem; }
+    video { width: 48%; background: #111; border-radius: 8px; }
+    .row { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
+    button { padding: 0.6rem 1rem; margin-right: 0.5rem; font-size: 1rem; }
+    #log, #chat {
+      background: #f4f4f4; padding: 0.5rem; height: 160px;
+      overflow-y: auto; font-family: monospace; font-size: 12px;
+      border-radius: 4px;
+    }
+    input { width: 70%; padding: 0.5rem; font-size: 1rem; }
+    #state { font-weight: bold; margin-left: 0.5rem; }
+    .err { color: #c00; font-weight: bold; }
+  </style>
 </head>
 <body>
-    <main id="main">
-     <h2 id="title"> Dr. Norman Borlaug</h2>
-        <div id="img-div">
-            <h4 id="img-caption">The man who saved a billion lives</h4>
-            <img id="image" src="/img/tribute-page-main-image.jpg" alt="" srcset="">
-        </div>
-        <div id="tribute-info">
+  <h2>aiortc + NATS signaling test</h2>
+  <button id="start">Start</button>
+  <button id="stop" disabled>Stop</button>
+  <span>state:</span><span id="state">idle</span>
 
-        </div>
-        <a id="tribute-link" href="#" target="_blank" rel="noopener noreferrer">Wikipedia entry</a>
-    </main>
+  <div class="row">
+    <video id="local" autoplay muted playsinline></video>
+    <video id="remote" autoplay playsinline></video>
+  </div>
+
+  <h3>Data channel</h3>
+  <div id="chat"></div>
+  <input id="msg" placeholder="type and press enter" disabled>
+
+  <h3>Log</h3>
+  <div id="log"></div>
+
+<script type="module">
+import { connect, StringCodec } from "https://cdn.jsdelivr.net/npm/nats.ws@1.29.2/esm/nats.js";
+
+// ───── Config ─────────────────────────────────────────────────
+const NATS_URL  = "wss://tunnel.knitnox.com:8080";
+const NATS_USER = "test";
+const NATS_PASS = "abbatanim";
+const SUBJECT   = "webrtc.signaling";
+
+const TURN_USER = "tanim";
+const TURN_PASS = "YOUR_TURN_PASSWORD";
+const STUN_URL  = "stun:tunnel.knitnox.com:3478";
+const TURN_URLS = [
+  "turn:tunnel.knitnox.com:3478?transport=udp",
+  "turn:tunnel.knitnox.com:3478?transport=tcp",
+  "turns:tunnel.knitnox.com:5349?transport=tcp"
+];
+// ──────────────────────────────────────────────────────────────
+
+const logEl  = document.getElementById("log");
+const chatEl = document.getElementById("chat");
+const log = (m, isErr=false) => {
+  const line = document.createElement("div");
+  if (isErr) line.className = "err";
+  line.textContent = new Date().toLocaleTimeString() + " " + m;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+  console.log(m);
+};
+const chatLog = (m) => {
+  chatEl.innerHTML += m + "<br>";
+  chatEl.scrollTop = chatEl.scrollHeight;
+};
+const sc = StringCodec();
+
+let pc, dc, localStream, nc;
+
+// Global error visibility — catches anything that slips past try/catch
+window.addEventListener("error", e => log("window error: " + e.message, true));
+window.addEventListener("unhandledrejection", e =>
+  log("unhandled: " + (e.reason?.message || e.reason), true));
+
+// Check HTTPS / secure context early so you get a clear message on mobile
+if (!window.isSecureContext) {
+  log("WARNING: page is not in a secure context. getUserMedia will fail on mobile. Serve via https://", true);
+}
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  log("WARNING: navigator.mediaDevices.getUserMedia unavailable in this browser/context", true);
+}
+
+document.getElementById("start").onclick = async () => {
+  document.getElementById("start").disabled = true;
+  document.getElementById("stop").disabled  = false;
+
+  try {
+    // 1) Connect to NATS
+    log("connecting to NATS " + NATS_URL + " ...");
+    nc = await connect({ servers: NATS_URL, user: NATS_USER, pass: NATS_PASS });
+    log("NATS connected");
+
+    // 2) Create peer connection
+    log("creating RTCPeerConnection...");
+    pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: STUN_URL },
+        { urls: TURN_URLS, username: TURN_USER, credential: TURN_PASS }
+      ]
+    });
+
+    pc.onconnectionstatechange = () => {
+      document.getElementById("state").innerText = pc.connectionState;
+      log("pc state: " + pc.connectionState);
+    };
+    pc.oniceconnectionstatechange = () => log("ice state: " + pc.iceConnectionState);
+    pc.onicegatheringstatechange  = () => log("gather state: " + pc.iceGatheringState);
+    pc.onicecandidateerror = (e) =>
+      log("ice candidate error code=" + e.errorCode + " " + (e.errorText || ""), true);
+
+    pc.ontrack = (e) => {
+      log("remote track: " + e.track.kind);
+      document.getElementById("remote").srcObject = e.streams[0];
+    };
+
+    // 3) Data channel
+    log("creating data channel...");
+    dc = pc.createDataChannel("chat");
+    dc.onopen    = () => { log("data channel OPEN"); document.getElementById("msg").disabled = false; };
+    dc.onclose   = () => log("data channel closed");
+    dc.onmessage = (e) => chatLog("← " + e.data);
+
+    // 4) Get mic + camera
+    log("requesting mic and camera...");
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    log("got media, tracks: " + localStream.getTracks().map(t => t.kind).join(","));
+    document.getElementById("local").srcObject = localStream;
+    localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+    // 5) Create offer
+    log("creating offer...");
+    const offer = await pc.createOffer();
+    log("setting local description...");
+    await pc.setLocalDescription(offer);
+
+    // 6) Wait for ICE gathering with 3s fallback (mobile networks can hang)
+    log("waiting for ICE gathering (max 3s)...");
+    await new Promise(resolve => {
+      if (pc.iceGatheringState === "complete") return resolve();
+      const done = () => { pc.onicegatheringstatechange = null; resolve(); };
+      pc.onicegatheringstatechange = () => pc.iceGatheringState === "complete" && done();
+      setTimeout(done, 3000);
+    });
+    log("gathering done, iceGatheringState=" + pc.iceGatheringState);
+
+    // 7) Send offer via NATS request/reply
+    log("publishing offer to " + SUBJECT + " ...");
+    const payload = JSON.stringify({
+      sdp: pc.localDescription.sdp,
+      type: pc.localDescription.type
+    });
+    const reply = await nc.request(SUBJECT, sc.encode(payload), { timeout: 15000 });
+    log("got reply from agent");
+
+    // 8) Apply answer
+    const answer = JSON.parse(sc.decode(reply.data));
+    if (answer.error) { log("agent error: " + answer.error, true); return; }
+    await pc.setRemoteDescription(answer);
+    log("answer applied, waiting for ICE to connect...");
+
+  } catch (e) {
+    log("FAILED: " + (e.message || e), true);
+    console.error(e);
+  }
+};
+
+document.getElementById("msg").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && dc && dc.readyState === "open") {
+    chatLog("→ " + e.target.value);
+    dc.send(e.target.value);
+    e.target.value = "";
+  }
+});
+
+document.getElementById("stop").onclick = async () => {
+  try {
+    if (pc) pc.close();
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    if (nc) await nc.close();
+  } catch (e) { log("stop error: " + e.message, true); }
+  document.getElementById("start").disabled = false;
+  document.getElementById("stop").disabled  = true;
+  document.getElementById("msg").disabled   = true;
+  document.getElementById("state").innerText = "idle";
+  log("stopped");
+};
+</script>
 </body>
 </html>
