@@ -17,6 +17,16 @@
     input { width: 70%; padding: 0.5rem; font-size: 1rem; }
     #state { font-weight: bold; margin-left: 0.5rem; }
     .err { color: #c00; font-weight: bold; }
+    #conninfo {
+      background: #f4f4f4; padding: 0.6rem 0.8rem;
+      border-radius: 4px; font-family: monospace; font-size: 12px;
+      min-height: 2.5rem;
+    }
+    #conninfo table { width: 100%; border-collapse: collapse; }
+    #conninfo td { padding: 2px 10px 2px 0; vertical-align: top; }
+    #conninfo td:first-child { color: #777; white-space: nowrap; width: 160px; }
+    .relay-badge { color: #c60; font-weight: bold; }
+    .direct-badge { color: #060; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -29,6 +39,9 @@
     <video id="local" autoplay muted playsinline></video>
     <video id="remote" autoplay playsinline></video>
   </div>
+
+  <h3>Connection Info</h3>
+  <div id="conninfo"><em style="color:#999">not connected</em></div>
 
   <h3>Data channel</h3>
   <div id="chat"></div>
@@ -87,6 +100,76 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
   log("WARNING: navigator.mediaDevices.getUserMedia unavailable in this browser/context", true);
 }
 
+let statsInterval = null;
+
+function fmtBytes(b) {
+  if (!b) return "0 B";
+  if (b < 1024) return b + " B";
+  if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+  return (b / 1048576).toFixed(2) + " MB";
+}
+
+async function updateConnectionInfo() {
+  if (!pc || pc.connectionState !== "connected") return;
+  try {
+    const stats = await pc.getStats();
+    const byId = id => stats.get(id);
+
+    for (const report of stats.values()) {
+      if (report.type !== "candidate-pair" || !report.nominated) continue;
+      const local  = byId(report.localCandidateId);
+      const remote = byId(report.remoteCandidateId);
+      if (!local || !remote) continue;
+
+      const isRelay = local.candidateType === "relay" || remote.candidateType === "relay";
+      const pathLabel = isRelay
+        ? `<span class="relay-badge">TURN relay</span>`
+        : `<span class="direct-badge">direct (${local.candidateType})</span>`;
+
+      const localAddr  = `${local.address  || local.ip}:${local.port}`;
+      const remoteAddr = `${remote.address || remote.ip}:${remote.port}`;
+
+      const rows = [
+        ["Path",            pathLabel],
+        ["Local candidate", `${localAddr} &nbsp;<em>${local.candidateType}</em> &nbsp;${(local.protocol||"").toUpperCase()}`],
+        ["Remote candidate",`${remoteAddr} &nbsp;<em>${remote.candidateType}</em> &nbsp;${(remote.protocol||"").toUpperCase()}`],
+      ];
+
+      if (local.candidateType === "relay" && local.relatedAddress)
+        rows.push(["TURN server →local",  `${local.relatedAddress}:${local.relatedPort}`]);
+      if (remote.candidateType === "relay" && remote.relatedAddress)
+        rows.push(["TURN server →remote", `${remote.relatedAddress}:${remote.relatedPort}`]);
+      if (local.candidateType === "srflx" && local.relatedAddress)
+        rows.push(["LAN IP (local)",  `${local.relatedAddress}:${local.relatedPort}`]);
+      if (remote.candidateType === "srflx" && remote.relatedAddress)
+        rows.push(["LAN IP (remote)", `${remote.relatedAddress}:${remote.relatedPort}`]);
+
+      if (report.currentRoundTripTime != null)
+        rows.push(["RTT", `${(report.currentRoundTripTime * 1000).toFixed(1)} ms`]);
+      if (report.availableOutgoingBitrate != null)
+        rows.push(["Avail outgoing", `${(report.availableOutgoingBitrate / 1000).toFixed(0)} kbps`]);
+
+      rows.push(["Bytes TX / RX",   `${fmtBytes(report.bytesSent)} / ${fmtBytes(report.bytesReceived)}`]);
+      rows.push(["Packets TX / RX", `${report.packetsSent ?? "?"} / ${report.packetsReceived ?? "?"}`]);
+
+      // media stats (inbound streams)
+      const inbound = [...stats.values()].filter(r => r.type === "inbound-rtp");
+      for (const r of inbound) {
+        const codec = r.codecId ? byId(r.codecId) : null;
+        const codecName = codec ? codec.mimeType : "?";
+        rows.push([`${r.kind} codec`, codecName]);
+        if (r.frameWidth)  rows.push([`${r.kind} resolution`, `${r.frameWidth}×${r.frameHeight} @ ${(r.framesPerSecond||0).toFixed(1)} fps`]);
+        if (r.jitter != null) rows.push([`${r.kind} jitter`, `${(r.jitter * 1000).toFixed(1)} ms`]);
+        if (r.packetsLost != null) rows.push([`${r.kind} packets lost`, r.packetsLost]);
+      }
+
+      document.getElementById("conninfo").innerHTML =
+        `<table>${rows.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</table>`;
+      return;
+    }
+  } catch (e) { /* ignore transient errors */ }
+}
+
 document.getElementById("start").onclick = async () => {
   document.getElementById("start").disabled = true;
   document.getElementById("stop").disabled  = false;
@@ -106,9 +189,16 @@ document.getElementById("start").onclick = async () => {
       ]
     });
 
-    pc.onconnectionstatechange = () => {
+    pc.onconnectionstatechange = async () => {
       document.getElementById("state").innerText = pc.connectionState;
       log("pc state: " + pc.connectionState);
+      if (pc.connectionState === "connected") {
+        await updateConnectionInfo();
+        statsInterval = setInterval(updateConnectionInfo, 2000);
+      } else if (["disconnected","failed","closed"].includes(pc.connectionState)) {
+        clearInterval(statsInterval); statsInterval = null;
+        document.getElementById("conninfo").innerHTML = "<em style='color:#999'>not connected</em>";
+      }
     };
     pc.oniceconnectionstatechange = () => log("ice state: " + pc.iceConnectionState);
     pc.onicegatheringstatechange  = () => log("gather state: " + pc.iceGatheringState);
@@ -180,6 +270,7 @@ document.getElementById("msg").addEventListener("keydown", (e) => {
 });
 
 document.getElementById("stop").onclick = async () => {
+  clearInterval(statsInterval); statsInterval = null;
   try {
     if (pc) pc.close();
     if (localStream) localStream.getTracks().forEach(t => t.stop());
