@@ -28,7 +28,7 @@
       flex-wrap: wrap;
       flex-shrink: 0;
     }
-    #toolbar .brand { color: #58a6ff; font-weight: 600; font-size: 15px; margin-right: 4px; }
+    #toolbar .brand { color: #58a6ff; font-weight: 600; font-size: 15px; }
     #toolbar input {
       background: #0d1117;
       color: #e6edf3;
@@ -38,6 +38,14 @@
       font-size: 13px;
     }
     #toolbar input:focus { outline: none; border-color: #58a6ff; }
+
+    /* Connection details wrapper — always visible on desktop */
+    #conn-details {
+      display: contents; /* transparent to layout on desktop */
+    }
+
+    /* Toggle button — hidden on desktop */
+    #btn-conn-toggle { display: none; }
 
     /* ── Buttons ── */
     button {
@@ -110,8 +118,35 @@
       overflow: hidden;
     }
 
+    /* ── Mobile tab bar — hidden on desktop ── */
+    #mobile-tabs {
+      display: none;
+      flex-shrink: 0;
+      background: #0d1117;
+      border-bottom: 1px solid #30363d;
+    }
+    #mobile-tabs button {
+      flex: 1;
+      border: none;
+      border-radius: 0;
+      border-right: 1px solid #30363d;
+      padding: 10px 4px;
+      font-size: 12px;
+      background: #0d1117;
+      color: #8b949e;
+    }
+    #mobile-tabs button:last-child { border-right: none; }
+    #mobile-tabs button.tab-active {
+      background: #161b22;
+      color: #e6edf3;
+      border-bottom: 2px solid #58a6ff;
+    }
+
+    /* ── Tab panels — all visible on desktop ── */
+    #panel-stats, #panel-controls, #panel-snaps { flex-shrink: 0; }
+
     /* panel base */
-    .panel { padding: 11px 13px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
+    .panel { padding: 11px 13px; border-bottom: 1px solid #30363d; }
     .panel h3 {
       font-size: 11px;
       color: #8b949e;
@@ -239,6 +274,99 @@
     .dot-connected  { background: #3fb950; }
     .dot-error      { background: #f85149; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    /* ════════════════════════════════════════════════
+       MOBILE  (≤ 640 px)
+    ════════════════════════════════════════════════ */
+    @media (max-width: 640px) {
+
+      /* Toolbar: show ⚙ toggle, hide conn details by default */
+      #btn-conn-toggle {
+        display: block;
+        padding: 4px 10px;
+        font-size: 16px;
+      }
+      #conn-details {
+        display: none;
+      }
+      #conn-details.open {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        width: 100%;
+        padding-top: 6px;
+        order: 99;
+      }
+      /* 16 px minimum prevents iOS Safari from auto-zooming */
+      #conn-details.open input { flex: 1; min-width: 100px; font-size: 16px; }
+
+      /* Snapshot toolbar button: icon-only on mobile to save space */
+      #btn-snap-tb { margin-left: auto; padding: 4px 10px; }
+
+      /* Stack video above sidebar */
+      #main { flex-direction: column; }
+
+      /* Fixed video height — leaves room for controls below */
+      #video-wrap { flex: 0 0 auto; height: 42vh; }
+
+      /* Sidebar: full width, occupies the rest of #main */
+      #sidebar {
+        width: 100%;
+        min-width: 0;
+        border-left: none;
+        border-top: 1px solid #30363d;
+        flex: 1;
+        min-height: 0;
+      }
+
+      /* Show mobile tab bar */
+      #mobile-tabs { display: flex; }
+
+      /* All tab panels hidden by default on mobile */
+      #panel-stats, #panel-controls, #panel-snaps, #chat-panel {
+        display: none !important;
+      }
+      /* Only the active panel is visible */
+      #panel-stats.tab-active,
+      #panel-controls.tab-active,
+      #panel-snaps.tab-active,
+      #chat-panel.tab-active {
+        display: flex !important;
+        flex-direction: column;
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+      }
+
+      /* Thumb strip: no height cap inside the snaps tab */
+      #panel-snaps.tab-active #thumb-strip {
+        max-height: none;
+        flex: 1;
+        border-bottom: none;
+      }
+      /* Show thumb strip even when empty on the snaps tab */
+      #panel-snaps.tab-active #thumb-strip:empty { display: flex; }
+      #panel-snaps.tab-active #thumb-strip:empty::before {
+        content: "No snapshots yet.";
+        color: #484f58;
+        font-size: 13px;
+        padding: 12px 0;
+        align-self: center;
+        margin: auto;
+      }
+
+      /* Chat panel fills remaining height */
+      #chat-panel.tab-active { flex: 1; }
+
+      /* Larger touch targets */
+      button          { min-height: 38px; }
+      .ctrl-row button{ min-height: 42px; font-size: 14px; }
+      select          { min-height: 38px; font-size: 16px; }
+      #chat-input     { font-size: 16px;  min-height: 38px; }
+
+      /* Slightly bigger status bar text on mobile */
+      #statusbar { padding: 5px 13px; font-size: 12px; }
+    }
   </style>
 </head>
 <body>
@@ -246,12 +374,15 @@
 <!-- ── Toolbar ─────────────────────────────────────────────────────────── -->
 <div id="toolbar">
   <span class="brand">Pi Vision</span>
-  <input id="nats-url"  value="wss://tunnel.knitnox.com" style="width:230px" placeholder="NATS WebSocket URL" />
-  <input id="nats-user" value="agent2"          style="width:80px"  placeholder="user" />
-  <input id="nats-pass" value="agent2_password" style="width:130px" type="password" placeholder="password" />
+  <button id="btn-conn-toggle" onclick="toggleConn()" title="Connection settings">⚙</button>
+  <div id="conn-details">
+    <input id="nats-url"  value="wss://tunnel.knitnox.com" style="width:230px" placeholder="NATS WebSocket URL" />
+    <input id="nats-user" value="agent2"          style="width:80px"  placeholder="user" />
+    <input id="nats-pass" value="agent2_password" style="width:130px" type="password" placeholder="password" />
+  </div>
   <button id="btn-connect"    class="primary" onclick="doConnect()">Connect</button>
   <button id="btn-disconnect" class="danger"  onclick="doDisconnect()" style="display:none">Disconnect</button>
-  <button id="btn-snap-tb" onclick="takeSnapshot()" disabled style="margin-left:auto">📷 Snapshot</button>
+  <button id="btn-snap-tb" onclick="takeSnapshot()" disabled style="margin-left:auto">📷</button>
 </div>
 
 <!-- ── Main ────────────────────────────────────────────────────────────── -->
@@ -268,8 +399,16 @@
   <!-- Sidebar -->
   <div id="sidebar">
 
+    <!-- Mobile-only tab bar -->
+    <div id="mobile-tabs">
+      <button id="tab-stats"    class="tab-active" onclick="switchTab('stats')">Stats</button>
+      <button id="tab-controls"                    onclick="switchTab('controls')">Camera</button>
+      <button id="tab-snaps"                       onclick="switchTab('snaps')">📷 Snaps</button>
+      <button id="tab-chat"                        onclick="switchTab('chat')">Chat</button>
+    </div>
+
     <!-- Stats -->
-    <div class="panel">
+    <div id="panel-stats" class="panel tab-active">
       <h3>Stats</h3>
       <div class="stat-row"><span class="stat-key">State</span>      <span class="stat-val" id="s-state">—</span></div>
       <div class="stat-row"><span class="stat-key">Transport</span>  <span class="stat-val" id="s-transport">—</span></div>
@@ -280,7 +419,7 @@
     </div>
 
     <!-- Camera Controls -->
-    <div class="panel">
+    <div id="panel-controls" class="panel">
       <h3>Camera Controls</h3>
 
       <div class="ctrl-block">
@@ -323,8 +462,10 @@
       </div>
     </div>
 
-    <!-- Thumbnail strip (hidden until first snapshot) -->
-    <div id="thumb-strip"></div>
+    <!-- Snapshots (thumbnail strip wrapped for tab targeting) -->
+    <div id="panel-snaps">
+      <div id="thumb-strip"></div>
+    </div>
 
     <!-- Chat -->
     <div id="chat-panel">
@@ -414,6 +555,26 @@
     $("btn-snap-sb").disabled = !on;
   }
 
+  // ── Mobile: tab switching ──────────────────────────────────────────────
+  const TAB_PANELS = { stats: "panel-stats", controls: "panel-controls", snaps: "panel-snaps", chat: "chat-panel" };
+
+  window.switchTab = function (name) {
+    for (const [key, panelId] of Object.entries(TAB_PANELS)) {
+      $(panelId).classList.toggle("tab-active", key === name);
+      $(`tab-${key}`).classList.toggle("tab-active", key === name);
+    }
+    // Auto-scroll chat to bottom when switching to it
+    if (name === "chat") {
+      const box = $("chat-messages");
+      box.scrollTop = box.scrollHeight;
+    }
+  };
+
+  // ── Mobile: connection details toggle ─────────────────────────────────
+  window.toggleConn = function () {
+    $("conn-details").classList.toggle("open");
+  };
+
   // ── Connect ────────────────────────────────────────────────────────────
   window.doConnect = async function () {
     const url  = $("nats-url").value.trim();
@@ -423,6 +584,8 @@
     $("btn-connect").disabled = true;
     setNats("connecting", "connecting…");
     logChat("sys", `Connecting to NATS at ${url}…`);
+    // Auto-switch to chat on mobile so the user sees connection progress
+    if (window.matchMedia("(max-width:640px)").matches) switchTab("chat");
 
     try {
       nc = await natsConnect({ servers: url, user, pass, reconnect: false });
@@ -437,6 +600,8 @@
 
     $("btn-connect").style.display    = "none";
     $("btn-disconnect").style.display = "";
+    // Close conn details drawer on mobile after connecting
+    $("conn-details").classList.remove("open");
     await startWebRTC();
   };
 
@@ -572,13 +737,11 @@
   window.takeSnapshot = function () {
     if (video.readyState < 2) { logChat("sys", "No video to capture."); return; }
 
-    // Draw current frame onto hidden canvas
     const canvas = $("snap-canvas");
     canvas.width  = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext("2d").drawImage(video, 0, 0);
 
-    // White flash
     const flash = $("flash");
     flash.classList.remove("fade");
     flash.classList.add("fire");
@@ -597,7 +760,6 @@
     canvas.toBlob(blob => {
       const url = URL.createObjectURL(blob);
 
-      // ── Immediate download ──────────────────────────────────────────
       const a    = document.createElement("a");
       a.href     = url;
       a.download = name;
@@ -605,7 +767,6 @@
       a.click();
       document.body.removeChild(a);
 
-      // ── Thumbnail strip entry ───────────────────────────────────────
       const strip = $("thumb-strip");
       const row   = document.createElement("div");
       row.className = "thumb-row";
@@ -626,7 +787,7 @@
       dl.textContent = "Save again";
 
       row.append(img, meta, dl);
-      strip.prepend(row);   // newest on top
+      strip.prepend(row);
 
       logChat("sys", `📷 Downloaded: ${name}`);
     }, "image/png");
