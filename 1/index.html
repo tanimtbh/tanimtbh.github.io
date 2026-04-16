@@ -89,6 +89,16 @@
       user-select: none;
     }
 
+    /* ── Snapshot flash ── */
+    #flash {
+      position: absolute; inset: 0;
+      background: #fff;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #flash.fire { opacity: 0.85; transition: none; }
+    #flash.fade { transition: opacity 0.4s ease-out; }
+
     /* ── Sidebar ── */
     #sidebar {
       width: 290px;
@@ -141,52 +151,71 @@
     }
     select:focus { outline: none; border-color: #58a6ff; }
 
-    /* ── Chat ── */
-    #chat-panel {
-      flex: 1;
+    /* ── Thumbnail strip ── */
+    #thumb-strip {
       display: flex;
       flex-direction: column;
-      min-height: 0;
+      gap: 6px;
+      padding: 8px 13px;
+      overflow-y: auto;
+      max-height: 200px;
+      border-bottom: 1px solid #30363d;
+      flex-shrink: 0;
+    }
+    #thumb-strip:empty { display: none; }
+    #thumb-strip::-webkit-scrollbar { width: 5px; }
+    #thumb-strip::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    .thumb-row { display: flex; align-items: center; gap: 8px; }
+    .thumb-row img {
+      width: 80px; height: 45px;
+      object-fit: cover;
+      border-radius: 3px;
+      border: 1px solid #30363d;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .thumb-row img:hover { border-color: #58a6ff; }
+    .thumb-meta { font-size: 10px; color: #8b949e; flex: 1; }
+    .thumb-dl {
+      font-size: 11px; color: #58a6ff;
+      cursor: pointer; text-decoration: none; white-space: nowrap;
+    }
+    .thumb-dl:hover { text-decoration: underline; }
+
+    /* ── Chat ── */
+    #chat-panel {
+      flex: 1; display: flex; flex-direction: column; min-height: 0;
     }
     #chat-panel h3 {
-      font-size: 11px;
-      color: #8b949e;
-      text-transform: uppercase;
-      letter-spacing: 0.9px;
+      font-size: 11px; color: #8b949e;
+      text-transform: uppercase; letter-spacing: 0.9px;
       padding: 11px 13px 8px;
       border-bottom: 1px solid #30363d;
       flex-shrink: 0;
     }
     #chat-messages {
-      flex: 1;
-      overflow-y: auto;
+      flex: 1; overflow-y: auto;
       padding: 8px 13px;
-      font-size: 12px;
-      font-family: monospace;
+      font-size: 12px; font-family: monospace;
       scroll-behavior: smooth;
     }
     #chat-messages::-webkit-scrollbar { width: 5px; }
-    #chat-messages::-webkit-scrollbar-track { background: transparent; }
     #chat-messages::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
     .msg { padding: 1px 0; word-break: break-word; }
     .msg .pc  { color: #58a6ff; }
     .msg .pi  { color: #3fb950; }
     .msg .sys { color: #8b949e; font-style: italic; }
     #chat-input-row {
-      display: flex;
-      gap: 6px;
+      display: flex; gap: 6px;
       padding: 8px 13px;
       border-top: 1px solid #30363d;
       flex-shrink: 0;
     }
     #chat-input {
       flex: 1;
-      background: #0d1117;
-      color: #e6edf3;
+      background: #0d1117; color: #e6edf3;
       border: 1px solid #30363d;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 4px 8px; border-radius: 4px; font-size: 12px;
     }
     #chat-input:focus { outline: none; border-color: #58a6ff; }
 
@@ -195,11 +224,8 @@
       padding: 3px 13px;
       background: #161b22;
       border-top: 1px solid #30363d;
-      font-size: 11px;
-      color: #8b949e;
-      display: flex;
-      gap: 20px;
-      flex-shrink: 0;
+      font-size: 11px; color: #8b949e;
+      display: flex; gap: 20px; flex-shrink: 0;
     }
     .dot {
       display: inline-block;
@@ -221,10 +247,11 @@
 <div id="toolbar">
   <span class="brand">Pi Vision</span>
   <input id="nats-url"  value="wss://tunnel.knitnox.com" style="width:230px" placeholder="NATS WebSocket URL" />
-  <input id="nats-user" value="agent2"           style="width:80px"  placeholder="user" />
-  <input id="nats-pass" value="agent2_password"  style="width:130px" type="password" placeholder="password" />
+  <input id="nats-user" value="agent2"          style="width:80px"  placeholder="user" />
+  <input id="nats-pass" value="agent2_password" style="width:130px" type="password" placeholder="password" />
   <button id="btn-connect"    class="primary" onclick="doConnect()">Connect</button>
   <button id="btn-disconnect" class="danger"  onclick="doDisconnect()" style="display:none">Disconnect</button>
+  <button id="btn-snap-tb" onclick="takeSnapshot()" disabled style="margin-left:auto">📷 Snapshot</button>
 </div>
 
 <!-- ── Main ────────────────────────────────────────────────────────────── -->
@@ -234,13 +261,15 @@
   <div id="video-wrap">
     <video id="video" autoplay playsinline muted></video>
     <span id="placeholder">Not connected</span>
+    <div id="flash"></div>
+    <canvas id="snap-canvas" style="display:none"></canvas>
   </div>
 
   <!-- Sidebar -->
   <div id="sidebar">
 
     <!-- Stats -->
-    <div class="panel" id="stats-panel">
+    <div class="panel">
       <h3>Stats</h3>
       <div class="stat-row"><span class="stat-key">State</span>      <span class="stat-val" id="s-state">—</span></div>
       <div class="stat-row"><span class="stat-key">Transport</span>  <span class="stat-val" id="s-transport">—</span></div>
@@ -250,7 +279,7 @@
       <div class="stat-row"><span class="stat-key">Pkt Lost</span>   <span class="stat-val" id="s-pktlost">—</span></div>
     </div>
 
-    <!-- Controls -->
+    <!-- Camera Controls -->
     <div class="panel">
       <h3>Camera Controls</h3>
 
@@ -285,7 +314,17 @@
           </select>
         </div>
       </div>
+
+      <div class="ctrl-block">
+        <div class="ctrl-label">Snapshot &nbsp;<kbd style="font-size:10px;background:#0d1117;padding:1px 4px;border-radius:3px;border:1px solid #30363d">Space</kbd></div>
+        <div class="ctrl-row">
+          <button id="btn-snap-sb" onclick="takeSnapshot()" disabled>📷 Take Picture</button>
+        </div>
+      </div>
     </div>
+
+    <!-- Thumbnail strip (hidden until first snapshot) -->
+    <div id="thumb-strip"></div>
 
     <!-- Chat -->
     <div id="chat-panel">
@@ -314,7 +353,6 @@
 
 <!-- ── Script ───────────────────────────────────────────────────────────── -->
 <script type="module">
-  // nats.ws ESM build via CDN
   import { connect as natsConnect, StringCodec } from "https://cdn.jsdelivr.net/npm/nats.ws@1.29.2/esm/nats.js";
 
   // ── Constants ──────────────────────────────────────────────────────────
@@ -334,33 +372,31 @@
   const TRANSPORT_LABEL = { host: "Direct (host)", srflx: "STUN (srflx)", relay: "TURN (relay)" };
 
   // ── State ──────────────────────────────────────────────────────────────
-  let nc           = null;   // NATS connection
-  let pc           = null;   // RTCPeerConnection
-  let dc           = null;   // DataChannel
-  let statsTimer   = null;
-  let prevBytes    = 0;
-  let prevBytesTs  = 0;
-  const sc         = StringCodec();
+  let nc          = null;
+  let pc          = null;
+  let dc          = null;
+  let statsTimer  = null;
+  let prevBytes   = 0;
+  let prevBytesTs = 0;
+  const sc        = StringCodec();
 
   // ── DOM helpers ────────────────────────────────────────────────────────
-  const $  = id => document.getElementById(id);
+  const $     = id => document.getElementById(id);
   const video = $("video");
 
   function setNats(cls, text) {
-    $("dot-nats").className    = `dot dot-${cls}`;
+    $("dot-nats").className      = `dot dot-${cls}`;
     $("nats-status").textContent = text;
   }
   function setRtc(cls, text) {
-    $("dot-rtc").className    = `dot dot-${cls}`;
+    $("dot-rtc").className      = `dot dot-${cls}`;
     $("rtc-status").textContent = text;
   }
-
   function setStat(id, val, cls = "") {
     const el = $(id);
     el.textContent = val;
     el.className   = `stat-val${cls ? " " + cls : ""}`;
   }
-
   function logChat(kind, text) {
     const box = $("chat-messages");
     const div = document.createElement("div");
@@ -369,10 +405,13 @@
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   }
-
   function resetStats() {
     ["s-state","s-transport","s-fps","s-kbps","s-rtt","s-pktlost"].forEach(id => setStat(id, "—"));
     prevBytes = prevBytesTs = 0;
+  }
+  function setSnapEnabled(on) {
+    $("btn-snap-tb").disabled = !on;
+    $("btn-snap-sb").disabled = !on;
   }
 
   // ── Connect ────────────────────────────────────────────────────────────
@@ -398,7 +437,6 @@
 
     $("btn-connect").style.display    = "none";
     $("btn-disconnect").style.display = "";
-
     await startWebRTC();
   };
 
@@ -414,20 +452,17 @@
     logChat("sys", "Disconnected.");
   };
 
-  // ── WebRTC setup ───────────────────────────────────────────────────────
+  // ── WebRTC ─────────────────────────────────────────────────────────────
   async function startWebRTC() {
     setRtc("connecting", "connecting…");
     resetStats();
 
     pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-
-    // Receive-only video
     pc.addTransceiver("video", { direction: "recvonly" });
 
-    // DataChannel (must be created before offer)
     dc = pc.createDataChannel("control");
-    dc.onopen    = () => logChat("sys", "DataChannel open.");
-    dc.onclose   = () => logChat("sys", "DataChannel closed.");
+    dc.onopen  = () => logChat("sys", "DataChannel open.");
+    dc.onclose = () => logChat("sys", "DataChannel closed.");
     dc.onmessage = e => {
       try {
         const m = JSON.parse(e.data);
@@ -440,13 +475,13 @@
       } catch (_) {}
     };
 
-    // Incoming video
     pc.ontrack = ev => {
       if (ev.track.kind !== "video") return;
       logChat("sys", "Video track received.");
-      video.srcObject = ev.streams[0];
-      video.style.display     = "block";
+      video.srcObject                = ev.streams[0];
+      video.style.display            = "block";
       $("placeholder").style.display = "none";
+      setSnapEnabled(true);
     };
 
     pc.onconnectionstatechange = () => {
@@ -456,32 +491,26 @@
       if (s === "failed" || s === "closed") cleanup();
     };
 
-    // Build offer and wait for ICE gathering to complete before sending.
-    // Unlike aiortc (which blocks until gathering is done), the browser's
-    // setLocalDescription returns immediately — candidates trickle in via
-    // onicecandidate. We must wait for gathering=complete so the SDP we
-    // send to the Pi already contains all candidates (matching aiortc behaviour).
+    // Wait for full ICE gathering before sending offer (matches aiortc behaviour)
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
-
     await new Promise(resolve => {
       if (pc.iceGatheringState === "complete") { resolve(); return; }
       pc.onicegatheringstatechange = () => {
         if (pc.iceGatheringState === "complete") resolve();
       };
     });
-
-    logChat("sys", "Offer created (ICE gathered). Sending to Pi…");
+    logChat("sys", "Offer ready (ICE gathered). Sending to Pi…");
 
     let resp;
     try {
       resp = await nc.request(
         SUBJECT,
-        sc.encode(JSON.stringify({ sdp: offer.sdp, type: offer.type })),
+        sc.encode(JSON.stringify({ sdp: pc.localDescription.sdp, type: pc.localDescription.type })),
         { timeout: 20_000 }
       );
     } catch (err) {
-      logChat("sys", `Signaling timeout / error: ${err.message}`);
+      logChat("sys", `Signaling error: ${err.message}`);
       setRtc("error", "signaling failed");
       cleanup();
       return;
@@ -501,7 +530,6 @@
       const reports = await pc.getStats();
       reports.forEach(r => {
         if (r.type === "inbound-rtp" && r.kind === "video") {
-          // Bitrate
           const now = Date.now() / 1000;
           if (prevBytesTs) {
             const kbps = ((r.bytesReceived - prevBytes) * 8 / (now - prevBytesTs) / 1000).toFixed(1);
@@ -509,21 +537,15 @@
           }
           prevBytes   = r.bytesReceived;
           prevBytesTs = Date.now() / 1000;
-
-          const lost = r.packetsLost ?? 0;
+          const lost  = r.packetsLost ?? 0;
           setStat("s-pktlost", lost, lost === 0 ? "good" : lost < 10 ? "warn" : "bad");
-
           const fps = r.framesPerSecond != null ? r.framesPerSecond.toFixed(0) : "—";
           setStat("s-fps", fps, parseFloat(fps) > 10 ? "good" : "warn");
         }
-
-        if (r.type === "candidate-pair" && r.state === "succeeded") {
-          if (r.currentRoundTripTime != null) {
-            const ms = (r.currentRoundTripTime * 1000).toFixed(0);
-            setStat("s-rtt", `${ms} ms`, ms < 100 ? "good" : ms < 300 ? "warn" : "bad");
-          }
+        if (r.type === "candidate-pair" && r.state === "succeeded" && r.currentRoundTripTime != null) {
+          const ms = (r.currentRoundTripTime * 1000).toFixed(0);
+          setStat("s-rtt", `${ms} ms`, ms < 100 ? "good" : ms < 300 ? "warn" : "bad");
         }
-
         if (r.type === "local-candidate") {
           const label = TRANSPORT_LABEL[r.candidateType] ?? r.candidateType ?? "—";
           setStat("s-transport", label, r.candidateType === "host" ? "good" : r.candidateType === "relay" ? "warn" : "");
@@ -537,11 +559,84 @@
     clearInterval(statsTimer); statsTimer = null;
     if (dc) { try { dc.close(); } catch(_) {} dc = null; }
     if (pc) { try { pc.close(); } catch(_) {} pc = null; }
-    video.srcObject         = null;
-    video.style.display     = "none";
+    video.srcObject                = null;
+    video.style.display            = "none";
     $("placeholder").style.display = "";
+    setSnapEnabled(false);
     resetStats();
   }
+
+  // ── Snapshot ───────────────────────────────────────────────────────────
+  window.takeSnapshot = function () {
+    if (video.readyState < 2) { logChat("sys", "No video to capture."); return; }
+
+    // Draw current frame onto hidden canvas
+    const canvas = $("snap-canvas");
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+
+    // White flash
+    const flash = $("flash");
+    flash.classList.remove("fade");
+    flash.classList.add("fire");
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      flash.classList.add("fade");
+      flash.style.opacity = "0";
+      flash.addEventListener("transitionend", () => {
+        flash.classList.remove("fire", "fade");
+        flash.style.opacity = "";
+      }, { once: true });
+    }));
+
+    const ts   = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const name = `pi-snapshot-${ts}.png`;
+
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+
+      // ── Immediate download ──────────────────────────────────────────
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // ── Thumbnail strip entry ───────────────────────────────────────
+      const strip = $("thumb-strip");
+      const row   = document.createElement("div");
+      row.className = "thumb-row";
+
+      const img   = document.createElement("img");
+      img.src     = url;
+      img.title   = "Click to open full size";
+      img.onclick = () => window.open(url);
+
+      const meta  = document.createElement("span");
+      meta.className   = "thumb-meta";
+      meta.textContent = ts.replace("T", " ");
+
+      const dl    = document.createElement("a");
+      dl.className  = "thumb-dl";
+      dl.href       = url;
+      dl.download   = name;
+      dl.textContent = "Save again";
+
+      row.append(img, meta, dl);
+      strip.prepend(row);   // newest on top
+
+      logChat("sys", `📷 Downloaded: ${name}`);
+    }, "image/png");
+  };
+
+  // Spacebar shortcut (not when typing in an input)
+  document.addEventListener("keydown", e => {
+    if (e.code === "Space" && e.target.tagName !== "INPUT") {
+      e.preventDefault();
+      takeSnapshot();
+    }
+  });
 
   // ── Chat ───────────────────────────────────────────────────────────────
   window.chatKeydown = function (e) {
@@ -559,25 +654,17 @@
 
   // ── Camera controls ────────────────────────────────────────────────────
   function sendControl(cmd, value) {
-    if (!dc || dc.readyState !== "open") {
-      logChat("sys", "DataChannel not open.");
-      return;
-    }
+    if (!dc || dc.readyState !== "open") { logChat("sys", "DataChannel not open."); return; }
     dc.send(JSON.stringify({ type: "control", cmd, value }));
   }
 
   window.sendPreset = function (name) {
     sendControl("preset", name);
-    // Optimistically update resolution/fps selects to match preset
-    const map = { low: ["320x240", "10"], medium: ["640x480", "20"], high: ["1280x720", "30"] };
-    if (map[name]) {
-      $("sel-res").value = map[name][0];
-      $("sel-fps").value = map[name][1];
-    }
+    const map = { low: ["320x240","10"], medium: ["640x480","20"], high: ["1280x720","30"] };
+    if (map[name]) { $("sel-res").value = map[name][0]; $("sel-fps").value = map[name][1]; }
   };
-
-  window.sendResolution = function (val) { sendControl("resolution", val); };
-  window.sendFps        = function (val) { sendControl("fps",        val); };
+  window.sendResolution = val => sendControl("resolution", val);
+  window.sendFps        = val => sendControl("fps",        val);
 
   function highlightPreset(name) {
     ["low","medium","high"].forEach(n => $(`btn-${n}`).classList.toggle("active", n === name));
