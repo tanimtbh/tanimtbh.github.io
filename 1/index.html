@@ -491,14 +491,16 @@
       if (s === "failed" || s === "closed") cleanup();
     };
 
-    // Wait for full ICE gathering before sending offer (matches aiortc behaviour)
+    // Wait for full ICE gathering before sending offer (matches aiortc behaviour).
+    // 10 s timeout guards against TURN allocation stalls on hostile networks —
+    // the offer is sent with whatever candidates exist rather than hanging forever.
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     await new Promise(resolve => {
       if (pc.iceGatheringState === "complete") { resolve(); return; }
-      pc.onicegatheringstatechange = () => {
-        if (pc.iceGatheringState === "complete") resolve();
-      };
+      const done = () => { if (pc.iceGatheringState === "complete") resolve(); };
+      pc.addEventListener("icegatheringstatechange", done, { once: false });
+      setTimeout(() => { logChat("sys", "ICE gathering timed out — sending partial offer."); resolve(); }, 10_000);
     });
     logChat("sys", "Offer ready (ICE gathered). Sending to Pi…");
 
