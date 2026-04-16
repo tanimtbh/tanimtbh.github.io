@@ -1,287 +1,588 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>aiortc + NATS test</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pi Vision</title>
   <style>
-    body { font-family: system-ui; max-width: 900px; margin: 1rem auto; padding: 1rem; }
-    video { width: 48%; background: #111; border-radius: 8px; }
-    .row { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
-    button { padding: 0.6rem 1rem; margin-right: 0.5rem; font-size: 1rem; }
-    #log, #chat {
-      background: #f4f4f4; padding: 0.5rem; height: 160px;
-      overflow-y: auto; font-family: monospace; font-size: 12px;
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Segoe UI', system-ui, monospace;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Toolbar ── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    #toolbar .brand { color: #58a6ff; font-weight: 600; font-size: 15px; margin-right: 4px; }
+    #toolbar input {
+      background: #0d1117;
+      color: #e6edf3;
+      border: 1px solid #30363d;
+      padding: 4px 8px;
       border-radius: 4px;
+      font-size: 13px;
     }
-    input { width: 70%; padding: 0.5rem; font-size: 1rem; }
-    #state { font-weight: bold; margin-left: 0.5rem; }
-    .err { color: #c00; font-weight: bold; }
-    #conninfo {
-      background: #f4f4f4; padding: 0.6rem 0.8rem;
-      border-radius: 4px; font-family: monospace; font-size: 12px;
-      min-height: 2.5rem;
+    #toolbar input:focus { outline: none; border-color: #58a6ff; }
+
+    /* ── Buttons ── */
+    button {
+      background: #21262d;
+      color: #e6edf3;
+      border: 1px solid #30363d;
+      padding: 4px 13px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      white-space: nowrap;
     }
-    #conninfo table { width: 100%; border-collapse: collapse; }
-    #conninfo td { padding: 2px 10px 2px 0; vertical-align: top; }
-    #conninfo td:first-child { color: #777; white-space: nowrap; width: 160px; }
-    .relay-badge { color: #c60; font-weight: bold; }
-    .direct-badge { color: #060; font-weight: bold; }
+    button:hover:not(:disabled) { background: #30363d; }
+    button:disabled { opacity: 0.45; cursor: default; }
+    button.primary { background: #238636; border-color: #2ea043; }
+    button.primary:hover:not(:disabled) { background: #2ea043; }
+    button.danger  { background: #6e1c1c; border-color: #da3633; }
+    button.danger:hover:not(:disabled)  { background: #b62324; }
+    button.active  { background: #1f6feb; border-color: #388bfd; }
+
+    /* ── Main area ── */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── Video pane ── */
+    #video-wrap {
+      flex: 1;
+      position: relative;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+    #placeholder {
+      color: #484f58;
+      font-size: 18px;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 290px;
+      min-width: 240px;
+      display: flex;
+      flex-direction: column;
+      background: #161b22;
+      border-left: 1px solid #30363d;
+      overflow: hidden;
+    }
+
+    /* panel base */
+    .panel { padding: 11px 13px; border-bottom: 1px solid #30363d; flex-shrink: 0; }
+    .panel h3 {
+      font-size: 11px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      margin-bottom: 9px;
+    }
+
+    /* ── Stats ── */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-family: monospace;
+      padding: 2px 0;
+    }
+    .stat-key { color: #8b949e; }
+    .stat-val { color: #58a6ff; }
+    .stat-val.good  { color: #3fb950; }
+    .stat-val.warn  { color: #d29922; }
+    .stat-val.bad   { color: #f85149; }
+
+    /* ── Controls ── */
+    .ctrl-block { margin-bottom: 9px; }
+    .ctrl-block:last-child { margin-bottom: 0; }
+    .ctrl-label { font-size: 11px; color: #8b949e; margin-bottom: 4px; }
+    .ctrl-row { display: flex; gap: 5px; }
+    .ctrl-row button { flex: 1; padding: 4px 4px; font-size: 12px; }
+    select {
+      flex: 1;
+      background: #0d1117;
+      color: #e6edf3;
+      border: 1px solid #30363d;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    select:focus { outline: none; border-color: #58a6ff; }
+
+    /* ── Chat ── */
+    #chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    #chat-panel h3 {
+      font-size: 11px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      padding: 11px 13px 8px;
+      border-bottom: 1px solid #30363d;
+      flex-shrink: 0;
+    }
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 13px;
+      font-size: 12px;
+      font-family: monospace;
+      scroll-behavior: smooth;
+    }
+    #chat-messages::-webkit-scrollbar { width: 5px; }
+    #chat-messages::-webkit-scrollbar-track { background: transparent; }
+    #chat-messages::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    .msg { padding: 1px 0; word-break: break-word; }
+    .msg .pc  { color: #58a6ff; }
+    .msg .pi  { color: #3fb950; }
+    .msg .sys { color: #8b949e; font-style: italic; }
+    #chat-input-row {
+      display: flex;
+      gap: 6px;
+      padding: 8px 13px;
+      border-top: 1px solid #30363d;
+      flex-shrink: 0;
+    }
+    #chat-input {
+      flex: 1;
+      background: #0d1117;
+      color: #e6edf3;
+      border: 1px solid #30363d;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    #chat-input:focus { outline: none; border-color: #58a6ff; }
+
+    /* ── Status bar ── */
+    #statusbar {
+      padding: 3px 13px;
+      background: #161b22;
+      border-top: 1px solid #30363d;
+      font-size: 11px;
+      color: #8b949e;
+      display: flex;
+      gap: 20px;
+      flex-shrink: 0;
+    }
+    .dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .dot-idle       { background: #484f58; }
+    .dot-connecting { background: #d29922; animation: pulse 1.1s infinite; }
+    .dot-connected  { background: #3fb950; }
+    .dot-error      { background: #f85149; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
   </style>
 </head>
 <body>
-  <h2>aiortc + NATS signaling test</h2>
-  <button id="start">Start</button>
-  <button id="stop" disabled>Stop</button>
-  <span>state:</span><span id="state">idle</span>
 
-  <div class="row">
-    <video id="local" autoplay muted playsinline></video>
-    <video id="remote" autoplay playsinline></video>
+<!-- ── Toolbar ─────────────────────────────────────────────────────────── -->
+<div id="toolbar">
+  <span class="brand">Pi Vision</span>
+  <input id="nats-url"  value="wss://tunnel.knitnox.com" style="width:230px" placeholder="NATS WebSocket URL" />
+  <input id="nats-user" value="agent2"           style="width:80px"  placeholder="user" />
+  <input id="nats-pass" value="agent2_password"  style="width:130px" type="password" placeholder="password" />
+  <button id="btn-connect"    class="primary" onclick="doConnect()">Connect</button>
+  <button id="btn-disconnect" class="danger"  onclick="doDisconnect()" style="display:none">Disconnect</button>
+</div>
+
+<!-- ── Main ────────────────────────────────────────────────────────────── -->
+<div id="main">
+
+  <!-- Video -->
+  <div id="video-wrap">
+    <video id="video" autoplay playsinline muted></video>
+    <span id="placeholder">Not connected</span>
   </div>
 
-  <h3>Connection Info</h3>
-  <div id="conninfo"><em style="color:#999">not connected</em></div>
+  <!-- Sidebar -->
+  <div id="sidebar">
 
-  <h3>Data channel</h3>
-  <div id="chat"></div>
-  <input id="msg" placeholder="type and press enter" disabled>
+    <!-- Stats -->
+    <div class="panel" id="stats-panel">
+      <h3>Stats</h3>
+      <div class="stat-row"><span class="stat-key">State</span>      <span class="stat-val" id="s-state">—</span></div>
+      <div class="stat-row"><span class="stat-key">Transport</span>  <span class="stat-val" id="s-transport">—</span></div>
+      <div class="stat-row"><span class="stat-key">FPS (recv)</span> <span class="stat-val" id="s-fps">—</span></div>
+      <div class="stat-row"><span class="stat-key">Bitrate</span>    <span class="stat-val" id="s-kbps">—</span></div>
+      <div class="stat-row"><span class="stat-key">RTT</span>        <span class="stat-val" id="s-rtt">—</span></div>
+      <div class="stat-row"><span class="stat-key">Pkt Lost</span>   <span class="stat-val" id="s-pktlost">—</span></div>
+    </div>
 
-  <h3>Log</h3>
-  <div id="log"></div>
+    <!-- Controls -->
+    <div class="panel">
+      <h3>Camera Controls</h3>
 
+      <div class="ctrl-block">
+        <div class="ctrl-label">Preset</div>
+        <div class="ctrl-row">
+          <button id="btn-low"    onclick="sendPreset('low')">Low</button>
+          <button id="btn-medium" onclick="sendPreset('medium')">Medium</button>
+          <button id="btn-high"   onclick="sendPreset('high')">High</button>
+        </div>
+      </div>
+
+      <div class="ctrl-block">
+        <div class="ctrl-label">Resolution</div>
+        <div class="ctrl-row">
+          <select id="sel-res" onchange="sendResolution(this.value)">
+            <option value="320x240">320 × 240</option>
+            <option value="640x480" selected>640 × 480</option>
+            <option value="1280x720">1280 × 720</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="ctrl-block">
+        <div class="ctrl-label">Framerate</div>
+        <div class="ctrl-row">
+          <select id="sel-fps" onchange="sendFps(this.value)">
+            <option value="10">10 fps</option>
+            <option value="15">15 fps</option>
+            <option value="20" selected>20 fps</option>
+            <option value="30">30 fps</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat -->
+    <div id="chat-panel">
+      <h3>Chat</h3>
+      <div id="chat-messages"></div>
+      <div id="chat-input-row">
+        <input id="chat-input" placeholder="Message…" onkeydown="chatKeydown(event)" />
+        <button onclick="sendChat()">Send</button>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+</div><!-- /main -->
+
+<!-- ── Status bar ───────────────────────────────────────────────────────── -->
+<div id="statusbar">
+  <span>
+    <span class="dot dot-idle" id="dot-nats"></span>
+    NATS: <span id="nats-status">disconnected</span>
+  </span>
+  <span>
+    <span class="dot dot-idle" id="dot-rtc"></span>
+    WebRTC: <span id="rtc-status">idle</span>
+  </span>
+</div>
+
+<!-- ── Script ───────────────────────────────────────────────────────────── -->
 <script type="module">
-import { connect, StringCodec } from "https://cdn.jsdelivr.net/npm/nats.ws@1.29.2/esm/nats.js";
+  // nats.ws ESM build via CDN
+  import { connect as natsConnect, StringCodec } from "https://cdn.jsdelivr.net/npm/nats.ws@1.29.2/esm/nats.js";
 
-// ───── Config ─────────────────────────────────────────────────
-const NATS_URL  = "wss://tunnel.knitnox.com";
-const NATS_USER = "test";
-const NATS_PASS = "abbatanim";
-const SUBJECT   = "webrtc.signaling";
+  // ── Constants ──────────────────────────────────────────────────────────
+  const SUBJECT = "webrtc.signaling";
+  const ICE_SERVERS = [
+    { urls: "stun:tunnel.knitnox.com:3478" },
+    {
+      urls: [
+        "turn:tunnel.knitnox.com:3478?transport=udp",
+        "turn:tunnel.knitnox.com:3478?transport=tcp",
+        "turns:tunnel.knitnox.com:5349?transport=tcp",
+      ],
+      username: "tanim",
+      credential: "1d3th@786",
+    },
+  ];
+  const TRANSPORT_LABEL = { host: "Direct (host)", srflx: "STUN (srflx)", relay: "TURN (relay)" };
 
-const TURN_USER = "tanim";
-const TURN_PASS = "YOUR_TURN_PASSWORD";
-const STUN_URL  = "stun:tunnel.knitnox.com:3478";
-const TURN_URLS = [
-  "turn:tunnel.knitnox.com:3478?transport=udp",
-  "turn:tunnel.knitnox.com:3478?transport=tcp",
-  "turns:tunnel.knitnox.com:5349?transport=tcp"
-];
-// ──────────────────────────────────────────────────────────────
+  // ── State ──────────────────────────────────────────────────────────────
+  let nc           = null;   // NATS connection
+  let pc           = null;   // RTCPeerConnection
+  let dc           = null;   // DataChannel
+  let statsTimer   = null;
+  let prevBytes    = 0;
+  let prevBytesTs  = 0;
+  const sc         = StringCodec();
 
-const logEl  = document.getElementById("log");
-const chatEl = document.getElementById("chat");
-const log = (m, isErr=false) => {
-  const line = document.createElement("div");
-  if (isErr) line.className = "err";
-  line.textContent = new Date().toLocaleTimeString() + " " + m;
-  logEl.appendChild(line);
-  logEl.scrollTop = logEl.scrollHeight;
-  console.log(m);
-};
-const chatLog = (m) => {
-  chatEl.innerHTML += m + "<br>";
-  chatEl.scrollTop = chatEl.scrollHeight;
-};
-const sc = StringCodec();
+  // ── DOM helpers ────────────────────────────────────────────────────────
+  const $  = id => document.getElementById(id);
+  const video = $("video");
 
-let pc, dc, localStream, nc;
+  function setNats(cls, text) {
+    $("dot-nats").className    = `dot dot-${cls}`;
+    $("nats-status").textContent = text;
+  }
+  function setRtc(cls, text) {
+    $("dot-rtc").className    = `dot dot-${cls}`;
+    $("rtc-status").textContent = text;
+  }
 
-// Global error visibility — catches anything that slips past try/catch
-window.addEventListener("error", e => log("window error: " + e.message, true));
-window.addEventListener("unhandledrejection", e =>
-  log("unhandled: " + (e.reason?.message || e.reason), true));
+  function setStat(id, val, cls = "") {
+    const el = $(id);
+    el.textContent = val;
+    el.className   = `stat-val${cls ? " " + cls : ""}`;
+  }
 
-// Check HTTPS / secure context early so you get a clear message on mobile
-if (!window.isSecureContext) {
-  log("WARNING: page is not in a secure context. getUserMedia will fail on mobile. Serve via https://", true);
-}
-if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-  log("WARNING: navigator.mediaDevices.getUserMedia unavailable in this browser/context", true);
-}
+  function logChat(kind, text) {
+    const box = $("chat-messages");
+    const div = document.createElement("div");
+    div.className = "msg";
+    div.innerHTML = `<span class="${kind}">${text}</span>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
 
-let statsInterval = null;
+  function resetStats() {
+    ["s-state","s-transport","s-fps","s-kbps","s-rtt","s-pktlost"].forEach(id => setStat(id, "—"));
+    prevBytes = prevBytesTs = 0;
+  }
 
-function fmtBytes(b) {
-  if (!b) return "0 B";
-  if (b < 1024) return b + " B";
-  if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
-  return (b / 1048576).toFixed(2) + " MB";
-}
+  // ── Connect ────────────────────────────────────────────────────────────
+  window.doConnect = async function () {
+    const url  = $("nats-url").value.trim();
+    const user = $("nats-user").value.trim();
+    const pass = $("nats-pass").value;
 
-async function updateConnectionInfo() {
-  if (!pc || pc.connectionState !== "connected") return;
-  try {
-    const stats = await pc.getStats();
-    const byId = id => stats.get(id);
+    $("btn-connect").disabled = true;
+    setNats("connecting", "connecting…");
+    logChat("sys", `Connecting to NATS at ${url}…`);
 
-    for (const report of stats.values()) {
-      if (report.type !== "candidate-pair" || !report.nominated) continue;
-      const local  = byId(report.localCandidateId);
-      const remote = byId(report.remoteCandidateId);
-      if (!local || !remote) continue;
-
-      const isRelay = local.candidateType === "relay" || remote.candidateType === "relay";
-      const pathLabel = isRelay
-        ? `<span class="relay-badge">TURN relay</span>`
-        : `<span class="direct-badge">direct (${local.candidateType})</span>`;
-
-      const localAddr  = `${local.address  || local.ip}:${local.port}`;
-      const remoteAddr = `${remote.address || remote.ip}:${remote.port}`;
-
-      const rows = [
-        ["Path",            pathLabel],
-        ["Local candidate", `${localAddr} &nbsp;<em>${local.candidateType}</em> &nbsp;${(local.protocol||"").toUpperCase()}`],
-        ["Remote candidate",`${remoteAddr} &nbsp;<em>${remote.candidateType}</em> &nbsp;${(remote.protocol||"").toUpperCase()}`],
-      ];
-
-      if (local.candidateType === "relay" && local.relatedAddress)
-        rows.push(["TURN server →local",  `${local.relatedAddress}:${local.relatedPort}`]);
-      if (remote.candidateType === "relay" && remote.relatedAddress)
-        rows.push(["TURN server →remote", `${remote.relatedAddress}:${remote.relatedPort}`]);
-      if (local.candidateType === "srflx" && local.relatedAddress)
-        rows.push(["LAN IP (local)",  `${local.relatedAddress}:${local.relatedPort}`]);
-      if (remote.candidateType === "srflx" && remote.relatedAddress)
-        rows.push(["LAN IP (remote)", `${remote.relatedAddress}:${remote.relatedPort}`]);
-
-      if (report.currentRoundTripTime != null)
-        rows.push(["RTT", `${(report.currentRoundTripTime * 1000).toFixed(1)} ms`]);
-      if (report.availableOutgoingBitrate != null)
-        rows.push(["Avail outgoing", `${(report.availableOutgoingBitrate / 1000).toFixed(0)} kbps`]);
-
-      rows.push(["Bytes TX / RX",   `${fmtBytes(report.bytesSent)} / ${fmtBytes(report.bytesReceived)}`]);
-      rows.push(["Packets TX / RX", `${report.packetsSent ?? "?"} / ${report.packetsReceived ?? "?"}`]);
-
-      // media stats (inbound streams)
-      const inbound = [...stats.values()].filter(r => r.type === "inbound-rtp");
-      for (const r of inbound) {
-        const codec = r.codecId ? byId(r.codecId) : null;
-        const codecName = codec ? codec.mimeType : "?";
-        rows.push([`${r.kind} codec`, codecName]);
-        if (r.frameWidth)  rows.push([`${r.kind} resolution`, `${r.frameWidth}×${r.frameHeight} @ ${(r.framesPerSecond||0).toFixed(1)} fps`]);
-        if (r.jitter != null) rows.push([`${r.kind} jitter`, `${(r.jitter * 1000).toFixed(1)} ms`]);
-        if (r.packetsLost != null) rows.push([`${r.kind} packets lost`, r.packetsLost]);
-      }
-
-      document.getElementById("conninfo").innerHTML =
-        `<table>${rows.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</table>`;
+    try {
+      nc = await natsConnect({ servers: url, user, pass, reconnect: false });
+      setNats("connected", "connected");
+      logChat("sys", "NATS connected. Starting WebRTC…");
+    } catch (err) {
+      setNats("error", `error: ${err.message}`);
+      logChat("sys", `NATS error: ${err.message}`);
+      $("btn-connect").disabled = false;
       return;
     }
-  } catch (e) { /* ignore transient errors */ }
-}
 
-document.getElementById("start").onclick = async () => {
-  document.getElementById("start").disabled = true;
-  document.getElementById("stop").disabled  = false;
+    $("btn-connect").style.display    = "none";
+    $("btn-disconnect").style.display = "";
 
-  try {
-    // 1) Connect to NATS
-    log("connecting to NATS " + NATS_URL + " ...");
-    nc = await connect({ servers: NATS_URL, user: NATS_USER, pass: NATS_PASS });
-    log("NATS connected");
+    await startWebRTC();
+  };
 
-    // 2) Create peer connection
-    log("creating RTCPeerConnection...");
-    pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: STUN_URL },
-        { urls: TURN_URLS, username: TURN_USER, credential: TURN_PASS }
-      ]
-    });
+  // ── Disconnect ─────────────────────────────────────────────────────────
+  window.doDisconnect = async function () {
+    cleanup();
+    if (nc) { try { await nc.close(); } catch(_) {} nc = null; }
+    setNats("idle", "disconnected");
+    setRtc("idle", "idle");
+    $("btn-disconnect").style.display = "none";
+    $("btn-connect").style.display    = "";
+    $("btn-connect").disabled         = false;
+    logChat("sys", "Disconnected.");
+  };
 
-    pc.onconnectionstatechange = async () => {
-      document.getElementById("state").innerText = pc.connectionState;
-      log("pc state: " + pc.connectionState);
-      if (pc.connectionState === "connected") {
-        await updateConnectionInfo();
-        statsInterval = setInterval(updateConnectionInfo, 2000);
-      } else if (["disconnected","failed","closed"].includes(pc.connectionState)) {
-        clearInterval(statsInterval); statsInterval = null;
-        document.getElementById("conninfo").innerHTML = "<em style='color:#999'>not connected</em>";
-      }
+  // ── WebRTC setup ───────────────────────────────────────────────────────
+  async function startWebRTC() {
+    setRtc("connecting", "connecting…");
+    resetStats();
+
+    pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+    // Receive-only video
+    pc.addTransceiver("video", { direction: "recvonly" });
+
+    // DataChannel (must be created before offer)
+    dc = pc.createDataChannel("control");
+    dc.onopen    = () => logChat("sys", "DataChannel open.");
+    dc.onclose   = () => logChat("sys", "DataChannel closed.");
+    dc.onmessage = e => {
+      try {
+        const m = JSON.parse(e.data);
+        if (m.type === "chat") {
+          logChat("pi", `[Pi] ${m.text}`);
+        } else if (m.type === "ack") {
+          logChat("sys", `Ack: ${m.cmd} = ${m.value}`);
+          if (m.cmd === "preset") highlightPreset(m.value);
+        }
+      } catch (_) {}
     };
-    pc.oniceconnectionstatechange = () => log("ice state: " + pc.iceConnectionState);
-    pc.onicegatheringstatechange  = () => log("gather state: " + pc.iceGatheringState);
-    pc.onicecandidateerror = (e) =>
-      log("ice candidate error code=" + e.errorCode + " " + (e.errorText || ""), true);
 
-    pc.ontrack = (e) => {
-      log("remote track: " + e.track.kind);
-      document.getElementById("remote").srcObject = e.streams[0];
+    // Incoming video
+    pc.ontrack = ev => {
+      if (ev.track.kind !== "video") return;
+      logChat("sys", "Video track received.");
+      video.srcObject = ev.streams[0];
+      video.style.display     = "block";
+      $("placeholder").style.display = "none";
     };
 
-    // 3) Data channel
-    log("creating data channel...");
-    dc = pc.createDataChannel("chat");
-    dc.onopen    = () => { log("data channel OPEN"); document.getElementById("msg").disabled = false; };
-    dc.onclose   = () => log("data channel closed");
-    dc.onmessage = (e) => chatLog("← " + e.data);
+    pc.onconnectionstatechange = () => {
+      const s = pc.connectionState;
+      setStat("s-state", s, s === "connected" ? "good" : s === "failed" ? "bad" : "warn");
+      setRtc(s === "connected" ? "connected" : s === "failed" ? "error" : "connecting", s);
+      if (s === "failed" || s === "closed") cleanup();
+    };
 
-    // 4) Get mic + camera
-    log("requesting mic and camera...");
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-    log("got media, tracks: " + localStream.getTracks().map(t => t.kind).join(","));
-    document.getElementById("local").srcObject = localStream;
-    localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-
-    // 5) Create offer
-    log("creating offer...");
+    // Build offer and wait for ICE gathering to complete before sending.
+    // Unlike aiortc (which blocks until gathering is done), the browser's
+    // setLocalDescription returns immediately — candidates trickle in via
+    // onicecandidate. We must wait for gathering=complete so the SDP we
+    // send to the Pi already contains all candidates (matching aiortc behaviour).
     const offer = await pc.createOffer();
-    log("setting local description...");
     await pc.setLocalDescription(offer);
 
-    // 6) Wait for ICE gathering with 3s fallback (mobile networks can hang)
-    log("waiting for ICE gathering (max 3s)...");
     await new Promise(resolve => {
-      if (pc.iceGatheringState === "complete") return resolve();
-      const done = () => { pc.onicegatheringstatechange = null; resolve(); };
-      pc.onicegatheringstatechange = () => pc.iceGatheringState === "complete" && done();
-      setTimeout(done, 3000);
+      if (pc.iceGatheringState === "complete") { resolve(); return; }
+      pc.onicegatheringstatechange = () => {
+        if (pc.iceGatheringState === "complete") resolve();
+      };
     });
-    log("gathering done, iceGatheringState=" + pc.iceGatheringState);
 
-    // 7) Send offer via NATS request/reply
-    log("publishing offer to " + SUBJECT + " ...");
-    const payload = JSON.stringify({
-      sdp: pc.localDescription.sdp,
-      type: pc.localDescription.type
-    });
-    const reply = await nc.request(SUBJECT, sc.encode(payload), { timeout: 15000 });
-    log("got reply from agent");
+    logChat("sys", "Offer created (ICE gathered). Sending to Pi…");
 
-    // 8) Apply answer
-    const answer = JSON.parse(sc.decode(reply.data));
-    if (answer.error) { log("agent error: " + answer.error, true); return; }
-    await pc.setRemoteDescription(answer);
-    log("answer applied, waiting for ICE to connect...");
+    let resp;
+    try {
+      resp = await nc.request(
+        SUBJECT,
+        sc.encode(JSON.stringify({ sdp: offer.sdp, type: offer.type })),
+        { timeout: 20_000 }
+      );
+    } catch (err) {
+      logChat("sys", `Signaling timeout / error: ${err.message}`);
+      setRtc("error", "signaling failed");
+      cleanup();
+      return;
+    }
 
-  } catch (e) {
-    log("FAILED: " + (e.message || e), true);
-    console.error(e);
+    const answer = JSON.parse(sc.decode(resp.data));
+    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    logChat("sys", "Answer received. Waiting for connection…");
+
+    statsTimer = setInterval(pollStats, 1000);
   }
-};
 
-document.getElementById("msg").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && dc && dc.readyState === "open") {
-    chatLog("→ " + e.target.value);
-    dc.send(e.target.value);
-    e.target.value = "";
+  // ── Stats polling ──────────────────────────────────────────────────────
+  async function pollStats() {
+    if (!pc) return;
+    try {
+      const reports = await pc.getStats();
+      reports.forEach(r => {
+        if (r.type === "inbound-rtp" && r.kind === "video") {
+          // Bitrate
+          const now = Date.now() / 1000;
+          if (prevBytesTs) {
+            const kbps = ((r.bytesReceived - prevBytes) * 8 / (now - prevBytesTs) / 1000).toFixed(1);
+            setStat("s-kbps", `${kbps} kbps`, parseFloat(kbps) > 50 ? "good" : "warn");
+          }
+          prevBytes   = r.bytesReceived;
+          prevBytesTs = Date.now() / 1000;
+
+          const lost = r.packetsLost ?? 0;
+          setStat("s-pktlost", lost, lost === 0 ? "good" : lost < 10 ? "warn" : "bad");
+
+          const fps = r.framesPerSecond != null ? r.framesPerSecond.toFixed(0) : "—";
+          setStat("s-fps", fps, parseFloat(fps) > 10 ? "good" : "warn");
+        }
+
+        if (r.type === "candidate-pair" && r.state === "succeeded") {
+          if (r.currentRoundTripTime != null) {
+            const ms = (r.currentRoundTripTime * 1000).toFixed(0);
+            setStat("s-rtt", `${ms} ms`, ms < 100 ? "good" : ms < 300 ? "warn" : "bad");
+          }
+        }
+
+        if (r.type === "local-candidate") {
+          const label = TRANSPORT_LABEL[r.candidateType] ?? r.candidateType ?? "—";
+          setStat("s-transport", label, r.candidateType === "host" ? "good" : r.candidateType === "relay" ? "warn" : "");
+        }
+      });
+    } catch (_) {}
   }
-});
 
-document.getElementById("stop").onclick = async () => {
-  clearInterval(statsInterval); statsInterval = null;
-  try {
-    if (pc) pc.close();
-    if (localStream) localStream.getTracks().forEach(t => t.stop());
-    if (nc) await nc.close();
-  } catch (e) { log("stop error: " + e.message, true); }
-  document.getElementById("start").disabled = false;
-  document.getElementById("stop").disabled  = true;
-  document.getElementById("msg").disabled   = true;
-  document.getElementById("state").innerText = "idle";
-  log("stopped");
-};
+  // ── Cleanup ────────────────────────────────────────────────────────────
+  function cleanup() {
+    clearInterval(statsTimer); statsTimer = null;
+    if (dc) { try { dc.close(); } catch(_) {} dc = null; }
+    if (pc) { try { pc.close(); } catch(_) {} pc = null; }
+    video.srcObject         = null;
+    video.style.display     = "none";
+    $("placeholder").style.display = "";
+    resetStats();
+  }
+
+  // ── Chat ───────────────────────────────────────────────────────────────
+  window.chatKeydown = function (e) {
+    if (e.key === "Enter") sendChat();
+  };
+
+  window.sendChat = function () {
+    const input = $("chat-input");
+    const text  = input.value.trim();
+    if (!text || !dc || dc.readyState !== "open") return;
+    dc.send(JSON.stringify({ type: "chat", text }));
+    logChat("pc", `[PC] ${text}`);
+    input.value = "";
+  };
+
+  // ── Camera controls ────────────────────────────────────────────────────
+  function sendControl(cmd, value) {
+    if (!dc || dc.readyState !== "open") {
+      logChat("sys", "DataChannel not open.");
+      return;
+    }
+    dc.send(JSON.stringify({ type: "control", cmd, value }));
+  }
+
+  window.sendPreset = function (name) {
+    sendControl("preset", name);
+    // Optimistically update resolution/fps selects to match preset
+    const map = { low: ["320x240", "10"], medium: ["640x480", "20"], high: ["1280x720", "30"] };
+    if (map[name]) {
+      $("sel-res").value = map[name][0];
+      $("sel-fps").value = map[name][1];
+    }
+  };
+
+  window.sendResolution = function (val) { sendControl("resolution", val); };
+  window.sendFps        = function (val) { sendControl("fps",        val); };
+
+  function highlightPreset(name) {
+    ["low","medium","high"].forEach(n => $(`btn-${n}`).classList.toggle("active", n === name));
+  }
 </script>
+
 </body>
 </html>
