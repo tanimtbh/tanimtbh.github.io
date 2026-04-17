@@ -751,9 +751,15 @@
     if (video.readyState < 2) { logChat("sys", "No video to capture."); return; }
 
     const canvas = $("snap-canvas");
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
+    const rotated = currentRotation === 90 || currentRotation === 270;
+    canvas.width  = rotated ? video.videoHeight : video.videoWidth;
+    canvas.height = rotated ? video.videoWidth  : video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(currentRotation * Math.PI / 180);
+    ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
+    ctx.restore();
 
     const flash = $("flash");
     flash.classList.remove("fade");
