@@ -383,6 +383,7 @@
     <input id="nats-url"  value="wss://tunnel.knitnox.com" style="width:230px" placeholder="NATS WebSocket URL" />
     <input id="nats-user" value="agent2"          style="width:80px"  placeholder="user" />
     <input id="nats-pass" value="agent2_password" style="width:130px" type="password" placeholder="password" />
+    <input id="nats-subject" value="webrtc.signaling.cam1" style="width:175px" placeholder="subject" />
   </div>
   <button id="btn-connect"    class="primary" onclick="doConnect()">Connect</button>
   <button id="btn-disconnect" class="danger"  onclick="doDisconnect()" style="display:none">Disconnect</button>
@@ -510,7 +511,6 @@
   import { connect as natsConnect, StringCodec } from "https://cdn.jsdelivr.net/npm/nats.ws@1.29.2/esm/nats.js";
 
   // ── Constants ──────────────────────────────────────────────────────────
-  const SUBJECT = "webrtc.signaling";
   const ICE_SERVERS = [
     { urls: "stun:tunnel.knitnox.com:3478" },
     {
@@ -524,6 +524,23 @@
     },
   ];
   const TRANSPORT_LABEL = { host: "Direct (host)", srflx: "STUN (srflx)", relay: "TURN (relay)" };
+
+  // ── Auto-fill from ?cam= query parameter ───────────────────────────────
+  (function initFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const cam = params.get("cam");
+    if (cam === "0") {
+      $("nats-user").value    = "agent1";
+      $("nats-pass").value    = "agent1_password";
+      $("nats-subject").value = "webrtc.signaling.cam0";
+      document.title = "Pi Vision — Cam 0";
+    } else if (cam === "1") {
+      $("nats-user").value    = "agent2";
+      $("nats-pass").value    = "agent2_password";
+      $("nats-subject").value = "webrtc.signaling.cam1";
+      document.title = "Pi Vision — Cam 1";
+    }
+  })();
 
   // ── State ──────────────────────────────────────────────────────────────
   let nc          = null;
@@ -684,8 +701,9 @@
 
     let resp;
     try {
+      const subject = $("nats-subject").value.trim() || "webrtc.signaling.cam1";
       resp = await nc.request(
-        SUBJECT,
+        subject,
         sc.encode(JSON.stringify({ sdp: pc.localDescription.sdp, type: pc.localDescription.type })),
         { timeout: 20_000 }
       );
