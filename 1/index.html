@@ -101,6 +101,22 @@
       user-select: none;
     }
 
+    /* Unmute overlay to bypass autoplay block rules */
+    #unmute-overlay {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(238, 174, 0, 0.85);
+      color: #000;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      display: none;
+      z-index: 10;
+    }
+
     /* ── Snapshot flash ── */
     #flash {
       position: absolute; inset: 0;
@@ -280,11 +296,9 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
     /* ════════════════════════════════════════════════
-       MOBILE  (≤ 640 px)
-    ════════════════════════════════════════════════ */
+        MOBILE  (≤ 640 px)
+     ════════════════════════════════════════════════ */
     @media (max-width: 640px) {
-
-      /* Toolbar: show ⚙ toggle, hide conn details by default */
       #btn-conn-toggle {
         display: block;
         padding: 4px 10px;
@@ -301,19 +315,10 @@
         padding-top: 6px;
         order: 99;
       }
-      /* 16 px minimum prevents iOS Safari from auto-zooming */
       #conn-details.open input { flex: 1; min-width: 100px; font-size: 16px; }
-
-      /* Snapshot toolbar button: icon-only on mobile to save space */
       #btn-snap-tb { margin-left: auto; padding: 4px 10px; }
-
-      /* Stack video above sidebar */
       #main { flex-direction: column; }
-
-      /* Fixed video height — leaves room for controls below */
       #video-wrap { flex: 0 0 auto; height: 42vh; }
-
-      /* Sidebar: full width, occupies the rest of #main */
       #sidebar {
         width: 100%;
         min-width: 0;
@@ -322,15 +327,10 @@
         flex: 1;
         min-height: 0;
       }
-
-      /* Show mobile tab bar */
       #mobile-tabs { display: flex; }
-
-      /* All tab panels hidden by default on mobile */
       #panel-stats, #panel-controls, #panel-snaps, #chat-panel {
         display: none !important;
       }
-      /* Only the active panel is visible */
       #panel-stats.tab-active,
       #panel-controls.tab-active,
       #panel-snaps.tab-active,
@@ -341,14 +341,11 @@
         overflow-y: auto;
         min-height: 0;
       }
-
-      /* Thumb strip: no height cap inside the snaps tab */
       #panel-snaps.tab-active #thumb-strip {
         max-height: none;
         flex: 1;
         border-bottom: none;
       }
-      /* Show thumb strip even when empty on the snaps tab */
       #panel-snaps.tab-active #thumb-strip:empty { display: flex; }
       #panel-snaps.tab-active #thumb-strip:empty::before {
         content: "No snapshots yet.";
@@ -358,24 +355,17 @@
         align-self: center;
         margin: auto;
       }
-
-      /* Chat panel fills remaining height */
       #chat-panel.tab-active { flex: 1; }
-
-      /* Larger touch targets */
       button          { min-height: 38px; }
       .ctrl-row button{ min-height: 42px; font-size: 14px; }
       select          { min-height: 38px; font-size: 16px; }
       #chat-input     { font-size: 16px;  min-height: 38px; }
-
-      /* Slightly bigger status bar text on mobile */
       #statusbar { padding: 5px 13px; font-size: 12px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── Toolbar ─────────────────────────────────────────────────────────── -->
 <div id="toolbar">
   <span class="brand">Pi Vision</span>
   <button id="btn-conn-toggle" onclick="toggleConn()" title="Connection settings">⚙</button>
@@ -390,21 +380,18 @@
   <button id="btn-snap-tb" onclick="takeSnapshot()" disabled style="margin-left:auto">📷</button>
 </div>
 
-<!-- ── Main ────────────────────────────────────────────────────────────── -->
 <div id="main">
 
-  <!-- Video -->
   <div id="video-wrap">
-    <video id="video" autoplay playsinline muted></video>
+    <video id="video" autoplay playsinline></video>
+    <div id="unmute-overlay" onclick="handleUnmute()">🔊 Click to Unmute System</div>
     <span id="placeholder">Not connected</span>
     <div id="flash"></div>
     <canvas id="snap-canvas" style="display:none"></canvas>
   </div>
 
-  <!-- Sidebar -->
   <div id="sidebar">
 
-    <!-- Mobile-only tab bar -->
     <div id="mobile-tabs">
       <button id="tab-stats"    class="tab-active" onclick="switchTab('stats')">Stats</button>
       <button id="tab-controls"                    onclick="switchTab('controls')">Camera</button>
@@ -412,7 +399,6 @@
       <button id="tab-chat"                        onclick="switchTab('chat')">Chat</button>
     </div>
 
-    <!-- Stats -->
     <div id="panel-stats" class="panel tab-active">
       <h3>Stats</h3>
       <div class="stat-row"><span class="stat-key">State</span>      <span class="stat-val" id="s-state">—</span></div>
@@ -423,7 +409,6 @@
       <div class="stat-row"><span class="stat-key">Pkt Lost</span>   <span class="stat-val" id="s-pktlost">—</span></div>
     </div>
 
-    <!-- Camera Controls -->
     <div id="panel-controls" class="panel">
       <h3>Camera Controls</h3>
 
@@ -432,7 +417,7 @@
         <div class="ctrl-row">
           <button id="btn-low"    onclick="sendPreset('low')">Low</button>
           <button id="btn-medium" onclick="sendPreset('medium')">Medium</button>
-          <button id="btn-high"   onclick="sendPreset('high')">High</button>
+          <button id="btn-high"    onclick="sendPreset('high')">High</button>
         </div>
       </div>
 
@@ -476,12 +461,10 @@
       </div>
     </div>
 
-    <!-- Snapshots (thumbnail strip wrapped for tab targeting) -->
     <div id="panel-snaps">
       <div id="thumb-strip"></div>
     </div>
 
-    <!-- Chat -->
     <div id="chat-panel">
       <h3>Chat</h3>
       <div id="chat-messages"></div>
@@ -491,11 +474,7 @@
       </div>
     </div>
 
-  </div><!-- /sidebar -->
-</div><!-- /main -->
-
-<!-- ── Status bar ───────────────────────────────────────────────────────── -->
-<div id="statusbar">
+  </div></div><div id="statusbar">
   <span>
     <span class="dot dot-idle" id="dot-nats"></span>
     NATS: <span id="nats-status">disconnected</span>
@@ -506,11 +485,9 @@
   </span>
 </div>
 
-<!-- ── Script ───────────────────────────────────────────────────────────── -->
 <script type="module">
   import { connect as natsConnect, StringCodec } from "https://cdn.jsdelivr.net/npm/nats.ws@1.29.2/esm/nats.js";
 
-  // ── Constants ──────────────────────────────────────────────────────────
   const ICE_SERVERS = [
     { urls: "stun:tunnel.knitnox.com:3478" },
     {
@@ -525,7 +502,6 @@
   ];
   const TRANSPORT_LABEL = { host: "Direct (host)", srflx: "STUN (srflx)", relay: "TURN (relay)" };
 
-  // ── Auto-fill from ?cam= query parameter ───────────────────────────────
   (function initFromURL() {
     const params = new URLSearchParams(window.location.search);
     const cam = params.get("cam");
@@ -542,16 +518,15 @@
     }
   })();
 
-  // ── State ──────────────────────────────────────────────────────────────
   let nc          = null;
   let pc          = null;
   let dc          = null;
   let statsTimer  = null;
   let prevBytes   = 0;
   let prevBytesTs = 0;
+  let localStream = null; // Holds the microphone track reference
   const sc        = StringCodec();
 
-  // ── DOM helpers ────────────────────────────────────────────────────────
   const $     = id => document.getElementById(id);
   const video = $("video");
 
@@ -585,25 +560,27 @@
     $("btn-snap-sb").disabled = !on;
   }
 
-  // ── Mobile: tab switching ──────────────────────────────────────────────
-  const TAB_PANELS = { stats: "panel-stats", controls: "panel-controls", snaps: "panel-snaps", chat: "chat-panel" };
-
   window.switchTab = function (name) {
     for (const [key, panelId] of Object.entries(TAB_PANELS)) {
       $(panelId).classList.toggle("tab-active", key === name);
       $(`tab-${key}`).classList.toggle("tab-active", key === name);
     }
-    // Auto-scroll chat to bottom when switching to it
     if (name === "chat") {
       const box = $("chat-messages");
       box.scrollTop = box.scrollHeight;
     }
   };
 
-  // ── Mobile: connection details toggle ─────────────────────────────────
+  const TAB_PANELS = { stats: "panel-stats", controls: "panel-controls", snaps: "panel-snaps", chat: "chat-panel" };
+
   window.toggleConn = function () {
     $("conn-details").classList.toggle("open");
   };
+
+  window.handleUnmute = function() {
+    video.muted = false;
+    $("unmute-overlay").style.display = "none";
+  }
 
   // ── Connect ────────────────────────────────────────────────────────────
   window.doConnect = async function () {
@@ -614,23 +591,25 @@
     $("btn-connect").disabled = true;
     setNats("connecting", "connecting…");
     logChat("sys", `Connecting to NATS at ${url}…`);
-    // Auto-switch to chat on mobile so the user sees connection progress
     if (window.matchMedia("(max-width:640px)").matches) switchTab("chat");
 
     try {
       nc = await natsConnect({ servers: url, user, pass, reconnect: false });
       setNats("connected", "connected");
-      logChat("sys", "NATS connected. Starting WebRTC…");
+      logChat("sys", "NATS connected. Requesting mic permissions…");
+      
+      // 1. Ask browser for Mic access
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      logChat("sys", "Microphone acquired. Starting WebRTC…");
     } catch (err) {
       setNats("error", `error: ${err.message}`);
-      logChat("sys", `NATS error: ${err.message}`);
+      logChat("sys", `Connection/Microphone error: ${err.message}`);
       $("btn-connect").disabled = false;
       return;
     }
 
     $("btn-connect").style.display    = "none";
     $("btn-disconnect").style.display = "";
-    // Close conn details drawer on mobile after connecting
     $("conn-details").classList.remove("open");
     await startWebRTC();
   };
@@ -653,7 +632,17 @@
     resetStats();
 
     pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    
+    // 2. Setup incoming remote video track from Raspberry Pi
     pc.addTransceiver("video", { direction: "recvonly" });
+
+    // 3. Attach your microphone track to send to the Raspberry Pi speaker
+    if (localStream) {
+      localStream.getAudioTracks().forEach(track => {
+        pc.addTrack(track, localStream);
+      });
+      logChat("sys", "Audio track added to pipeline.");
+    }
 
     dc = pc.createDataChannel("control");
     dc.onopen  = () => logChat("sys", "DataChannel open.");
@@ -671,12 +660,16 @@
     };
 
     pc.ontrack = ev => {
-      if (ev.track.kind !== "video") return;
-      logChat("sys", "Video track received.");
-      video.srcObject                = ev.streams[0];
-      video.style.display            = "block";
-      $("placeholder").style.display = "none";
-      setSnapEnabled(true);
+      if (ev.track.kind === "video") {
+        logChat("sys", "Video track received.");
+        video.srcObject                = ev.streams[0];
+        video.style.display            = "block";
+        $("placeholder").style.display = "none";
+        setSnapEnabled(true);
+        
+        // Show the unmute box if browser stops unmuted playback
+        $("unmute-overlay").style.display = "block";
+      }
     };
 
     pc.onconnectionstatechange = () => {
@@ -686,9 +679,6 @@
       if (s === "failed" || s === "closed") cleanup();
     };
 
-    // Wait for full ICE gathering before sending offer (matches aiortc behaviour).
-    // 10 s timeout guards against TURN allocation stalls on hostile networks —
-    // the offer is sent with whatever candidates exist rather than hanging forever.
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     await new Promise(resolve => {
@@ -721,7 +711,6 @@
     statsTimer = setInterval(pollStats, 1000);
   }
 
-  // ── Stats polling ──────────────────────────────────────────────────────
   async function pollStats() {
     if (!pc) return;
     try {
@@ -752,19 +741,22 @@
     } catch (_) {}
   }
 
-  // ── Cleanup ────────────────────────────────────────────────────────────
   function cleanup() {
     clearInterval(statsTimer); statsTimer = null;
     if (dc) { try { dc.close(); } catch(_) {} dc = null; }
     if (pc) { try { pc.close(); } catch(_) {} pc = null; }
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
     video.srcObject                = null;
     video.style.display            = "none";
+    $("unmute-overlay").style.display = "none";
     $("placeholder").style.display = "";
     setSnapEnabled(false);
     resetStats();
   }
 
-  // ── Snapshot ───────────────────────────────────────────────────────────
   window.takeSnapshot = function () {
     if (video.readyState < 2) { logChat("sys", "No video to capture."); return; }
 
@@ -805,12 +797,12 @@
       document.body.removeChild(a);
 
       const strip = $("thumb-strip");
-      const row   = document.createElement("div");
+      const row    = document.createElement("div");
       row.className = "thumb-row";
 
-      const img   = document.createElement("img");
-      img.src     = url;
-      img.title   = "Click to open full size";
+      const img    = document.createElement("img");
+      img.src      = url;
+      img.title    = "Click to open full size";
       img.onclick = () => window.open(url);
 
       const meta  = document.createElement("span");
@@ -830,7 +822,6 @@
     }, "image/png");
   };
 
-  // Spacebar shortcut (not when typing in an input)
   document.addEventListener("keydown", e => {
     if (e.code === "Space" && e.target.tagName !== "INPUT") {
       e.preventDefault();
@@ -838,7 +829,6 @@
     }
   });
 
-  // ── Chat ───────────────────────────────────────────────────────────────
   window.chatKeydown = function (e) {
     if (e.key === "Enter") sendChat();
   };
@@ -852,7 +842,6 @@
     input.value = "";
   };
 
-  // ── Camera controls ────────────────────────────────────────────────────
   function sendControl(cmd, value) {
     if (!dc || dc.readyState !== "open") { logChat("sys", "DataChannel not open."); return; }
     dc.send(JSON.stringify({ type: "control", cmd, value }));
@@ -870,7 +859,6 @@
     ["low","medium","high"].forEach(n => $(`btn-${n}`).classList.toggle("active", n === name));
   }
 
-  // ── Rotate ───────────────────────────────────────────────────────────
   let currentRotation = 0;
 
   window.rotateVideo = function (delta) {
