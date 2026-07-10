@@ -3,237 +3,177 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Walkie-Talkie</title>
 <style>
   :root {
-    --bg: #111311; --surface: #1a1d1a; --border: #2a2d28;
-    --text: #e8eae6; --dim: #7a7f76; --accent: #e8472a;
-    --green: #4caf50; --yellow: #f5a623;
+    --case: #1a1d1a; --case-light: #232723; --case-dark: #0f110f;
+    --grille: #111311; --lcd-bg: #1e2a1a; --lcd-text: #8fbc6b;
+    --text: #d4d6d0; --dim: #6e7568; --dim-light: #90998a;
+    --accent: #f04a2a; --accent-glow: rgba(240,74,42,0.4);
+    --green: #5cb85c; --green-glow: rgba(92,184,92,0.35);
+    --yellow: #f0ad4e;
     --font: system-ui, -apple-system, sans-serif;
-    --ptt-size: min(36vw, 170px);
-    --safe-b: env(safe-area-inset-bottom, 8px);
-    --safe-t: env(safe-area-inset-top, 8px);
+    --ptt-size: min(36vw, 150px);
+    --safe-b: env(safe-area-inset-bottom, 12px);
+    --safe-t: env(safe-area-inset-top, 0px);
   }
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { height: 100%; overflow: hidden; }
   body {
-    font-family: var(--font); background: var(--bg);
-    color: var(--text); height: 100dvh; height: 100vh;
-    display: flex; flex-direction: column; align-items: center;
-    -webkit-tap-highlight-color: transparent; user-select: none;
-    -webkit-user-select: none; padding: var(--safe-t) 0 var(--safe-b);
+    font-family: var(--font); background: #0d0f0d;
+    background-image: radial-gradient(ellipse at 50% 0%, #1a2218 0%, #0d0f0d 55%);
+    color: var(--text); min-height: 100dvh; display: flex; flex-direction: column;
+    align-items: center; -webkit-tap-highlight-color: transparent; user-select: none;
+    -webkit-user-select: none; padding: calc(10px + var(--safe-t)) 12px var(--safe-b);
     -webkit-font-smoothing: antialiased;
-    overscroll-behavior: none; position: fixed; inset: 0;
   }
-
-  .container {
-    width: 100%; max-width: 440px; height: 100%;
-    display: flex; flex-direction: column; padding: 8px 14px;
+  .container { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .device-shell {
+    width: 100%; flex: 1; display: flex; flex-direction: column; gap: 10px;
+    background: linear-gradient(180deg, #1e221d 0%, #171a16 30%, #141714 100%);
+    border-radius: 22px; padding: 16px 14px 12px;
+    box-shadow: 0 2px 0 #2a2e28 inset, 0 8px 32px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.04) inset;
+    border: 1px solid #252823; position: relative; overflow: hidden;
   }
-
-  /* ── Status bar ── */
-  .status-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 4px 2px; gap: 10px; flex-shrink: 0;
+  .device-shell::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    border-radius: 22px;
   }
-  .status-left { display: flex; align-items: center; gap: 7px; }
-  .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .status-dot.on { background: var(--green); box-shadow: 0 0 8px rgba(76,175,80,0.5); }
-  .status-dot.off { background: #555; }
-  .status-dot.warn { background: var(--yellow); box-shadow: 0 0 8px rgba(245,166,35,0.5); }
-  .status-dot.busy { background: var(--accent); box-shadow: 0 0 8px rgba(232,71,42,0.5); }
-  .status-text { font-size: 0.8rem; font-weight: 600; }
-  .status-right { display: flex; align-items: center; gap: 10px; font-size: 0.78rem; color: var(--dim); }
-
-  /* ── Channel row ── */
-  .ch-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; flex-shrink: 0; }
-  .ch-hash { color: var(--dim); font-weight: 600; font-size: 1rem; flex-shrink: 0; }
-  .ch-input {
-    flex: 1; background: var(--surface); border: 1px solid var(--border);
-    color: var(--text); font-size: 0.82rem; padding: 9px 10px; border-radius: 8px;
-    outline: none; min-width: 0; font-family: monospace;
+  /* ── Speaker grille ── */
+  .speaker-grille {
+    width: 100%; height: 36px; background: var(--grille); border-radius: 8px;
+    display: flex; flex-direction: column; gap: 3px; padding: 7px 12px;
+    position: relative; z-index: 1; box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
   }
-  .ch-input:focus { border-color: #555; }
-  .ch-input::placeholder { color: #444; }
-  .btn-sm {
-    width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 8px;
-    background: var(--surface); color: var(--text); font-size: 0.9rem;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: background 0.1s;
-    -webkit-tap-highlight-color: transparent;
+  .grille-line { height: 2px; background: #1a1e18; border-radius: 1px; box-shadow: 0 1px 0 rgba(255,255,255,0.03); }
+  /* ── LCD ── */
+  .lcd {
+    width: 100%; background: var(--lcd-bg); border-radius: 8px; padding: 8px 12px;
+    position: relative; z-index: 1; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+    border: 1px solid #1a1f16;
   }
-  .btn-sm:active { background: #2a2d28; }
-
-  /* ── VU meters ── */
-  .vu-row { display: flex; gap: 8px; padding: 2px 0; flex-shrink: 0; }
+  .lcd-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .lcd-label { font-size: 0.55rem; color: var(--lcd-text); opacity: 0.5; text-transform: uppercase; letter-spacing: 0.08em; font-family: monospace; }
+  .lcd-input {
+    flex: 1; background: none; border: none; color: #a8d68a; font-size: 0.78rem;
+    font-family: 'SF Mono', monospace; outline: none; min-width: 0; letter-spacing: 0.03em;
+  }
+  .lcd-input::placeholder { color: #3a4a2a; }
+  .lcd-btn {
+    background: rgba(143,188,107,0.08); border: 1px solid rgba(143,188,107,0.15);
+    color: var(--lcd-text); font-size: 0.55rem; padding: 3px 7px; border-radius: 3px;
+    cursor: pointer; font-family: monospace; letter-spacing: 0.04em; white-space: nowrap;
+  }
+  .lcd-btn:active { background: rgba(143,188,107,0.2); }
+  .lcd-status {
+    display: flex; align-items: center; gap: 6px; font-family: monospace; font-size: 0.6rem;
+    color: var(--lcd-text); opacity: 0.7; margin-top: 3px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot.on { background: var(--green); box-shadow: 0 0 5px rgba(92,184,92,0.5); }
+  .dot.off { background: #555; }
+  .dot.warn { background: var(--yellow); box-shadow: 0 0 5px rgba(240,173,78,0.5); }
+  .dot.busy { background: var(--accent); box-shadow: 0 0 5px rgba(240,74,42,0.5); }
+  /* ── VU ── */
+  .vu-row { display: flex; gap: 8px; position: relative; z-index: 1; }
   .vu-item { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-  .vu-label { font-size: 0.58rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
-  .vu-track { display: flex; gap: 2px; height: 10px; }
-  .vu-seg { flex: 1; background: #222420; border-radius: 1.5px; transition: background 0.06s; }
-  .vu-seg.s1 { background: #2d5a1e; }
-  .vu-seg.s2 { background: #4a8a2a; }
-  .vu-seg.s3 { background: #6db830; }
-  .vu-seg.s4 { background: #b0c830; }
-  .vu-seg.s5 { background: #e89820; }
-  .vu-seg.s6 { background: #e83818; box-shadow: 0 0 3px rgba(232,56,24,0.5); }
-
-  /* ── Controls row ── */
-  .ctrl-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; flex-shrink: 0; }
-  .btn-icon {
-    width: 38px; height: 38px; border: 1px solid var(--border); border-radius: 8px;
-    background: var(--surface); color: var(--text); font-size: 1rem;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: background 0.1s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .btn-icon:active { background: #2a2d28; }
-  .btn-icon.muted { border-color: #444; opacity: 0.5; }
-  .vol-slider {
-    flex: 1; -webkit-appearance: none; appearance: none; height: 6px;
-    background: #222420; border-radius: 3px; outline: none; min-width: 50px;
-  }
-  .vol-slider::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
-    background: #ddd; border: 2px solid #555; cursor: pointer;
-  }
-  .vol-slider::-moz-range-thumb {
-    width: 22px; height: 22px; border-radius: 50%; background: #ddd; border: 2px solid #555; cursor: pointer;
-  }
-
-  /* ── PTT Button ── */
-  .ptt-zone {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    padding: 6px 0; min-height: 80px;
-  }
+  .vu-label { font-size: 0.55rem; color: var(--dim-light); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+  .vu-track { display: flex; gap: 2px; height: 12px; }
+  .vu-seg { flex: 1; background: #1e221d; border-radius: 1px; transition: background 0.06s; }
+  .vu-seg.s1 { background: #3a5a2a; } .vu-seg.s2 { background: #5a8a3a; } .vu-seg.s3 { background: #8ab83a; }
+  .vu-seg.s4 { background: #c8c840; } .vu-seg.s5 { background: #e8a030; box-shadow: 0 0 3px rgba(240,74,42,0.3); }
+  .vu-seg.s6 { background: #f04020; box-shadow: 0 0 6px rgba(240,74,42,0.5); }
+  /* ── PTT ── */
+  .ptt-zone { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; min-height: 100px; }
   .ptt-btn {
     width: var(--ptt-size); height: var(--ptt-size); border-radius: 50%;
-    border: 3px solid #6b1a08;
-    background: radial-gradient(circle at 38% 32%, #e05030, #a02010 65%, #5a0802 100%);
-    color: #ffe0d0; cursor: pointer; display: flex; align-items: center;
-    justify-content: center; position: relative;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3),
-                inset 0 2px 3px rgba(255,255,255,0.12), inset 0 -3px 5px rgba(0,0,0,0.4);
+    border: 4px solid #3a1508;
+    background: radial-gradient(circle at 35% 30%, #c04020, #8a1a08 70%, #4a0a02 100%);
+    color: #ffd8c8; cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -3px 6px rgba(0,0,0,0.4);
     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
-  .ptt-inner { display: flex; flex-direction: column; align-items: center; gap: 1px; z-index: 1; }
-  .ptt-icon { font-size: 2.6rem; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); transition: transform 0.1s; }
-  .ptt-label { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-
-  /* Pressed */
-  .ptt-btn:active { transform: scale(0.94); box-shadow: 0 3px 8px rgba(0,0,0,0.6), 0 0 40px rgba(232,71,42,0.35), inset 0 3px 6px rgba(0,0,0,0.5); }
-
-  /* Talking */
+  .ptt-inner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .ptt-icon { font-size: 2.4rem; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); }
+  .ptt-label { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+  .ptt-btn:active { transform: scale(0.94); box-shadow: 0 3px 8px rgba(0,0,0,0.6), 0 0 40px rgba(240,74,42,0.35), inset 0 3px 6px rgba(0,0,0,0.5); }
   .ptt-btn.talking { border-color: #f05030; animation: pttPulse 0.5s ease-in-out infinite; }
   .ptt-btn.talking .ptt-icon { transform: scale(1.05); }
   @keyframes pttPulse {
-    0%,100% { box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 50px rgba(232,71,42,0.4), inset 0 2px 3px rgba(255,150,100,0.15), inset 0 -3px 5px rgba(0,0,0,0.4); }
-    50% { box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 85px rgba(232,71,42,0.65), inset 0 2px 3px rgba(255,150,100,0.25), inset 0 -3px 5px rgba(0,0,0,0.4); }
+    0%,100% { box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 50px rgba(240,74,42,0.4), inset 0 2px 4px rgba(255,150,100,0.15), inset 0 -3px 6px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 85px rgba(240,74,42,0.65), inset 0 2px 4px rgba(255,150,100,0.25), inset 0 -3px 6px rgba(0,0,0,0.4); }
   }
-
-  /* Warning (time limit) */
   .ptt-btn.warning { border-color: #c89420; animation: pttWarn 0.5s ease-in-out infinite; }
   @keyframes pttWarn {
-    0%,100% { box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 35px rgba(245,166,35,0.3), inset 0 2px 3px rgba(255,200,100,0.12), inset 0 -3px 5px rgba(0,0,0,0.4); }
-    50% { box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 65px rgba(245,166,35,0.5), inset 0 2px 3px rgba(255,200,100,0.2), inset 0 -3px 5px rgba(0,0,0,0.4); }
+    0%,100% { box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 35px rgba(240,173,78,0.3), inset 0 2px 4px rgba(255,200,100,0.12), inset 0 -3px 6px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 65px rgba(240,173,78,0.5), inset 0 2px 4px rgba(255,200,100,0.2), inset 0 -3px 6px rgba(0,0,0,0.4); }
   }
-
-  /* Busy */
-  .ptt-btn.floor-busy {
-    border-color: #333; background: radial-gradient(circle at 38% 32%, #3a3a35, #1a1a15 65%, #0a0a05 100%);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.5); cursor: not-allowed; opacity: 0.7;
-  }
-  .ptt-btn.floor-busy .ptt-icon { filter: grayscale(0.6); opacity: 0.45; }
+  .ptt-btn.floor-busy { border-color: #333; background: radial-gradient(circle at 35% 30%, #3a3a35, #1a1a15 70%, #0a0a05 100%); box-shadow: 0 6px 20px rgba(0,0,0,0.6); cursor: not-allowed; opacity: 0.65; }
+  .ptt-btn.floor-busy .ptt-icon { filter: grayscale(0.6); opacity: 0.4; }
   .ptt-btn.floor-busy .ptt-label { color: #666; }
-  .ptt-btn.busy-flash { border-color: var(--yellow) !important; box-shadow: 0 0 35px rgba(245,166,35,0.5) !important; }
-
+  .ptt-btn.busy-flash { border-color: var(--yellow) !important; box-shadow: 0 0 35px rgba(240,173,78,0.5) !important; }
+  /* ── Controls ── */
+  .ctrl-row { display: flex; align-items: center; gap: 8px; position: relative; z-index: 1; }
+  .btn-icon {
+    width: 34px; height: 34px; border: 1px solid #3a3d35; border-radius: 6px;
+    background: #1e221d; color: var(--text); font-size: 0.9rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .btn-icon:active { background: #2a2d28; }
+  .btn-icon.muted { opacity: 0.4; }
+  .vol-slider { flex: 1; -webkit-appearance: none; appearance: none; height: 5px; background: #1e221d; border-radius: 3px; outline: none; }
+  .vol-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #ddd; border: 2px solid #555; cursor: pointer; }
+  .vol-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #ddd; border: 2px solid #555; cursor: pointer; }
   /* ── Toast ── */
   .toast {
-    position: fixed; bottom: max(20px, var(--safe-b)); left: 50%; transform: translateX(-50%);
-    background: #222420; border: 1px solid #3a3d35; padding: 10px 18px;
-    border-radius: 10px; font-size: 0.8rem; font-weight: 500; z-index: 100; opacity: 0;
-    transition: opacity 0.2s, transform 0.2s; pointer-events: none;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.6); max-width: 90vw; text-align: center;
+    position: fixed; bottom: max(24px, var(--safe-b)); left: 50%; transform: translateX(-50%);
+    background: #1e221d; border: 1px solid #3a3d35; padding: 10px 18px; border-radius: 10px;
+    font-size: 0.78rem; font-weight: 500; z-index: 100; opacity: 0; transition: opacity 0.2s;
+    pointer-events: none; box-shadow: 0 6px 20px rgba(0,0,0,0.6); max-width: 90vw; text-align: center;
   }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-2px); }
-
+  .toast.show { opacity: 1; }
   /* ── Hint ── */
-  .hint { text-align: center; font-size: 0.58rem; color: var(--dim); padding: 2px 0; flex-shrink: 0; }
-
+  .hint { text-align: center; font-size: 0.55rem; color: var(--dim); position: relative; z-index: 1; }
   /* ── Responsive ── */
-  @media (max-width: 380px) {
-    :root { --ptt-size: min(40vw, 130px); }
-    .ptt-icon { font-size: 2.2rem; }
-    .ptt-label { font-size: 0.66rem; }
-    .container { padding: 6px 10px; }
-    .ch-input { font-size: 0.76rem; padding: 8px; }
-    .btn-sm { width: 32px; height: 32px; }
-    .btn-icon { width: 34px; height: 34px; }
-  }
-  @media (min-height: 750px) {
-    :root { --ptt-size: min(33vw, 180px); }
-    .ptt-icon { font-size: 2.8rem; }
-    .ptt-label { font-size: 0.78rem; }
-  }
+  @media (max-width: 400px) { :root { --ptt-size: min(38vw, 130px); } .ptt-icon { font-size: 2rem; } .device-shell { padding: 12px 10px 8px; gap: 7px; } }
+  @media (max-width: 340px) { :root { --ptt-size: min(40vw, 110px); } .ptt-icon { font-size: 1.6rem; } .ptt-label { font-size: 0.6rem; } }
+  @media (min-height: 750px) { :root { --ptt-size: min(33vw, 170px); } .ptt-icon { font-size: 2.6rem; } }
   @media (max-height: 500px) and (orientation: landscape) {
-    :root { --ptt-size: 88px; }
-    .container { padding: 2px 10px; }
-    .status-bar, .vu-row, .hint { display: none; }
-    .ptt-icon { font-size: 1.3rem; }
-    .ptt-label { font-size: 0.5rem; }
-    .ch-row { padding: 1px 0; }
-    .ctrl-row { padding: 1px 0; }
+    :root { --ptt-size: 85px; } .speaker-grille { display: none; } .ptt-icon { font-size: 1.2rem; } .ptt-label { font-size: 0.5rem; } .hint { display: none; }
   }
 </style>
 </head>
 <body>
 
 <div class="container">
+<div class="device-shell">
 
-  <!-- Status bar -->
-  <div class="status-bar">
-    <div class="status-left">
-      <div class="status-dot off" id="statusDot"></div>
-      <span class="status-text" id="statusText">Connecting</span>
+  <div class="speaker-grille">
+    <div class="grille-line"></div><div class="grille-line"></div><div class="grille-line"></div><div class="grille-line"></div><div class="grille-line"></div>
+  </div>
+
+  <div class="lcd">
+    <div class="lcd-row">
+      <span class="lcd-label">CH</span>
+      <input class="lcd-input" id="channelInput" type="text" placeholder="--------" maxlength="60" autocomplete="off" spellcheck="false">
+      <button class="lcd-btn" id="copyBtn">COPY</button>
+      <button class="lcd-btn" id="newBtn">NEW</button>
     </div>
-    <div class="status-right">
-      <span id="listenerCount">--</span>
+    <div class="lcd-status">
+      <span class="dot off" id="statusDot"></span>
+      <span id="statusText">Connecting</span>
+      <span style="margin-left:auto;"></span>
+      <button class="lcd-btn" id="recvToggle">🔊</button>
+      <span style="margin-left:4px;" id="listenerCount">--</span>
     </div>
   </div>
 
-  <!-- Channel -->
-  <div class="ch-row">
-    <span class="ch-hash">#</span>
-    <input class="ch-input" id="channelInput" type="text" placeholder="channel-name" maxlength="60" autocomplete="off" spellcheck="false">
-    <button class="btn-sm" id="copyBtn" title="Copy link">📋</button>
-    <button class="btn-sm" id="newBtn" title="New channel">✨</button>
-  </div>
-
-  <!-- VU meters -->
   <div class="vu-row">
-    <div class="vu-item">
-      <span class="vu-label">Mic</span>
-      <div class="vu-track" id="vuMicBars"></div>
-    </div>
-    <div class="vu-item">
-      <span class="vu-label">Spk</span>
-      <div class="vu-track" id="vuSpkBars"></div>
-    </div>
+    <div class="vu-item"><span class="vu-label">Mic</span><div class="vu-track" id="vuMicBars"></div></div>
+    <div class="vu-item"><span class="vu-label">Spk</span><div class="vu-track" id="vuSpkBars"></div></div>
   </div>
 
-  <!-- Controls: mute + volume -->
-  <div class="ctrl-row">
-    <button class="btn-icon" id="recvToggle" title="Toggle speaker">🔊</button>
-    <span style="font-size:0.65rem;color:var(--dim);flex-shrink:0;">🔈</span>
-    <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" aria-label="Volume">
-    <span style="font-size:0.65rem;color:var(--dim);flex-shrink:0;">🔊</span>
-  </div>
-
-  <!-- PTT -->
   <div class="ptt-zone">
     <button class="ptt-btn" id="pttBtn">
       <div class="ptt-inner">
@@ -243,386 +183,235 @@
     </button>
   </div>
 
-  <!-- Hint -->
+  <div class="ctrl-row">
+    <span style="font-size:0.6rem;color:var(--dim);">🔈</span>
+    <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="80" aria-label="Volume">
+    <span style="font-size:0.6rem;color:var(--dim);">🔊</span>
+  </div>
+
   <div class="hint" id="footerInfo">Press &amp; hold to talk</div>
 
-  <div class="toast" id="toast"></div>
+</div>
+<div class="toast" id="toast"></div>
 </div>
 
 <script type="module">
 import { connect } from 'https://esm.sh/nats.ws@1.28.0';
 import FingerprintJS from 'https://esm.sh/@fingerprintjs/fingerprintjs@3';
 
-// ── Config ──
 const CHUNK_MS = 100;
 const OPUS_CODECS = ['audio/webm;codecs=opus','audio/ogg;codecs=opus'];
 const CHANNEL_ID_LEN = 16;
-const WORDLIST = [
-  'alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel',
-  'india','juliet','kilo','lima','mike','november','oscar','papa',
-  'quebec','romeo','sierra','tango','uniform','victor','whiskey',
-  'xray','yankee','zulu','atlas','blaze','cobra','dragon','eagle',
-  'falcon','ghost','hammer','inferno','jaguar','kappa','lightning',
-  'meteor','nebula','omega','phantom','quartz','raptor','shadow',
-  'thunder','ultra','vortex','wolf','xenon','yeti','zenith','amber',
-  'bolt','crystal','drift','ember','frost','glacier','haven','onyx',
-];
+const WORDLIST = ['alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel','india','juliet','kilo','lima','mike','november','oscar','papa','quebec','romeo','sierra','tango','uniform','victor','whiskey','xray','yankee','zulu','atlas','blaze','cobra','dragon','eagle','falcon','ghost','hammer','inferno','jaguar','kappa','lightning','meteor','nebula','omega','phantom','quartz','raptor','shadow','thunder','ultra','vortex','wolf','xenon','yeti','zenith','amber','bolt','crystal','drift','ember','frost','glacier','haven','onyx'];
 
-// ═══════════════════════ State ═══════════════════════
 const state = {
   channel: '', passphrase: '', fingerprint: '',
-  realUser: 'bootstrap', realPass: 'bootstrap',
   connected: false, talking: false, micReady: false,
   nats: null, subAudio: null, subCtrl: null,
   mediaRecorder: null, micStream: null, supportedCodec: '',
   mediaSource: null, sourceBuffer: null, chunkQueue: [], isAppending: false,
   vuMicNode: null, vuSpkNode: null, audioCtx: null,
-  heartbeatTimer: null, presenceCount: 0,
-  floorOccupied: false, floorOwner: '', floorOwnerId: '', myClaimTs: 0,
-  talkTimer: null, talkStartTs: 0,
-  maxTalkMs: 115000, warnAtMs: 105000,
+  heartbeatTimer: null,
+  floorOccupied: false, floorOwner: '', floorOwnerId: '', myClaimTs: 0, floorClaimedAt: 0,
+  talkTimer: null, talkStartTs: 0, maxTalkMs: 115000, warnAtMs: 105000,
   talkRequested: false, receiving: true,
 };
 
-// ═══════════════════════ DOM ═══════════════════════
 const $ = (id) => document.getElementById(id);
-const channelInput = $('channelInput');
-const copyBtn = $('copyBtn'); const newBtn = $('newBtn');
-const pttBtn = $('pttBtn');
-const statusDot = $('statusDot'); const statusText = $('statusText');
-const listenerCount = $('listenerCount');
-const vuMicBars = $('vuMicBars'); const vuSpkBars = $('vuSpkBars');
-const volSlider = $('volSlider');
-const recvToggle = $('recvToggle');
-const footerInfo = $('footerInfo'); const toastEl = $('toast');
+const channelInput = $('channelInput'), copyBtn = $('copyBtn'), newBtn = $('newBtn');
+const pttBtn = $('pttBtn'), statusDot = $('statusDot'), statusText = $('statusText');
+const listenerCount = $('listenerCount'), vuMicBars = $('vuMicBars'), vuSpkBars = $('vuSpkBars');
+const volSlider = $('volSlider'), recvToggle = $('recvToggle');
+const footerInfo = $('footerInfo'), toastEl = $('toast');
 
-// ═══════════════════════ Helpers ═══════════════════════
 function randomId(len = CHANNEL_ID_LEN) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return Array.from({length: len}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
-function randomPassphrase(n = 4) {
-  return Array.from({length: n}, () => WORDLIST[Math.floor(Math.random() * WORDLIST.length)]).join('-');
-}
+function randomPassphrase(n = 4) { return Array.from({length: n}, () => WORDLIST[Math.floor(Math.random() * WORDLIST.length)]).join('-'); }
 function generateChannelCreds() { return { id: randomId(), passphrase: randomPassphrase() }; }
 
 function toast(msg, ms = 2000) {
   toastEl.textContent = msg; toastEl.classList.add('show');
   clearTimeout(toast._t); toast._t = setTimeout(() => toastEl.classList.remove('show'), ms);
 }
-
 function updateStatus(type, text) {
-  statusDot.className = 'status-dot ' + type; // on, off, warn, busy
-  statusText.textContent = text;
+  statusDot.className = 'dot ' + type; statusText.textContent = text;
 }
 
-// ── VU bars ──
-(function initVUBars() {
-  for (const c of [vuMicBars, vuSpkBars]) {
-    for (let i = 0; i < 14; i++) { const s = document.createElement('div'); s.className = 'vu-seg'; c.appendChild(s); }
-  }
+// VU bars
+(function() {
+  for (const c of [vuMicBars, vuSpkBars]) for (let i = 0; i < 14; i++) { const s = document.createElement('div'); s.className = 'vu-seg'; c.appendChild(s); }
 })();
-function updateVU(bars, value) {
-  const pct = Math.min(100, Math.max(0, value));
-  const n = Math.round(pct / 100 * bars.children.length);
+function updateVU(bars, val) {
+  const n = Math.round(Math.min(100, Math.max(0, val)) / 100 * bars.children.length);
   for (let i = 0; i < bars.children.length; i++) {
-    const seg = bars.children[i]; seg.className = 'vu-seg';
-    if (i < n) {
-      if (i < 5) seg.className = 'vu-seg s1'; else if (i < 7) seg.className = 'vu-seg s2';
-      else if (i < 9) seg.className = 'vu-seg s3'; else if (i < 11) seg.className = 'vu-seg s4';
-      else if (i < 13) seg.className = 'vu-seg s5'; else seg.className = 'vu-seg s6';
-    }
+    const s = bars.children[i]; s.className = 'vu-seg';
+    if (i < n) { if (i < 5) s.className = 'vu-seg s1'; else if (i < 7) s.className = 'vu-seg s2'; else if (i < 9) s.className = 'vu-seg s3'; else if (i < 11) s.className = 'vu-seg s4'; else if (i < 13) s.className = 'vu-seg s5'; else s.className = 'vu-seg s6'; }
   }
 }
 
-// ═══════════════════════ NATS ═══════════════════════
-async function connectNATS(user = 'bootstrap', pass = 'bootstrap') {
+// ── NATS ──
+async function connectNATS() {
   try {
-    const nc = await connect({
-      servers: ['wss://tunnel.knitnox.com'], user, pass,
-      maxReconnectAttempts: -1, reconnectTimeWait: 2000, timeout: 5000, pingInterval: 20000,
-    });
-    state.nats = nc; state.connected = true;
-    updateStatus('on', 'Connected');
+    const nc = await connect({ servers: ['wss://tunnel.knitnox.com'], user: 'agent2', pass: 'agent2_password', maxReconnectAttempts: -1, reconnectTimeWait: 2000, timeout: 5000, pingInterval: 20000 });
+    state.nats = nc; state.connected = true; updateStatus('on', 'Connected');
+    let dcTimer;
     (async () => {
-      let dcTimer = null;
       for await (const s of nc.status()) {
-        if (s.type === 'disconnect') {
-          state.connected = false;
-          clearTimeout(dcTimer);
-          dcTimer = setTimeout(() => { if (!state.connected) updateStatus('warn', 'Reconnecting'); }, 2000);
-        } else if (s.type === 'reconnect') {
-          clearTimeout(dcTimer);
-          state.connected = true; updateStatus('on', 'Connected'); resubscribe();
-        }
+        if (s.type === 'disconnect') { state.connected = false; clearTimeout(dcTimer); dcTimer = setTimeout(() => { if (!state.connected) updateStatus('warn', 'Reconnecting'); }, 2000); }
+        else if (s.type === 'reconnect') { clearTimeout(dcTimer); state.connected = true; updateStatus('on', 'Connected'); resubscribe(); }
       }
     })().catch(() => {});
     return nc;
-  } catch (e) { console.error(e); updateStatus('off', 'Offline'); throw e; }
+  } catch (e) { updateStatus('off', 'Offline'); throw e; }
 }
-
 function resubscribe() { if (state.channel) { unsubscribe(); subscribeAll(); } }
-function unsubscribe() {
-  if (state.subAudio) { state.subAudio.unsubscribe(); state.subAudio = null; }
-  if (state.subCtrl) { state.subCtrl.unsubscribe(); state.subCtrl = null; }
-}
+function unsubscribe() { if (state.subAudio) { state.subAudio.unsubscribe(); state.subAudio = null; } if (state.subCtrl) { state.subCtrl.unsubscribe(); state.subCtrl = null; } }
 function subscribeAll() {
   const ch = state.channel; if (!ch || !state.nats) return;
   state.subAudio = state.nats.subscribe(`walkie.${ch}.audio`, { callback: (_, msg) => { if (msg) handleAudioChunk(msg.data); } });
-  state.subCtrl = state.nats.subscribe(`walkie.${ch}.ctrl`, { callback: (_, msg) => {
-    if (!msg) return;
-    try { handleCtrl(JSON.parse(new TextDecoder().decode(msg.data))); } catch (e) {}
-  }});
+  state.subCtrl = state.nats.subscribe(`walkie.${ch}.ctrl`, { callback: (_, msg) => { if (!msg) return; try { handleCtrl(JSON.parse(new TextDecoder().decode(msg.data))); } catch (e) {} } });
 }
-
 function handleCtrl(ctrl) {
   switch (ctrl.type) {
     case 'stream-start': resetMediaSource(); updateVU(vuSpkBars, 15); break;
     case 'floor-taken':
-      state.floorOccupied = true; state.floorOwner = ctrl.id || ''; updatePTTState();
-      if (state.talking && ctrl.id !== state.floorOwnerId && ctrl.ts && state.myClaimTs && ctrl.ts < state.myClaimTs) {
-        forceStopTalk('Channel busy');
-      }
+      state.floorOccupied = true; state.floorOwner = ctrl.id || ''; state.floorClaimedAt = Date.now(); updatePTTState();
+      if (state.talking && ctrl.id !== state.floorOwnerId && ctrl.ts && state.myClaimTs && ctrl.ts < state.myClaimTs) forceStopTalk('Channel busy');
       break;
     case 'floor-released':
-      if (!ctrl.id || ctrl.id === state.floorOwner) { state.floorOccupied = false; state.floorOwner = ''; updatePTTState(); }
+      if (!ctrl.id || ctrl.id === state.floorOwner) { state.floorOccupied = false; state.floorOwner = ''; state.floorClaimedAt = 0; updatePTTState(); }
       break;
-    case 'presence': if (ctrl.count !== undefined) { state.presenceCount = ctrl.count; listenerCount.textContent = `👤 ${ctrl.count}`; } break;
   }
 }
-
 function handleAudioChunk(data) {
-  if (!data || data.length === 0 || state.talking || !state.receiving) return;
+  if (!data || !data.length || state.talking || !state.receiving) return;
   state.chunkQueue.push(new Uint8Array(data)); drainQueue();
 }
 
-// ═══════════════════════ MSE Playback ═══════════════════════
+// ── MSE ──
 function resetMediaSource() {
   state.chunkQueue = []; state.isAppending = false; state.sourceBuffer = null;
-  if (state.mediaSource) {
-    try { if (state.mediaSource.readyState === 'open') state.mediaSource.endOfStream(); } catch (e) {}
-    state.mediaSource.removeEventListener('sourceopen', onSourceOpen);
-  }
-  state.mediaSource = new MediaSource();
-  state.mediaSource.addEventListener('sourceopen', onSourceOpen);
-  const audio = $('audioOut');
-  if (audio) {
-    if (audio.src && audio.src.startsWith('blob:')) URL.revokeObjectURL(audio.src);
-    audio.src = URL.createObjectURL(state.mediaSource);
-  }
+  if (state.mediaSource) { try { if (state.mediaSource.readyState === 'open') state.mediaSource.endOfStream(); } catch (e) {} state.mediaSource.removeEventListener('sourceopen', onSourceOpen); }
+  state.mediaSource = new MediaSource(); state.mediaSource.addEventListener('sourceopen', onSourceOpen);
+  const a = $('audioOut'); if (a) { if (a.src?.startsWith('blob:')) URL.revokeObjectURL(a.src); a.src = URL.createObjectURL(state.mediaSource); }
 }
 function onSourceOpen() {
-  for (const codec of OPUS_CODECS) {
-    try {
-      state.sourceBuffer = state.mediaSource.addSourceBuffer(codec);
-      state.sourceBuffer.mode = 'sequence';
-      state.sourceBuffer.addEventListener('updateend', () => { state.isAppending = false; drainQueue(); });
-      drainQueue(); return;
-    } catch (e) {}
-  }
-  console.error('Cannot add Opus SourceBuffer');
+  for (const c of OPUS_CODECS) { try { state.sourceBuffer = state.mediaSource.addSourceBuffer(c); state.sourceBuffer.mode = 'sequence'; state.sourceBuffer.addEventListener('updateend', () => { state.isAppending = false; drainQueue(); }); drainQueue(); return; } catch (e) {} }
 }
 function drainQueue() {
   if (state.isAppending || !state.sourceBuffer || state.mediaSource?.readyState !== 'open' || !state.chunkQueue.length) return;
-  updateVU(vuSpkBars, Math.min(state.chunkQueue.length * 15, 70));
-  state.isAppending = true;
-  try { state.sourceBuffer.appendBuffer(state.chunkQueue.shift()); }
-  catch (e) { state.isAppending = false; if (e.name === 'InvalidStateError' || e.name === 'NotSupportedError') resetMediaSource(); }
+  updateVU(vuSpkBars, Math.min(state.chunkQueue.length * 15, 70)); state.isAppending = true;
+  try { state.sourceBuffer.appendBuffer(state.chunkQueue.shift()); } catch (e) { state.isAppending = false; if (e.name === 'InvalidStateError' || e.name === 'NotSupportedError') resetMediaSource(); }
 }
-
 function setupAudioOutput() {
-  let audio = $('audioOut');
-  if (!audio) { audio = document.createElement('audio'); audio.id = 'audioOut'; audio.autoplay = true; audio.playsInline = true; document.body.appendChild(audio); }
+  let a = $('audioOut'); if (!a) { a = document.createElement('audio'); a.id = 'audioOut'; a.autoplay = true; a.playsInline = true; document.body.appendChild(a); }
   try {
     state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const src = state.audioCtx.createMediaElementSource(audio);
-    const a = state.audioCtx.createAnalyser(); a.fftSize = 128; a.smoothingTimeConstant = 0.3;
-    src.connect(a); a.connect(state.audioCtx.destination); state.vuSpkNode = a;
-    const d = new Uint8Array(a.frequencyBinCount);
-    (function poll() { if (state.vuSpkNode) { state.vuSpkNode.getByteFrequencyData(d); updateVU(vuSpkBars, d.reduce((x,y)=>x+y,0)/d.length*1.5); } requestAnimationFrame(poll); })();
+    const src = state.audioCtx.createMediaElementSource(a), an = state.audioCtx.createAnalyser(); an.fftSize = 128; an.smoothingTimeConstant = 0.3;
+    src.connect(an); an.connect(state.audioCtx.destination); state.vuSpkNode = an;
+    const d = new Uint8Array(an.frequencyBinCount);
+    (function p() { if (state.vuSpkNode) { state.vuSpkNode.getByteFrequencyData(d); updateVU(vuSpkBars, d.reduce((x,y)=>x+y,0)/d.length*1.5); } requestAnimationFrame(p); })();
     document.addEventListener('click', () => { if (state.audioCtx?.state === 'suspended') state.audioCtx.resume(); }, { once: true });
-  } catch (e) { console.warn('AudioContext setup failed:', e); }
-  audio.volume = volSlider.value / 100;
-  volSlider.addEventListener('input', () => { audio.volume = volSlider.value / 100; });
-  return audio;
+  } catch (e) {}
+  a.volume = volSlider.value / 100; volSlider.addEventListener('input', () => { a.volume = volSlider.value / 100; });
 }
 
-// ═══════════════════════ Mic + MediaRecorder ═══════════════════════
-async function initMic() {
-  releaseMic();
+// ── Mic ──
+async function initMic() { releaseMic();
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-    state.micStream = stream; state.micReady = true;
-    if (state.audioCtx) {
-      const src = state.audioCtx.createMediaStreamSource(stream);
-      const a = state.audioCtx.createAnalyser(); a.fftSize = 128; a.smoothingTimeConstant = 0.1;
-      src.connect(a); state.vuMicNode = a;
-      const d = new Uint8Array(a.frequencyBinCount);
-      (function poll() { if (state.vuMicNode) { state.vuMicNode.getByteFrequencyData(d); updateVU(vuMicBars, (d.reduce((x,y)=>x+y,0)/d.length)*(state.talking?1.5:0.4)); } requestAnimationFrame(poll); })();
-    }
-    const sup = OPUS_CODECS.find(c => MediaRecorder.isTypeSupported(c));
-    state.supportedCodec = sup || '';
-    footerInfo.textContent = sup ? `Opus ${CHUNK_MS}ms ready` : '⚠️ Opus unsupported';
-    return stream;
-  } catch (e) { state.micReady = false; state.micStream = null; footerInfo.textContent = '❌ Mic denied'; toast('Mic access required to talk'); throw e; }
+    const s = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    state.micStream = s; state.micReady = true;
+    if (state.audioCtx) { const src = state.audioCtx.createMediaStreamSource(s), an = state.audioCtx.createAnalyser(); an.fftSize = 128; an.smoothingTimeConstant = 0.1; src.connect(an); state.vuMicNode = an; const d = new Uint8Array(an.frequencyBinCount); (function p() { if (state.vuMicNode) { state.vuMicNode.getByteFrequencyData(d); updateVU(vuMicBars, (d.reduce((x,y)=>x+y,0)/d.length)*(state.talking?1.5:0.4)); } requestAnimationFrame(p); })(); }
+    state.supportedCodec = OPUS_CODECS.find(c => MediaRecorder.isTypeSupported(c)) || '';
+    footerInfo.textContent = state.supportedCodec ? `Opus ${CHUNK_MS}ms` : '⚠️ Opus unsupported';
+    return s;
+  } catch (e) { state.micReady = false; footerInfo.textContent = '❌ Mic denied'; toast('Mic required'); throw e; }
 }
-function releaseMic() {
-  if (state.micStream) { state.micStream.getTracks().forEach(t => t.stop()); state.micStream = null; }
-  state.micReady = false; state.vuMicNode = null; updateVU(vuMicBars, 0);
-  footerInfo.textContent = state.supportedCodec ? `Opus ${CHUNK_MS}ms ready` : 'Ready';
-}
+function releaseMic() { if (state.micStream) { state.micStream.getTracks().forEach(t => t.stop()); state.micStream = null; } state.micReady = false; state.vuMicNode = null; updateVU(vuMicBars, 0); }
 function createRecorder() {
   if (!state.micStream || !state.supportedCodec) { toast('❌ Opus unsupported'); return null; }
   const mr = new MediaRecorder(state.micStream, { mimeType: state.supportedCodec });
-  mr.ondataavailable = async (e) => { if (e.data.size && state.nats?.connected) { try { state.nats.publish(`walkie.${state.channel}.audio`, new Uint8Array(await e.data.arrayBuffer())); } catch (_) {} } };
+  mr.ondataavailable = async e => { if (e.data.size && state.nats?.connected) { try { state.nats.publish(`walkie.${state.channel}.audio`, new Uint8Array(await e.data.arrayBuffer())); } catch (_) {} } };
   mr.onstop = () => { if (state.nats?.connected && state.channel) { try { state.nats.publish(`walkie.${state.channel}.ctrl`, JSON.stringify({ type: 'stream-end' })); } catch (_) {} } };
   mr.onerror = () => endTalk();
   return mr;
 }
 
-// ═══════════════════════ PTT ═══════════════════════
+// ── PTT ──
 async function startTalk() {
   if (state.floorOccupied) { toast('Channel busy'); pttBtn.classList.add('busy-flash'); setTimeout(() => pttBtn.classList.remove('busy-flash'), 300); return; }
   state.talkRequested = true;
-  if (!state.nats || !state.connected) { try { await connectToChannel(); } catch (_) { toast('Cannot connect'); return; } if (!state.nats?.connected) { toast('Cannot connect'); return; } }
+  if (!state.nats?.connected) { try { await connectNATS(); subscribeAll(); } catch (_) { toast('Cannot connect'); return; } }
   if (!state.talkRequested) { releaseMic(); return; }
   if (!state.channel) { joinChannel(); await connectToChannel(); }
   if (state.audioCtx?.state === 'suspended') await state.audioCtx.resume();
   if (!state.talkRequested) { releaseMic(); return; }
   if (!state.micReady) { try { await initMic(); } catch (_) { return; } }
   if (!state.talkRequested) { releaseMic(); return; }
-
   state.myClaimTs = Date.now(); state.floorOwnerId = Math.random().toString(36).slice(2, 10);
   state.nats.publish(`walkie.${state.channel}.ctrl`, JSON.stringify({ type: 'floor-taken', id: state.floorOwnerId, ts: state.myClaimTs }));
-  state.floorOccupied = true; state.floorOwner = state.floorOwnerId; updatePTTState();
+  state.floorOccupied = true; state.floorOwner = state.floorOwnerId; state.floorClaimedAt = Date.now(); updatePTTState();
   state.nats.publish(`walkie.${state.channel}.ctrl`, JSON.stringify({ type: 'stream-start' }));
-
-  state.mediaRecorder = createRecorder();
-  if (!state.mediaRecorder) { state.floorOccupied = false; state.talkRequested = false; releaseMic(); return; }
-
-  state.talking = true;
-  state.mediaRecorder.start(CHUNK_MS); state.talkStartTs = Date.now();
-  pttBtn.classList.add('talking'); pttBtn.querySelector('.ptt-icon').textContent = '🔴'; pttBtn.querySelector('.ptt-label').textContent = 'TX';
-  updateStatus('busy', 'Talking');
+  state.mediaRecorder = createRecorder(); if (!state.mediaRecorder) { state.floorOccupied = false; state.talkRequested = false; releaseMic(); return; }
+  state.talking = true; state.mediaRecorder.start(CHUNK_MS); state.talkStartTs = Date.now();
+  pttBtn.classList.add('talking'); pttBtn.querySelector('.ptt-icon').textContent = '🔴'; pttBtn.querySelector('.ptt-label').textContent = 'TX'; updateStatus('busy', 'Talking');
   startTalkTimer();
 }
 function startTalkTimer() {
-  clearInterval(state.talkTimer);
-  state.talkTimer = setInterval(() => {
+  clearInterval(state.talkTimer); state.talkTimer = setInterval(() => {
     const e = Date.now() - state.talkStartTs;
-    if (e >= state.warnAtMs && e < state.maxTalkMs) { pttBtn.querySelector('.ptt-label').textContent = `⚠️ ${Math.ceil((state.maxTalkMs - e) / 1000)}s`; pttBtn.classList.add('warning'); }
+    if (e >= state.warnAtMs && e < state.maxTalkMs) { pttBtn.querySelector('.ptt-label').textContent = `⚠ ${Math.ceil((state.maxTalkMs-e)/1000)}s`; pttBtn.classList.add('warning'); }
     if (e >= state.maxTalkMs) forceStopTalk('2 min limit');
   }, 500);
 }
-function forceStopTalk(reason) { toast(reason); endTalk(); }
-
+function forceStopTalk(r) { toast(r); endTalk(); }
 function endTalk() {
   state.talkRequested = false;
-  if (!state.talking) {
-    if (state.floorOccupied && state.floorOwner === state.floorOwnerId) {
-      state.floorOccupied = false; state.floorOwner = ''; state.floorOwnerId = ''; state.myClaimTs = 0; updatePTTState();
-      if (state.nats?.connected && state.channel) { try { state.nats.publish(`walkie.${state.channel}.ctrl`, JSON.stringify({ type: 'floor-released', id: 'aborted' })); } catch (_) {} }
-    }
-    releaseMic(); pttBtn.classList.remove('talking','warning','floor-busy'); pttBtn.querySelector('.ptt-icon').textContent = '🎙️'; pttBtn.querySelector('.ptt-label').textContent = 'PTT'; updateVU(vuMicBars, 0); updateStatus(state.connected ? 'on' : 'off', state.connected ? 'Connected' : 'Offline'); return;
-  }
-  clearInterval(state.talkTimer); state.talkTimer = null;
-  pttBtn.classList.remove('talking','warning'); pttBtn.querySelector('.ptt-icon').textContent = '🎙️'; pttBtn.querySelector('.ptt-label').textContent = 'PTT';
-  updateVU(vuMicBars, 0); updateStatus('on', 'Connected');
+  if (!state.talking) { releaseMic(); pttBtn.classList.remove('talking','warning','floor-busy'); pttBtn.querySelector('.ptt-icon').textContent = '🎙️'; pttBtn.querySelector('.ptt-label').textContent = 'PTT'; updateVU(vuMicBars, 0); updateStatus(state.connected?'on':'off', state.connected?'Connected':'Offline'); return; }
+  clearInterval(state.talkTimer); pttBtn.classList.remove('talking','warning');
+  pttBtn.querySelector('.ptt-icon').textContent = '🎙️'; pttBtn.querySelector('.ptt-label').textContent = 'PTT'; updateVU(vuMicBars, 0); updateStatus('on', 'Connected');
   if (state.mediaRecorder?.state === 'recording') { state.mediaRecorder.stop(); state.mediaRecorder = null; }
   if (state.nats?.connected && state.channel) {
     try { state.nats.publish(`walkie.${state.channel}.ctrl`, JSON.stringify({ type: 'stream-end' })); } catch (_) {}
     try { state.nats.publish(`walkie.${state.channel}.ctrl`, JSON.stringify({ type: 'floor-released', id: state.floorOwnerId })); } catch (_) {}
   }
-  state.floorOccupied = false; state.floorOwner = ''; state.floorOwnerId = ''; state.myClaimTs = 0; updatePTTState();
+  state.floorOccupied = false; state.floorOwner = ''; state.floorOwnerId = ''; state.myClaimTs = 0; state.floorClaimedAt = 0; updatePTTState();
   resetMediaSource(); releaseMic(); state.talking = false;
 }
 function updatePTTState() {
-  if (state.floorOccupied && !state.talking) {
-    pttBtn.classList.add('floor-busy'); pttBtn.querySelector('.ptt-icon').textContent = '🔒'; pttBtn.querySelector('.ptt-label').textContent = 'BUSY';
-  } else { pttBtn.classList.remove('floor-busy'); if (!state.talking) { pttBtn.querySelector('.ptt-icon').textContent = '🎙️'; pttBtn.querySelector('.ptt-label').textContent = 'PTT'; } }
+  if (state.floorOccupied && !state.talking) { pttBtn.classList.add('floor-busy'); pttBtn.querySelector('.ptt-icon').textContent = '🔒'; pttBtn.querySelector('.ptt-label').textContent = 'BUSY'; }
+  else { pttBtn.classList.remove('floor-busy'); if (!state.talking) { pttBtn.querySelector('.ptt-icon').textContent = '🎙️'; pttBtn.querySelector('.ptt-label').textContent = 'PTT'; } }
 }
 
-// ═══════════════════════ Channel ═══════════════════════
-function joinChannel(name, passphrase = '') {
-  if (!name) { const c = generateChannelCreds(); name = c.id; passphrase = c.passphrase; }
-  if (!passphrase) passphrase = randomPassphrase();
-  state.channel = name; state.passphrase = passphrase; channelInput.value = name;
-  window.location.hash = `#${name}:${passphrase}`;
+// ── Channel ──
+function joinChannel(name, pw = '') {
+  if (!name) { const c = generateChannelCreds(); name = c.id; pw = c.passphrase; }
+  if (!pw) pw = randomPassphrase();
+  state.channel = name; state.passphrase = pw; channelInput.value = name;
+  window.location.hash = `#${name}:${pw}`;
   state.talkRequested = false; if (state.talking) endTalk();
-  state.floorOccupied = false; state.floorOwner = ''; state.floorOwnerId = ''; state.myClaimTs = 0; updatePTTState();
-  unsubscribe(); resetMediaSource();
-  document.title = `📻 ${name}`; toast(`#${name}`);
+  state.floorOccupied = false; state.floorOwner = ''; state.floorOwnerId = ''; state.myClaimTs = 0; state.floorClaimedAt = 0; updatePTTState();
+  unsubscribe(); resetMediaSource(); document.title = `📻 ${name}`; toast(`#${name}`);
 }
-
 async function connectToChannel() {
-  if (state.nats) { try { await state.nats.close(); } catch (_) {} }
-  state.nats = null; state.connected = false;
-
+  if (state.nats) { try { await state.nats.close(); } catch (_) {} } state.nats = null; state.connected = false;
+  state.floorOccupied = false; state.floorOwner = ''; state.floorOwnerId = ''; state.floorClaimedAt = 0; updatePTTState();
   try {
-    // Step 1: Connect as bootstrap (only walkie.auth.> permissions)
-    await connectNATS('bootstrap', 'bootstrap');
-
-    // Step 2: Request real credentials via explicit reply subject
-    const replyId = 'r' + randomId(12);
-    const replySub = `walkie.auth.reply.${replyId}`;
-
-    const creds = await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => { sub.unsubscribe(); reject(new Error('timeout')); }, 5000);
-
-      const sub = state.nats.subscribe(replySub, {
-        callback: (_, msg) => {
-          clearTimeout(timeout);
-          sub.unsubscribe();
-          try {
-            const r = JSON.parse(new TextDecoder().decode(msg.data));
-            resolve(r.ok ? r : null);
-          } catch (e) { reject(e); }
-        }
-      });
-
-      state.nats.publish('walkie.auth.creds', JSON.stringify({
-        fingerprint: state.fingerprint,
-        channel_id: state.channel,
-        passphrase: state.passphrase,
-        reply: replySub,    // <-- explicit reply subject
-      }));
-    });
-
-    // Step 3: Close bootstrap, connect with real credentials
-    try { await state.nats.close(); } catch (_) {}
-    state.nats = null; state.connected = false;
-
-    if (!creds?.user) {
-      updateStatus('off', 'Auth denied');
-      return;
-    }
-
-    await connectNATS(creds.user, creds.pass);
-    if (creds.occupants !== undefined) listenerCount.textContent = `👤 ${creds.occupants}`;
-    subscribeAll();
-    startHeartbeat();
-  } catch (e) {
-    if (state.nats) { try { await state.nats.close(); } catch (_) {} }
-    state.nats = null; state.connected = false;
-    updateStatus('off', 'Connection failed');
-    toast('Connection failed');
-  }
+    await connectNATS(); subscribeAll(); startHeartbeat();
+    try { const r = JSON.parse(new TextDecoder().decode((await state.nats.request('walkie.auth.creds', JSON.stringify({ fingerprint: state.fingerprint, channel_id: state.channel, passphrase: state.passphrase }), { timeout: 3000 })).data)); if (r.ok && r.occupants != null) listenerCount.textContent = `👤 ${r.occupants}`; } catch (_) {}
+  } catch (e) { updateStatus('off', 'Connection failed'); }
 }
-
 function startHeartbeat() {
-  clearInterval(state.heartbeatTimer);
-  state.heartbeatTimer = setInterval(async () => {
+  clearInterval(state.heartbeatTimer); state.heartbeatTimer = setInterval(async () => {
     if (!state.nats?.connected || !state.channel) return;
-    state.nats.publish(`walkie.${state.channel}.ctrl`, JSON.stringify({ type: 'presence', ts: Date.now() }));
-    try {
-      const reply = await state.nats.request('walkie.auth.status', JSON.stringify({ channel_id: state.channel }), { timeout: 2000 });
-      const r = JSON.parse(new TextDecoder().decode(reply.data));
-      if (r.ok && r.occupants !== undefined) listenerCount.textContent = `👤 ${r.occupants}`;
-    } catch (_) {}
+    if (state.floorOccupied && !state.talking && Date.now() - state.floorClaimedAt > 8000) { state.floorOccupied = false; state.floorOwner = ''; state.floorClaimedAt = 0; updatePTTState(); }
+    try { const r = JSON.parse(new TextDecoder().decode((await state.nats.request('walkie.auth.status', JSON.stringify({ channel_id: state.channel }), { timeout: 2000 })).data)); if (r.ok && r.occupants != null) listenerCount.textContent = `👤 ${r.occupants}`; } catch (_) {}
   }, 5000);
 }
 
-// ═══════════════════════ Events ═══════════════════════
+// ── Events ──
 pttBtn.addEventListener('mousedown', e => { e.preventDefault(); startTalk(); });
 pttBtn.addEventListener('mouseup', e => { e.preventDefault(); endTalk(); });
 pttBtn.addEventListener('mouseleave', () => { if (state.talking) endTalk(); });
@@ -631,50 +420,25 @@ pttBtn.addEventListener('touchend', e => { e.preventDefault(); endTalk(); });
 pttBtn.addEventListener('touchcancel', () => { if (state.talking) endTalk(); });
 document.addEventListener('keydown', e => { if (e.code === 'Space' && !e.repeat && document.activeElement !== channelInput) { e.preventDefault(); startTalk(); } });
 document.addEventListener('keyup', e => { if (e.code === 'Space' && state.talking) { e.preventDefault(); endTalk(); } });
-
-channelInput.addEventListener('change', () => handleChannelInput());
-channelInput.addEventListener('keydown', e => { if (e.key === 'Enter') { channelInput.blur(); handleChannelInput(); } });
-function handleChannelInput() {
-  let raw = channelInput.value.trim(); if (!raw) return;
-  const h = raw.lastIndexOf('#'); if (h !== -1) raw = raw.slice(h + 1);
-  const c = raw.indexOf(':');
-  if (c !== -1) joinChannel(raw.slice(0, c), raw.slice(c + 1)); else joinChannel(raw, '');
-  connectToChannel();
-}
-
-copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(window.location.href).then(() => toast('📋 Link copied!'), () => toast('Copy failed')); });
+channelInput.addEventListener('change', () => { let r = channelInput.value.trim(); if (!r) return; const h = r.lastIndexOf('#'); if (h !== -1) r = r.slice(h + 1); const c = r.indexOf(':'); joinChannel(c !== -1 ? r.slice(0, c) : r, c !== -1 ? r.slice(c + 1) : ''); connectToChannel(); });
+channelInput.addEventListener('keydown', e => { if (e.key === 'Enter') { channelInput.blur(); channelInput.dispatchEvent(new Event('change')); } });
+copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(window.location.href).then(() => toast('📋 Copied!'), () => toast('Copy failed')); });
 newBtn.addEventListener('click', () => { joinChannel(); connectToChannel(); });
-recvToggle.addEventListener('click', () => {
-  state.receiving = !state.receiving; recvToggle.textContent = state.receiving ? '🔊' : '🔇';
-  recvToggle.className = state.receiving ? 'btn-icon' : 'btn-icon muted';
-  if (!state.receiving) { state.chunkQueue = []; resetMediaSource(); }
-});
+recvToggle.addEventListener('click', () => { state.receiving = !state.receiving; recvToggle.textContent = state.receiving ? '🔊' : '🔇'; recvToggle.className = 'lcd-btn' + (state.receiving ? '' : ' muted'); if (!state.receiving) { state.chunkQueue = []; resetMediaSource(); } });
 
-// ═══════════════════════ Init ═══════════════════════
+// ── Init ──
 async function init() {
-  try { const fp = await FingerprintJS.load(); state.fingerprint = (await fp.get()).visitorId; } catch (_) { state.fingerprint = 'anon-' + randomId(8); }
+  try { state.fingerprint = (await (await FingerprintJS.load()).get()).visitorId; } catch (_) { state.fingerprint = 'anon-' + randomId(8); }
   setupAudioOutput(); resetMediaSource();
-
-  const hash = window.location.hash.slice(1);
-  let ch = '', pw = '';
+  const hash = window.location.hash.slice(1); let ch = '', pw = '';
   if (hash) { const p = hash.split(':'); ch = p[0] || ''; pw = p[1] || ''; }
   if (!ch) { const c = generateChannelCreds(); ch = c.id; pw = c.passphrase; }
   joinChannel(ch, pw);
-
-  try { await connectToChannel(); } catch (_) {
-    updateStatus('off', 'Connection failed');
-    const retry = () => { connectToChannel().catch(() => setTimeout(retry, 5000)); };
-    setTimeout(retry, 5000);
-  }
-  footerInfo.textContent = 'Hold to talk • Space or tap';
-
-  window.addEventListener('hashchange', () => {
-    const raw = window.location.hash.slice(1); if (!raw) return;
-    const p = raw.split(':'); const cid = p[0];
-    if (cid && cid !== state.channel) { joinChannel(cid, p[1] || ''); connectToChannel(); }
-  });
+  try { await connectToChannel(); } catch (_) { updateStatus('off', 'Connection failed'); const retry = () => connectToChannel().catch(() => setTimeout(retry, 5000)); setTimeout(retry, 5000); }
+  footerInfo.textContent = 'Hold to talk • Tap the red button';
+  window.addEventListener('hashchange', () => { const r = window.location.hash.slice(1); if (!r) return; const p = r.split(':'); if (p[0] && p[0] !== state.channel) { joinChannel(p[0], p[1] || ''); connectToChannel(); } });
 }
-init().catch(e => { console.error(e); updateStatus('off', 'Error'); footerInfo.textContent = '❌ ' + e.message; });
+init().catch(e => { updateStatus('off', 'Error'); footerInfo.textContent = '❌ ' + e.message; });
 </script>
 </body>
 </html>
