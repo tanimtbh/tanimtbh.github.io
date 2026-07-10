@@ -1,64 +1,1100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        #image{
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Walkie-Talkie</title>
+<style>
+  :root {
+    --bg: #09090b; --bg-gradient: radial-gradient(ellipse at 50% 0%, #1a1020 0%, #09090b 60%);
+    --surface: #141417; --surface-hover: #1c1c20; --border: #252529;
+    --text: #f1f1f3; --dim: #6b6b73; --dim-light: #8e8e98;
+    --accent: #ef4444; --accent-glow: rgba(239,68,68,0.35);
+    --green: #22c55e; --green-glow: rgba(34,197,94,0.3);
+    --yellow: #eab308;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --radius-sm: 10px; --radius: 16px; --radius-xl: 24px;
+    --ptt-size: 148px;
+    --safe-b: env(safe-area-inset-bottom, 12px);
+    --safe-t: env(safe-area-inset-top, 0px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font); background: var(--bg); background-image: var(--bg-gradient);
+    color: var(--text); min-height: 100dvh; display: flex; flex-direction: column;
+    align-items: center; -webkit-tap-highlight-color: transparent; user-select: none;
+    -webkit-user-select: none; padding: calc(12px + var(--safe-t)) 14px var(--safe-b);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    width: 100%; max-width: 420px; display: flex; flex-direction: column;
+    align-items: center; gap: 14px; flex: 1; padding-bottom: 8px;
+  }
+
+  /* ── Header ── */
+  .header { width: 100%; text-align: center; padding: 4px 0 0; }
+  .header h1 {
+    font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #fff 30%, #c0c0c8 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .header .subtitle { font-size: 0.72rem; color: var(--dim); margin-top: 0px; letter-spacing: 0.02em; }
+
+  /* ── Channel card ── */
+  .channel-card {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 4px 4px 4px 16px;
+    display: flex; align-items: center; gap: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    transition: border-color 0.2s;
+  }
+  .channel-card:focus-within { border-color: #3a3a42; }
+  .channel-card .hash { font-size: 1rem; color: var(--dim-light); font-family: 'SF Mono','Cascadia Code',monospace; flex-shrink: 0; }
+  .channel-card input {
+    flex: 1; background: none; border: none; color: var(--text); font-size: 0.9rem;
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace; outline: none;
+    min-width: 0; padding: 10px 8px;
+  }
+  .channel-card input::placeholder { color: #3a3a42; }
+  .btn-icon {
+    width: 38px; height: 38px; border: none; border-radius: 10px;
+    background: transparent; color: var(--dim-light); font-size: 1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .btn-icon:hover { background: var(--surface-hover); color: var(--text); }
+  .btn-icon:active { transform: scale(0.9); background: #252529; }
+  .btn-divider { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+
+  /* ── Info card (status + VU) ── */
+  .info-card {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .status-row {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 0.78rem; font-weight: 500;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot.red { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+  .dot.green { background: var(--green); box-shadow: 0 0 8px var(--green-glow); animation: dotPulse 2.2s ease-in-out infinite; }
+  .dot.yellow { background: var(--yellow); box-shadow: 0 0 6px rgba(234,179,8,0.4); }
+  @keyframes dotPulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.75); } }
+  .status-sep { color: var(--border); }
+
+  /* ── VU meters ── */
+  .vu-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .vu-header { display: flex; justify-content: space-between; align-items: baseline; }
+  .vu-label { font-size: 0.65rem; color: var(--dim); text-transform: uppercase;
+              letter-spacing: 0.12em; font-weight: 600; }
+  .vu-peak { font-size: 0.6rem; color: var(--dim); font-family: monospace; }
+  .vu-track { width: 100%; height: 5px; background: #1c1c22; border-radius: 3px;
+              overflow: hidden; position: relative; }
+  .vu-fill { height: 100%; width: 0%; border-radius: 3px; transition: width 0.05s linear;
+             background: linear-gradient(90deg, #22c55e 0%, #4ade80 60%, #eab308 80%, #ef4444 95%); }
+  .vu-fill.hot { filter: brightness(1.3); }
+  .vu-fill.clip { filter: brightness(1.6); animation: clipBlink 0.3s steps(2) infinite; }
+  @keyframes clipBlink { 50% { opacity: 0.4; } }
+
+  /* ── PTT Button ── */
+  .ptt-container { flex: 1; display: flex; align-items: center; justify-content: center;
+                   width: 100%; padding: 8px 0; }
+  .ptt-btn {
+    width: var(--ptt-size); height: var(--ptt-size); border-radius: 50%;
+    border: 3px solid #ef444466; background: radial-gradient(circle at 35% 30%, #2d1519, #14090c);
+    color: var(--text); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; position: relative; transition: transform 0.15s cubic-bezier(.34,1.56,.64,1),
+    border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 8px rgba(239,68,68,0.04);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ptt-inner {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    position: relative; z-index: 2;
+  }
+  .ptt-btn .icon { font-size: 2.2rem; line-height: 1; transition: transform 0.15s; }
+  .ptt-btn .ptt-label {
+    font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  /* PTT concentric rings */
+  .ptt-ring {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    border: 1.5px solid rgba(239,68,68,0.12); transition: all 0.3s;
+  }
+  .ptt-ring-1 { width: calc(100% + 16px); height: calc(100% + 16px); }
+  .ptt-ring-2 { width: calc(100% + 32px); height: calc(100% + 32px); border-color: rgba(239,68,68,0.06); }
+
+  /* Pressed state */
+  .ptt-btn:active, .ptt-btn.pressed {
+    transform: scale(0.94);
+    border-color: rgba(239,68,68,0.8);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6), 0 0 48px var(--accent-glow), 0 0 0 14px rgba(239,68,68,0.08);
+  }
+  .ptt-btn:active .ptt-ring-1, .ptt-btn.pressed .ptt-ring-1 {
+    border-color: rgba(239,68,68,0.25); width: calc(100% + 20px); height: calc(100% + 20px);
+  }
+  .ptt-btn:active .ptt-ring-2, .ptt-btn.pressed .ptt-ring-2 {
+    border-color: rgba(239,68,68,0.12); width: calc(100% + 38px); height: calc(100% + 38px);
+  }
+
+  /* Talking state */
+  .ptt-btn.talking {
+    border-color: rgba(239,68,68,0.9);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6), 0 0 72px var(--accent-glow), 0 0 0 18px rgba(239,68,68,0.1);
+    animation: throb 0.55s ease-in-out infinite;
+  }
+  .ptt-btn.talking .ptt-ring-1 { border-color: rgba(239,68,68,0.3); animation: ringPulse 0.55s ease-in-out infinite; }
+  .ptt-btn.talking .ptt-ring-2 { border-color: rgba(239,68,68,0.15); animation: ringPulse 0.55s ease-in-out 0.1s infinite; }
+  .ptt-btn.talking .icon { transform: scale(1.08); }
+
+  /* Warning state (last 10s) */
+  .ptt-btn.warning {
+    border-color: rgba(234,179,8,0.7);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6), 0 0 48px rgba(234,179,8,0.3), 0 0 0 18px rgba(234,179,8,0.06);
+    animation: warnPulse 0.5s ease-in-out infinite;
+  }
+  .ptt-btn.warning .ptt-ring-1 { border-color: rgba(234,179,8,0.2); animation: ringPulse 0.5s ease-in-out infinite; }
+  .ptt-btn.warning .ptt-ring-2 { border-color: rgba(234,179,8,0.1); }
+
+  /* Busy state */
+  .ptt-btn.floor-busy {
+    border-color: #3a3a3f; background: radial-gradient(circle at 35% 30%, #1a1a1d, #0e0e11);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5); cursor: not-allowed; opacity: 0.75;
+  }
+  .ptt-btn.floor-busy .ptt-ring-1, .ptt-btn.floor-busy .ptt-ring-2 { border-color: rgba(255,255,255,0.03); }
+  .ptt-btn.floor-busy .icon { filter: grayscale(0.6); }
+  .ptt-btn.floor-busy .ptt-label { color: var(--dim); }
+
+  /* Busy flash (attempted to talk while busy) */
+  .ptt-btn.busy-flash {
+    border-color: var(--yellow) !important;
+    box-shadow: 0 0 40px rgba(234,179,8,0.5) !important;
+  }
+
+  @keyframes throb {
+    0%,100% { box-shadow:0 2px 8px rgba(0,0,0,0.6),0 0 48px var(--accent-glow),0 0 0 18px rgba(239,68,68,0.1); }
+    50% { box-shadow:0 2px 8px rgba(0,0,0,0.6),0 0 96px var(--accent-glow),0 0 0 26px rgba(239,68,68,0.18); }
+  }
+  @keyframes ringPulse {
+    0%,100% { opacity:0.6; } 50% { opacity:1; }
+  }
+  @keyframes warnPulse {
+    0%,100% { box-shadow:0 2px 8px rgba(0,0,0,0.6),0 0 32px rgba(234,179,8,0.25),0 0 0 18px rgba(234,179,8,0.06); }
+    50% { box-shadow:0 2px 8px rgba(0,0,0,0.6),0 0 64px rgba(234,179,8,0.45),0 0 0 26px rgba(234,179,8,0.12); }
+  }
+
+  /* ── Volume ── */
+  .vol-row {
+    width: 100%; display: flex; align-items: center; gap: 10px; justify-content: center;
+    padding: 2px 0;
+  }
+  .vol-row .vol-icon { font-size: 0.85rem; opacity: 0.5; }
+  .vol-row input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 130px; height: 5px;
+    background: #1c1c22; border-radius: 3px; outline: none;
+  }
+  .vol-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+    border-radius: 50%; background: #fff; border: 2px solid #3a3a42;
+    cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .vol-row input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%; background: #fff;
+    border: 2px solid #3a3a42; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    font-size: 0.65rem; color: var(--dim); text-align: center; padding: 2px 0;
+    letter-spacing: 0.03em; font-weight: 500;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: max(28px, var(--safe-b)); left: 50%; transform: translateX(-50%);
+    background: #1c1c22; border: 1px solid #2a2a32; padding: 11px 22px;
+    border-radius: 24px; font-size: 0.82rem; font-weight: 500; z-index: 100; opacity: 0;
+    transition: opacity 0.22s, transform 0.22s; pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6); backdrop-filter: blur(12px);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+
+  /* ── Responsive ── */
+  @media (max-width: 400px) {
+    :root { --ptt-size: 130px; }
+    .ptt-btn .icon { font-size: 1.9rem; }
+    .ptt-btn .ptt-label { font-size: 0.7rem; }
+    .container { gap: 10px; }
+    .info-card { padding: 12px 14px; gap: 10px; }
+    .header h1 { font-size: 1.2rem; }
+    .ptt-ring-1 { width: calc(100% + 12px); height: calc(100% + 12px); }
+    .ptt-ring-2 { width: calc(100% + 24px); height: calc(100% + 24px); }
+  }
+
+  @media (max-width: 340px) {
+    :root { --ptt-size: 114px; }
+    .ptt-btn .icon { font-size: 1.6rem; }
+    .ptt-btn .ptt-label { font-size: 0.65rem; letter-spacing: 0.05em; }
+    .container { gap: 8px; }
+  }
+
+  @media (min-height: 800px) {
+    :root { --ptt-size: 160px; }
+    .ptt-btn .icon { font-size: 2.5rem; }
+    .ptt-btn .ptt-label { font-size: 0.82rem; }
+    .container { gap: 18px; }
+  }
+
+  /* Landscape — keep PTT visible */
+  @media (max-height: 500px) and (orientation: landscape) {
+    :root { --ptt-size: 100px; }
+    .container { gap: 6px; }
+    .header { display: none; }
+    .info-card { padding: 6px 12px; gap: 4px; }
+    .ptt-btn .icon { font-size: 1.4rem; }
+    .ptt-btn .ptt-label { font-size: 0.6rem; }
+    .ptt-ring-1, .ptt-ring-2 { display: none; }
+    .vol-row, .footer { display: none; }
+  }
+</style>
 </head>
 <body>
-    <main id="main">
-     <h1 id="title">freeCodeCamp Survey Form</h1>
-     <p id="description">Thank you for taking the time to help us improve the platform</p>
-     <form id="survey-form" action="">
-       <label id="name-label" for="name">NAME:  </label>
-       <input id="name" type="text"  placeholder="Enter your name" required>
-       <br>
-      <label id="email-label" for="email">EMAIL:  </label>
-      <input id="email" type="email" placeholder="Enter your email">
-       <br>
-      <label id="number-label" for="number">Age:  </label>
-      <input id="number" type="number" min="1" max="100" placeholder="Age">
-      <br>
-      <label for="dropdown">Which option best describes your current role?:</label>
-      <select id="dropdown" name="dropdown">
-        <option value="" disabled selected>Select your corrent Role</option>
-        <option value="student">Student</option>
-        <option value="full time job">Full Time Job</option>
-        <option value="full time learer">Full Time Learner</option>
-        <option value="prefer not to say">Prefer Not To Say</option>
-      </select>
-       <br>
-        
-          <p>Would you recommend freeCodeCamp to a friend?:</p>
-         <input type="radio" id="Definitely" name="name" value="Definitely">
-         <label for="Definitely">Definitely</label><br>
-         <input type="radio" id="Maybe" name="name" value="Maybe">
-         <label for="Maybe">Maybe</label><br>
-         <input type="radio" id="Not sure" name="name" value="Not sure">
-         <label for="Not sure">Not sure</label>
-         <p>Would you recommend freeCodeCamp to a friend?:</p>
-         <input type="checkbox" id="Front-end" name="Front-end" value="Front-end">
-         <label for="Front-end">Front-end</label>
-         <input type="checkbox" id="Back-end" name="Back-end" value="Back-end">
-         <label for="Back-end">Back-end</label>
-        <br>
-          <label for="textarea">Any comments or suggestions?:</label>
-          <br>
-          <textarea id="textarea" name="" rows="4" cols="50"></textarea>
-         <br>
-         <button id="submit" type="submit"></button>
-         
-     </form>
-    </main>
+
+<div class="container">
+  <div class="header">
+    <h1>Walkie-Talkie</h1>
+    <div class="subtitle">Tap &bull; Talk &bull; Share &mdash; no accounts</div>
+  </div>
+
+  <div class="channel-card">
+    <span class="hash">#</span>
+    <input id="channelInput" type="text" placeholder="channel-name" maxlength="40" autocomplete="off" spellcheck="false">
+    <span class="btn-divider"></span>
+    <button class="btn-icon" id="copyBtn" title="Copy link">📋</button>
+    <button class="btn-icon" id="newBtn" title="New channel">🔄</button>
+  </div>
+
+  <div class="info-card">
+    <div class="status-row">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">Connecting...</span>
+      <span class="status-sep">&bull;</span>
+      <span id="listenerCount">—</span>
+    </div>
+    <div class="vu-wrap">
+      <div class="vu-header">
+        <span class="vu-label">Mic</span>
+        <span class="vu-peak" id="vuMicPeak"></span>
+      </div>
+      <div class="vu-track"><div class="vu-fill" id="vuMic"></div></div>
+    </div>
+    <div class="vu-wrap">
+      <div class="vu-header">
+        <span class="vu-label">Speaker</span>
+        <span class="vu-peak" id="vuSpkPeak"></span>
+      </div>
+      <div class="vu-track"><div class="vu-fill" id="vuSpk"></div></div>
+    </div>
+  </div>
+
+  <div class="ptt-container">
+    <button class="ptt-btn" id="pttBtn">
+      <span class="ptt-ring ptt-ring-1"></span>
+      <span class="ptt-ring ptt-ring-2"></span>
+      <span class="ptt-inner">
+        <span class="icon">🎙️</span>
+        <span class="ptt-label">Hold to talk</span>
+      </span>
+    </button>
+  </div>
+
+  <div class="vol-row">
+    <span class="vol-icon">🔈</span>
+    <input type="range" id="volSlider" min="0" max="100" value="80" aria-label="Volume">
+    <span class="vol-icon">🔊</span>
+  </div>
+
+  <div class="footer" id="footerInfo">Audio: checking…</div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script type="module">
+import { connect } from 'https://esm.sh/nats.ws@1.28.0';
+
+// ── Audio config ──
+const CHUNK_MS = 100;        // 100ms chunks (low latency, efficient Opus frames)
+const OPUS_CODECS = [        // Opus only — NEVER raw PCM/WAV
+  'audio/webm;codecs=opus',
+  'audio/ogg;codecs=opus',
+];
+
+// ═══════════════════════════════════════
+//  State
+// ═══════════════════════════════════════
+const state = {
+  channel: '',
+  connected: false,
+  talking: false,
+  micReady: false,
+  nats: null,
+  subAudio: null,
+  subCtrl: null,
+  mediaRecorder: null,
+  micStream: null,
+  // MSE
+  mediaSource: null,
+  sourceBuffer: null,
+  chunkQueue: [],
+  isAppending: false,
+  // VU
+  vuMicNode: null,
+  vuSpkNode: null,
+  audioCtx: null,
+  // Heartbeat
+  heartbeatTimer: null,
+  presenceCount: 0,
+  // Floor control
+  floorOccupied: false,
+  floorOwner: '',
+  floorOwnerId: '',   // my claim ID when I hold the floor
+  myClaimTs: 0,
+  talkTimer: null,
+  talkStartTs: 0,
+  maxTalkMs: 115000, // 1:55 (5s grace before hard 2:00)
+  warnAtMs: 105000,  // warn at 1:45 (10s before auto-release)
+};
+
+// ═══════════════════════════════════════
+//  DOM refs
+// ═══════════════════════════════════════
+const $ = (id) => document.getElementById(id);
+const channelInput = $('channelInput');
+const copyBtn = $('copyBtn');
+const newBtn = $('newBtn');
+const pttBtn = $('pttBtn');
+const statusDot = $('statusDot');
+const statusText = $('statusText');
+const listenerCount = $('listenerCount');
+const vuMic = $('vuMic');
+const vuSpk = $('vuSpk');
+const volSlider = $('volSlider');
+const footerInfo = $('footerInfo');
+const toastEl = $('toast');
+
+// ═══════════════════════════════════════
+//  Helpers
+// ═══════════════════════════════════════
+function randomChannel() {
+  const adj = ['brave','calm','cool','dark','fierce','gentle','happy','keen','loud','mighty',
+               'nimble','proud','quick','sharp','swift','wild','bold','bright','crisp','deep'];
+  const noun = ['eagle','fox','hawk','lion','owl','puma','raven','shark','tiger','viper',
+                'bear','deer','elk','frog','hawk','lynx','mole','newt','pike','wolf'];
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  return `${pick(adj)}-${pick(noun)}-${Math.floor(Math.random() * 99) + 1}`;
+}
+
+function toast(msg, ms = 2000) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toastEl.classList.remove('show'), ms);
+}
+
+function updateStatus(dotClass, text) {
+  statusDot.className = `dot ${dotClass}`;
+  statusText.textContent = text;
+}
+
+function updateVU(element, value) {
+  const pct = Math.min(100, Math.max(0, value));
+  element.style.width = pct + '%';
+  element.classList.toggle('hot', pct > 65 && pct <= 85);
+  element.classList.toggle('clip', pct > 85);
+}
+
+// ═══════════════════════════════════════
+//  NATS
+// ═══════════════════════════════════════
+async function connectNATS() {
+  try {
+    const nc = await connect({
+      servers: ['wss://tunnel.knitnox.com'],
+      user: 'agent2',
+      pass: 'agent2_password',
+      maxReconnectAttempts: -1,
+      reconnectTimeWait: 2000,
+      timeout: 5000,
+      pingInterval: 20000,
+    });
+    state.nats = nc;
+    state.connected = true;
+    updateStatus('green', 'Connected');
+
+    // Connection lifecycle
+    (async () => {
+      for await (const s of nc.status()) {
+        if (s.type === 'disconnect') {
+          state.connected = false;
+          updateStatus('yellow', 'Reconnecting…');
+        } else if (s.type === 'reconnect') {
+          state.connected = true;
+          updateStatus('green', 'Connected');
+          resubscribe();
+        }
+      }
+    })().catch(() => {});
+
+    return nc;
+  } catch (e) {
+    console.error('NATS connect error:', e);
+    updateStatus('red', 'Connection failed');
+    throw e;
+  }
+}
+
+function resubscribe() {
+  if (!state.channel) return;
+  unsubscribe();
+  subscribeAll();
+}
+
+function unsubscribe() {
+  if (state.subAudio) { state.subAudio.unsubscribe(); state.subAudio = null; }
+  if (state.subCtrl) { state.subCtrl.unsubscribe(); state.subCtrl = null; }
+}
+
+function subscribeAll() {
+  const ch = state.channel;
+  if (!ch || !state.nats) return;
+
+  // Audio subject — binary chunks
+  state.subAudio = state.nats.subscribe(`walkie.${ch}.audio`, {
+    callback: (err, msg) => {
+      if (err) return;
+      handleAudioChunk(msg.data);
+    },
+  });
+
+  // Control subject — JSON
+  state.subCtrl = state.nats.subscribe(`walkie.${ch}.ctrl`, {
+    callback: (err, msg) => {
+      if (err) return;
+      try {
+        const ctrl = JSON.parse(new TextDecoder().decode(msg.data));
+        handleCtrl(ctrl);
+      } catch (e) { /* ignore */ }
+    },
+  });
+}
+
+function handleCtrl(ctrl) {
+  switch (ctrl.type) {
+    case 'stream-start':
+      // New transmission — reset MSE for clean decode
+      resetMediaSource();
+      updateVU(vuSpk, 15);
+      break;
+    case 'stream-end':
+      // Transmission ended — no action, buffer plays out
+      break;
+    case 'floor-taken':
+      state.floorOccupied = true;
+      state.floorOwner = ctrl.id || '';
+      updatePTTState();
+      // If I'm currently talking and someone else claims the floor with
+      // an earlier timestamp, I yield — they pressed first.
+      if (state.talking && ctrl.id !== state.floorOwnerId &&
+          ctrl.ts && state.myClaimTs && ctrl.ts < state.myClaimTs) {
+        forceStopTalk('Channel busy — someone else is talking');
+      }
+      break;
+    case 'floor-released':
+      // Only clear if the release matches current owner (ignore stale releases)
+      if (!ctrl.id || ctrl.id === state.floorOwner) {
+        state.floorOccupied = false;
+        state.floorOwner = '';
+        updatePTTState();
+      }
+      break;
+    case 'presence':
+      if (ctrl.count !== undefined) {
+        state.presenceCount = ctrl.count;
+        listenerCount.textContent = `👤 ${ctrl.count}`;
+      }
+      break;
+  }
+}
+
+function handleAudioChunk(data) {
+  if (!data || data.length === 0) return;
+  // Never play back own voice while transmitting (walkie-talkie is half-duplex)
+  if (state.talking) return;
+  state.chunkQueue.push(new Uint8Array(data));
+  drainQueue();
+}
+
+// ═══════════════════════════════════════
+//  MSE Playback
+// ═══════════════════════════════════════
+function resetMediaSource() {
+  state.chunkQueue = [];
+  state.isAppending = false;
+  state.sourceBuffer = null;
+
+  // Tear down old MediaSource
+  if (state.mediaSource) {
+    try {
+      if (state.mediaSource.readyState === 'open') {
+        state.mediaSource.endOfStream();
+      }
+    } catch (e) { /* ignore */ }
+    state.mediaSource.removeEventListener('sourceopen', onSourceOpen);
+  }
+
+  // Create fresh MediaSource (MUST attach listener BEFORE setting src)
+  state.mediaSource = new MediaSource();
+  state.mediaSource.addEventListener('sourceopen', onSourceOpen);
+
+  const audio = $('audioOut');
+  if (audio) {
+    if (audio.src && audio.src.startsWith('blob:')) {
+      URL.revokeObjectURL(audio.src);
+    }
+    audio.src = URL.createObjectURL(state.mediaSource);
+  }
+}
+
+function onSourceOpen() {
+  // Try Opus codecs only — matches what the sender uses
+  for (const codec of OPUS_CODECS) {
+    try {
+      state.sourceBuffer = state.mediaSource.addSourceBuffer(codec);
+      state.sourceBuffer.mode = 'sequence';
+      state.sourceBuffer.addEventListener('updateend', () => {
+        state.isAppending = false;
+        drainQueue();
+      });
+      drainQueue();
+      return; // success
+    } catch (e) { /* try next */ }
+  }
+  // None of the Opus codecs worked
+  console.error('Cannot add Opus SourceBuffer');
+  footerInfo.textContent = '⚠️ Opus playback unsupported in this browser';
+}
+
+function drainQueue() {
+  if (state.isAppending) return;
+  if (!state.sourceBuffer) return;
+  if (state.mediaSource?.readyState !== 'open') return;
+  if (state.chunkQueue.length === 0) return;
+
+  // Update VU meter from queue depth (crude proxy for incoming audio)
+  updateVU(vuSpk, Math.min(state.chunkQueue.length * 15, 70));
+
+  state.isAppending = true;
+  try {
+    const chunk = state.chunkQueue.shift();
+    state.sourceBuffer.appendBuffer(chunk);
+  } catch (e) {
+    console.error('appendBuffer error:', e);
+    state.isAppending = false;
+    // If we can't append, might be a new stream with mismatched headers — reset
+    if (e.name === 'InvalidStateError' || e.name === 'NotSupportedError') {
+      resetMediaSource();
+    }
+  }
+}
+
+function setupAudioOutput() {
+  // Only create the element once
+  let audio = $('audioOut');
+  if (!audio) {
+    audio = document.createElement('audio');
+    audio.id = 'audioOut';
+    audio.autoplay = true;
+    audio.playsInline = true;
+    document.body.appendChild(audio);
+  }
+
+  // Create audio context for VU meter on output
+  try {
+    state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = state.audioCtx.createMediaElementSource(audio);
+    const analyser = state.audioCtx.createAnalyser();
+    analyser.fftSize = 128;
+    analyser.smoothingTimeConstant = 0.3;
+    src.connect(analyser);
+    analyser.connect(state.audioCtx.destination);
+    state.vuSpkNode = analyser;
+
+    // Poll VU for speaker
+    const spkData = new Uint8Array(analyser.frequencyBinCount);
+    function pollSpk() {
+      if (state.vuSpkNode) {
+        state.vuSpkNode.getByteFrequencyData(spkData);
+        const avg = spkData.reduce((a, b) => a + b, 0) / spkData.length;
+        updateVU(vuSpk, avg * 1.5);
+      }
+      requestAnimationFrame(pollSpk);
+    }
+    pollSpk();
+
+    // Resume AudioContext on user interaction (browser policy)
+    document.addEventListener('click', () => {
+      if (state.audioCtx.state === 'suspended') state.audioCtx.resume();
+    }, { once: true });
+  } catch (e) {
+    console.warn('AudioContext VU setup failed:', e);
+  }
+
+  audio.volume = volSlider.value / 100;
+  volSlider.addEventListener('input', () => {
+    audio.volume = volSlider.value / 100;
+  });
+
+  return audio;
+}
+
+// ═══════════════════════════════════════
+//  Microphone + MediaRecorder
+// ═══════════════════════════════════════
+async function initMic() {
+  // Release any existing stream first
+  releaseMic();
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
+    state.micStream = stream;
+    state.micReady = true;
+
+    // Set up VU meter for mic
+    if (state.audioCtx) {
+      const micSrc = state.audioCtx.createMediaStreamSource(stream);
+      const analyser = state.audioCtx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.1;
+      micSrc.connect(analyser);
+      // Don't connect to destination — we don't want to hear ourselves
+      state.vuMicNode = analyser;
+
+      const micData = new Uint8Array(analyser.frequencyBinCount);
+      function pollMic() {
+        if (state.vuMicNode) {
+          state.vuMicNode.getByteFrequencyData(micData);
+          const avg = micData.reduce((a, b) => a + b, 0) / micData.length;
+          updateVU(vuMic, state.talking ? avg * 1.5 : avg * 0.4);
+        }
+        requestAnimationFrame(pollMic);
+      }
+      pollMic();
+    }
+
+    // Check codec support — Opus ONLY (never fall back to raw PCM/WAV)
+    const supported = OPUS_CODECS.find(c => MediaRecorder.isTypeSupported(c));
+    state.supportedCodec = supported || '';
+    if (!supported) {
+      console.warn('Opus not supported by this browser');
+      footerInfo.textContent = '⚠️ Opus codec unsupported — audio may not work';
+    } else {
+      footerInfo.textContent = `🎤 Opus ${CHUNK_MS}ms chunks ready`;
+    }
+
+    return stream;
+  } catch (e) {
+    console.error('Mic access denied:', e);
+    state.micReady = false;
+    state.micStream = null;
+    footerInfo.textContent = '❌ Mic access denied — cannot transmit';
+    toast('Microphone access required to talk');
+    throw e;
+  }
+}
+
+function releaseMic() {
+  if (state.micStream) {
+    state.micStream.getTracks().forEach(t => t.stop());
+    state.micStream = null;
+  }
+  state.micReady = false;
+  state.vuMicNode = null;
+  updateVU(vuMic, 0);
+  footerInfo.textContent = state.supportedCodec
+    ? `🎤 Opus ${CHUNK_MS}ms ready`
+    : '🎤 Ready (Opus required to talk)';
+}
+
+function createRecorder() {
+  if (!state.micStream) return null;
+  if (!state.supportedCodec) {
+    toast('❌ Opus codec not supported — cannot transmit in this browser');
+    return null;
+  }
+  // Always use explicit Opus codec, never fall back to raw PCM/WAV
+  const mr = new MediaRecorder(state.micStream, { mimeType: state.supportedCodec });
+
+  mr.ondataavailable = async (e) => {
+    if (e.data.size === 0 || !state.nats || !state.connected) return;
+    try {
+      const buf = await e.data.arrayBuffer();
+      state.nats.publish(`walkie.${state.channel}.audio`, new Uint8Array(buf));
+    } catch (err) {
+      console.error('Publish error:', err);
+    }
+  };
+
+  mr.onstop = () => {
+    // Signal end of transmission
+    if (state.nats && state.connected && state.channel) {
+      try {
+        state.nats.publish(`walkie.${state.channel}.ctrl`,
+          JSON.stringify({ type: 'stream-end' }));
+      } catch (e) { /* ignore */ }
+    }
+  };
+
+  mr.onerror = (e) => {
+    console.error('MediaRecorder error:', e);
+    endTalk();
+  };
+
+  return mr;
+}
+
+async function startTalk() {
+  // ── Floor check ──
+  if (state.floorOccupied) {
+    toast('🔒 Channel busy — someone else is talking');
+    // Flash the button to indicate busy
+    pttBtn.classList.add('busy-flash');
+    setTimeout(() => pttBtn.classList.remove('busy-flash'), 300);
+    return;
+  }
+
+  if (!state.nats || !state.connected) {
+    toast('Not connected — retrying…');
+    try { await connectNATS(); subscribeAll(); } catch (e) { toast('Cannot connect'); return; }
+  }
+  if (!state.channel) {
+    joinChannel(randomChannel());
+  }
+
+  // Ensure AudioContext is running
+  if (state.audioCtx && state.audioCtx.state === 'suspended') {
+    await state.audioCtx.resume();
+  }
+
+  // Acquire mic (only now — releases when done talking)
+  if (!state.micReady) {
+    try { await initMic(); } catch (e) { return; }
+  }
+
+  // ── Claim the floor ──
+  state.myClaimTs = Date.now();
+  state.floorOwnerId = Math.random().toString(36).slice(2, 10);
+  state.nats.publish(`walkie.${state.channel}.ctrl`,
+    JSON.stringify({ type: 'floor-taken', id: state.floorOwnerId, ts: state.myClaimTs }));
+
+  // Mark locally
+  state.floorOccupied = true;
+  state.floorOwner = state.floorOwnerId;
+  updatePTTState();
+
+  // Signal stream start (other clients reset MSE)
+  state.nats.publish(`walkie.${state.channel}.ctrl`,
+    JSON.stringify({ type: 'stream-start' }));
+
+  // Create + start recorder
+  state.mediaRecorder = createRecorder();
+  if (!state.mediaRecorder) {
+    // Release floor if recorder creation fails
+    state.floorOccupied = false;
+    releaseMic();
+    toast('Cannot access microphone');
+    return;
+  }
+
+  // Set talking flag BEFORE starting recorder so handleAudioChunk
+  // drops our own chunks from the very first ondataavailable
+  state.talking = true;
+  state.mediaRecorder.start(CHUNK_MS);
+  state.talkStartTs = Date.now();
+
+  pttBtn.classList.add('talking');
+  pttBtn.querySelector('.icon').textContent = '🔴';
+  pttBtn.querySelector('.ptt-label').textContent = 'Talking…';
+  vuMic.classList.add('hot');
+
+  // ── Auto-release timer ──
+  startTalkTimer();
+}
+
+function startTalkTimer() {
+  clearInterval(state.talkTimer);
+  state.talkTimer = setInterval(() => {
+    const elapsed = Date.now() - state.talkStartTs;
+
+    // Warning at 1:45
+    if (elapsed >= state.warnAtMs && elapsed < state.maxTalkMs) {
+      const remaining = Math.ceil((state.maxTalkMs - elapsed) / 1000);
+      pttBtn.querySelector('.ptt-label').textContent = `⚠️ ${remaining}s left`;
+      pttBtn.classList.add('warning');
+    }
+
+    // Auto-release at 1:55
+    if (elapsed >= state.maxTalkMs) {
+      forceStopTalk('⏰ 2 minute limit reached');
+    }
+  }, 500);
+}
+
+function forceStopTalk(reason) {
+  toast(reason);
+  endTalk();
+}
+
+function endTalk() {
+  clearInterval(state.talkTimer);
+  state.talkTimer = null;
+
+  pttBtn.classList.remove('talking', 'warning');
+  pttBtn.querySelector('.icon').textContent = '🎙️';
+  pttBtn.querySelector('.ptt-label').textContent = 'Hold to talk';
+  vuMic.classList.remove('hot');
+  updateVU(vuMic, 0);
+
+  // Stop recording (ondataavailable + onstop fire; state.talking still true so
+  // handleAudioChunk drops any final self-chunks)
+  if (state.mediaRecorder && state.mediaRecorder.state === 'recording') {
+    state.mediaRecorder.stop();
+    state.mediaRecorder = null;
+  }
+
+  // Signal stream-end
+  if (state.nats && state.connected && state.channel) {
+    try {
+      state.nats.publish(`walkie.${state.channel}.ctrl`,
+        JSON.stringify({ type: 'stream-end' }));
+    } catch (e) { /* ignore */ }
+  }
+
+  // Release floor
+  if (state.nats && state.connected && state.channel) {
+    try {
+      state.nats.publish(`walkie.${state.channel}.ctrl`,
+        JSON.stringify({ type: 'floor-released', id: state.floorOwnerId }));
+    } catch (e) { /* ignore */ }
+  }
+
+  state.floorOccupied = false;
+  state.floorOwner = '';
+  state.floorOwnerId = '';
+  state.myClaimTs = 0;
+  updatePTTState();
+
+  // Flush playback buffer (clear any in-flight self-chunks)
+  resetMediaSource();
+
+  // Release mic hardware (stops browser mic indicator)
+  releaseMic();
+
+  // NOW safe to listen again — self-chunks have been stopped + buffer cleared
+  state.talking = false;
+}
+
+function updatePTTState() {
+  if (state.floorOccupied && !state.talking) {
+    // Someone else has the floor — show disabled
+    pttBtn.classList.add('floor-busy');
+    pttBtn.querySelector('.icon').textContent = '🔒';
+    pttBtn.querySelector('.ptt-label').textContent = 'Channel busy';
+  } else {
+    pttBtn.classList.remove('floor-busy');
+    if (!state.talking) {
+      pttBtn.querySelector('.icon').textContent = '🎙️';
+      pttBtn.querySelector('.ptt-label').textContent = 'Hold to talk';
+    }
+  }
+}
+
+// ═══════════════════════════════════════
+//  Channel management
+// ═══════════════════════════════════════
+function joinChannel(name) {
+  name = name.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  if (!name) { name = randomChannel(); }
+
+  state.channel = name;
+  channelInput.value = name;
+  window.location.hash = '#' + name;
+
+  // Reset floor state for new channel
+  if (state.talking) endTalk();
+  state.floorOccupied = false;
+  state.floorOwner = '';
+  state.floorOwnerId = '';
+  state.myClaimTs = 0;
+  updatePTTState();
+
+  unsubscribe();
+  resetMediaSource();  // fresh audio pipeline for new channel
+  subscribeAll();
+  startHeartbeat();
+
+  document.title = `📻 ${name} — Walkie-Talkie`;
+  toast(`Joined #${name}`);
+}
+
+function startHeartbeat() {
+  clearInterval(state.heartbeatTimer);
+  // Send periodic presence (also acts as keep-alive and listener count)
+  // In a real system you'd tally these server-side; here we just ping
+  if (state.nats && state.connected && state.channel) {
+    state.nats.publish(`walkie.${state.channel}.ctrl`,
+      JSON.stringify({ type: 'presence', ts: Date.now() }));
+  }
+  state.heartbeatTimer = setInterval(() => {
+    if (state.nats && state.connected && state.channel) {
+      state.nats.publish(`walkie.${state.channel}.ctrl`,
+        JSON.stringify({ type: 'presence', ts: Date.now() }));
+    }
+  }, 5000);
+}
+
+// ═══════════════════════════════════════
+//  Event handlers
+// ═══════════════════════════════════════
+
+// PTT — mouse
+pttBtn.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  startTalk();
+});
+pttBtn.addEventListener('mouseup', (e) => {
+  e.preventDefault();
+  endTalk();
+});
+pttBtn.addEventListener('mouseleave', () => {
+  if (state.talking) endTalk();
+});
+
+// PTT — touch (mobile)
+pttBtn.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  startTalk();
+}, { passive: false });
+pttBtn.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  endTalk();
+});
+pttBtn.addEventListener('touchcancel', () => {
+  if (state.talking) endTalk();
+});
+
+// PTT — keyboard (spacebar)
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && !e.repeat && document.activeElement !== channelInput) {
+    e.preventDefault();
+    startTalk();
+  }
+});
+document.addEventListener('keyup', (e) => {
+  if (e.code === 'Space' && state.talking) {
+    e.preventDefault();
+    endTalk();
+  }
+});
+
+// Channel input
+channelInput.addEventListener('change', () => {
+  const name = channelInput.value.trim();
+  if (name) joinChannel(name);
+});
+channelInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    channelInput.blur();
+    const name = channelInput.value.trim();
+    if (name) joinChannel(name);
+  }
+});
+
+// Buttons
+copyBtn.addEventListener('click', () => {
+  const link = window.location.href;
+  navigator.clipboard.writeText(link).then(
+    () => toast('📋 Link copied!'),
+    () => toast('Could not copy — ' + link)
+  );
+});
+
+newBtn.addEventListener('click', () => {
+  joinChannel(randomChannel());
+});
+
+// ═══════════════════════════════════════
+//  Init
+// ═══════════════════════════════════════
+async function init() {
+  // 1. Set up audio pipeline FIRST (need element before joinChannel → resetMediaSource)
+  setupAudioOutput();
+  resetMediaSource(); // triggers sourceopen → onSourceOpen → ready to receive
+
+  // 2. Determine channel from URL hash
+  let channel = window.location.hash.slice(1) || randomChannel();
+  channel = channel.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  if (!channel) channel = randomChannel();
+
+  // 3. Join (will reset MSE again — harmless, ensures clean pipeline for the channel)
+  joinChannel(channel);
+
+  // 4. Connect NATS (joinChannel's subscribeAll is no-op until connected, so we re-sub after)
+  try {
+    await connectNATS();
+    subscribeAll();
+    startHeartbeat();
+  } catch (e) {
+    updateStatus('red', 'Connection failed');
+    toast('Server unreachable — will retry');
+    const retry = () => {
+      connectNATS().then(() => { subscribeAll(); startHeartbeat(); })
+        .catch(() => setTimeout(retry, 5000));
+    };
+    setTimeout(retry, 5000);
+  }
+
+  // Mic is acquired on-demand during PTT press, released on release
+  footerInfo.textContent = '🎤 Press hold to talk (mic activates only then)';
+  listenerCount.textContent = '👤 —';
+
+  // Handle hash changes
+  window.addEventListener('hashchange', () => {
+    const name = window.location.hash.slice(1);
+    if (name && name !== state.channel) {
+      joinChannel(name); // joinChannel calls resetMediaSource internally
+    }
+  });
+}
+
+// Kick off
+init().catch((e) => {
+  console.error('Init failed:', e);
+  updateStatus('red', 'Startup error');
+  footerInfo.textContent = '❌ ' + e.message;
+});
+</script>
 </body>
 </html>
