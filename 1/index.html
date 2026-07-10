@@ -39,10 +39,8 @@
     }
     #toolbar input:focus { outline: none; border-color: #58a6ff; }
 
-    /* Connection details wrapper — always visible on desktop */
-    #conn-details {
-      display: contents; /* transparent to layout on desktop */
-    }
+    /* Connection details wrapper */
+    #conn-details { display: contents; }
 
     /* Toggle button — hidden on desktop */
     #btn-conn-toggle { display: none; }
@@ -101,20 +99,21 @@
       user-select: none;
     }
 
-    /* Unmute overlay to bypass autoplay block rules */
+    /* Unmute overlay to bypass aggressive browser autoplay security rules */
     #unmute-overlay {
       position: absolute;
       top: 15px;
       left: 15px;
-      background: rgba(238, 174, 0, 0.85);
+      background: rgba(238, 174, 0, 0.95);
       color: #000;
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 4px;
       font-size: 12px;
       font-weight: bold;
       cursor: pointer;
       display: none;
       z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     /* ── Snapshot flash ── */
@@ -138,7 +137,7 @@
       overflow: hidden;
     }
 
-    /* ── Mobile tab bar — hidden on desktop ── */
+    /* ── Mobile tab bar ── */
     #mobile-tabs {
       display: none;
       flex-shrink: 0;
@@ -162,10 +161,8 @@
       border-bottom: 2px solid #58a6ff;
     }
 
-    /* ── Tab panels — all visible on desktop ── */
+    /* Tab panels */
     #panel-stats, #panel-controls, #panel-snaps { flex-shrink: 0; }
-
-    /* panel base */
     .panel { padding: 11px 13px; border-bottom: 1px solid #30363d; }
     .panel h3 {
       font-size: 11px;
@@ -299,61 +296,27 @@
         MOBILE  (≤ 640 px)
      ════════════════════════════════════════════════ */
     @media (max-width: 640px) {
-      #btn-conn-toggle {
-        display: block;
-        padding: 4px 10px;
-        font-size: 16px;
-      }
-      #conn-details {
-        display: none;
-      }
+      #btn-conn-toggle { display: block; padding: 4px 10px; font-size: 16px; }
+      #conn-details { display: none; }
       #conn-details.open {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        width: 100%;
-        padding-top: 6px;
-        order: 99;
+        display: flex; flex-wrap: wrap; gap: 6px; width: 100%; padding-top: 6px; order: 99;
       }
       #conn-details.open input { flex: 1; min-width: 100px; font-size: 16px; }
       #btn-snap-tb { margin-left: auto; padding: 4px 10px; }
       #main { flex-direction: column; }
       #video-wrap { flex: 0 0 auto; height: 42vh; }
       #sidebar {
-        width: 100%;
-        min-width: 0;
-        border-left: none;
-        border-top: 1px solid #30363d;
-        flex: 1;
-        min-height: 0;
+        width: 100%; min-width: 0; border-left: none; border-top: 1px solid #30363d; flex: 1; min-height: 0;
       }
       #mobile-tabs { display: flex; }
-      #panel-stats, #panel-controls, #panel-snaps, #chat-panel {
-        display: none !important;
+      #panel-stats, #panel-controls, #panel-snaps, #chat-panel { display: none !important; }
+      #panel-stats.tab-active, #panel-controls.tab-active, #panel-snaps.tab-active, #chat-panel.tab-active {
+        display: flex !important; flex-direction: column; flex: 1; overflow-y: auto; min-height: 0;
       }
-      #panel-stats.tab-active,
-      #panel-controls.tab-active,
-      #panel-snaps.tab-active,
-      #chat-panel.tab-active {
-        display: flex !important;
-        flex-direction: column;
-        flex: 1;
-        overflow-y: auto;
-        min-height: 0;
-      }
-      #panel-snaps.tab-active #thumb-strip {
-        max-height: none;
-        flex: 1;
-        border-bottom: none;
-      }
+      #panel-snaps.tab-active #thumb-strip { max-height: none; flex: 1; border-bottom: none; }
       #panel-snaps.tab-active #thumb-strip:empty { display: flex; }
       #panel-snaps.tab-active #thumb-strip:empty::before {
-        content: "No snapshots yet.";
-        color: #484f58;
-        font-size: 13px;
-        padding: 12px 0;
-        align-self: center;
-        margin: auto;
+        content: "No snapshots yet."; color: #484f58; font-size: 13px; padding: 12px 0; align-self: center; margin: auto;
       }
       #chat-panel.tab-active { flex: 1; }
       button          { min-height: 38px; }
@@ -384,14 +347,13 @@
 
   <div id="video-wrap">
     <video id="video" autoplay playsinline></video>
-    <div id="unmute-overlay" onclick="handleUnmute()">🔊 Click to Unmute System</div>
+    <div id="unmute-overlay" onclick="handleUnmute()">🔊 Click to Unmute Camera Audio</div>
     <span id="placeholder">Not connected</span>
     <div id="flash"></div>
     <canvas id="snap-canvas" style="display:none"></canvas>
   </div>
 
   <div id="sidebar">
-
     <div id="mobile-tabs">
       <button id="tab-stats"    class="tab-active" onclick="switchTab('stats')">Stats</button>
       <button id="tab-controls"                    onclick="switchTab('controls')">Camera</button>
@@ -411,7 +373,6 @@
 
     <div id="panel-controls" class="panel">
       <h3>Camera Controls</h3>
-
       <div class="ctrl-block">
         <div class="ctrl-label">Preset</div>
         <div class="ctrl-row">
@@ -420,7 +381,6 @@
           <button id="btn-high"    onclick="sendPreset('high')">High</button>
         </div>
       </div>
-
       <div class="ctrl-block">
         <div class="ctrl-label">Resolution</div>
         <div class="ctrl-row">
@@ -431,7 +391,6 @@
           </select>
         </div>
       </div>
-
       <div class="ctrl-block">
         <div class="ctrl-label">Framerate</div>
         <div class="ctrl-row">
@@ -443,7 +402,6 @@
           </select>
         </div>
       </div>
-
       <div class="ctrl-block">
         <div class="ctrl-label">Rotate</div>
         <div class="ctrl-row">
@@ -452,7 +410,6 @@
           <button onclick="rotateVideo(90)">↻ CW</button>
         </div>
       </div>
-
       <div class="ctrl-block">
         <div class="ctrl-label">Snapshot &nbsp;<kbd style="font-size:10px;background:#0d1117;padding:1px 4px;border-radius:3px;border:1px solid #30363d">Space</kbd></div>
         <div class="ctrl-row">
@@ -473,20 +430,16 @@
         <button onclick="sendChat()">Send</button>
       </div>
     </div>
+  </div>
+</div>
 
-  </div></div><div id="statusbar">
-  <span>
-    <span class="dot dot-idle" id="dot-nats"></span>
-    NATS: <span id="nats-status">disconnected</span>
-  </span>
-  <span>
-    <span class="dot dot-idle" id="dot-rtc"></span>
-    WebRTC: <span id="rtc-status">idle</span>
-  </span>
+<div id="statusbar">
+  <span><span class="dot dot-idle" id="dot-nats"></span>NATS: <span id="nats-status">disconnected</span></span>
+  <span><span class="dot dot-idle" id="dot-rtc"></span>WebRTC: <span id="rtc-status">idle</span></span>
 </div>
 
 <script type="module">
-  import { connect as natsConnect, StringCodec } from "https://cdn.jsdelivr.net/npm/nats.ws@1.29.2/esm/nats.js";
+  import { connect as natsConnect, StringCodec } from "https://cdn.jsdelivr.net/npm/nats.ws@1.29.2/esm/esm/nats.js";
 
   const ICE_SERVERS = [
     { urls: "stun:tunnel.knitnox.com:3478" },
@@ -524,7 +477,7 @@
   let statsTimer  = null;
   let prevBytes   = 0;
   let prevBytesTs = 0;
-  let localStream = null; // Holds the microphone track reference
+  let localStream = null;
   const sc        = StringCodec();
 
   const $     = id => document.getElementById(id);
@@ -572,17 +525,13 @@
   };
 
   const TAB_PANELS = { stats: "panel-stats", controls: "panel-controls", snaps: "panel-snaps", chat: "chat-panel" };
-
-  window.toggleConn = function () {
-    $("conn-details").classList.toggle("open");
-  };
+  window.toggleConn = () => $("conn-details").classList.toggle("open");
 
   window.handleUnmute = function() {
     video.muted = false;
     $("unmute-overlay").style.display = "none";
-  }
+  };
 
-  // ── Connect ────────────────────────────────────────────────────────────
   window.doConnect = async function () {
     const url  = $("nats-url").value.trim();
     const user = $("nats-user").value.trim();
@@ -596,14 +545,14 @@
     try {
       nc = await natsConnect({ servers: url, user, pass, reconnect: false });
       setNats("connected", "connected");
-      logChat("sys", "NATS connected. Requesting mic permissions…");
+      logChat("sys", "NATS connected. Initializing local microphone access...");
       
-      // 1. Ask browser for Mic access
+      // Request mic permissions so we can chat browser -> Pi speaker
       localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      logChat("sys", "Microphone acquired. Starting WebRTC…");
+      logChat("sys", "Microphone access verified. Building pipeline…");
     } catch (err) {
       setNats("error", `error: ${err.message}`);
-      logChat("sys", `Connection/Microphone error: ${err.message}`);
+      logChat("sys", `Initialization failure: ${err.message}`);
       $("btn-connect").disabled = false;
       return;
     }
@@ -614,7 +563,6 @@
     await startWebRTC();
   };
 
-  // ── Disconnect ─────────────────────────────────────────────────────────
   window.doDisconnect = async function () {
     cleanup();
     if (nc) { try { await nc.close(); } catch(_) {} nc = null; }
@@ -626,22 +574,20 @@
     logChat("sys", "Disconnected.");
   };
 
-  // ── WebRTC ─────────────────────────────────────────────────────────────
   async function startWebRTC() {
     setRtc("connecting", "connecting…");
     resetStats();
 
     pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     
-    // 2. Setup incoming remote video track from Raspberry Pi
+    // Explicitly define bidirectional intent for the connection renegotiation
     pc.addTransceiver("video", { direction: "recvonly" });
+    pc.addTransceiver("audio", { direction: "sendrecv" });
 
-    // 3. Attach your microphone track to send to the Raspberry Pi speaker
     if (localStream) {
       localStream.getAudioTracks().forEach(track => {
         pc.addTrack(track, localStream);
       });
-      logChat("sys", "Audio track added to pipeline.");
     }
 
     dc = pc.createDataChannel("control");
@@ -650,25 +596,27 @@
     dc.onmessage = e => {
       try {
         const m = JSON.parse(e.data);
-        if (m.type === "chat") {
-          logChat("pi", `[Pi] ${m.text}`);
-        } else if (m.type === "ack") {
+        if (m.type === "chat") logChat("pi", `[Pi] ${m.text}`);
+        else if (m.type === "ack") {
           logChat("sys", `Ack: ${m.cmd} = ${m.value}`);
           if (m.cmd === "preset") highlightPreset(m.value);
         }
       } catch (_) {}
     };
 
+    // Combine streams correctly into a single pipeline
     pc.ontrack = ev => {
       if (ev.track.kind === "video") {
-        logChat("sys", "Video track received.");
+        logChat("sys", "Video feed attached.");
         video.srcObject                = ev.streams[0];
         video.style.display            = "block";
         $("placeholder").style.display = "none";
         setSnapEnabled(true);
-        
-        // Show the unmute box if browser stops unmuted playback
+        // Show overlay to circumvent programmatic unmuting blocks
         $("unmute-overlay").style.display = "block";
+      }
+      if (ev.track.kind === "audio") {
+        logChat("sys", "Webcam audio line connected.");
       }
     };
 
@@ -685,9 +633,8 @@
       if (pc.iceGatheringState === "complete") { resolve(); return; }
       const done = () => { if (pc.iceGatheringState === "complete") resolve(); };
       pc.addEventListener("icegatheringstatechange", done, { once: false });
-      setTimeout(() => { logChat("sys", "ICE gathering timed out — sending partial offer."); resolve(); }, 10_000);
+      setTimeout(() => { logChat("sys", "ICE gathering timed out."); resolve(); }, 10_000);
     });
-    logChat("sys", "Offer ready (ICE gathered). Sending to Pi…");
 
     let resp;
     try {
@@ -706,8 +653,6 @@
 
     const answer = JSON.parse(sc.decode(resp.data));
     await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    logChat("sys", "Answer received. Waiting for connection…");
-
     statsTimer = setInterval(pollStats, 1000);
   }
 
@@ -758,8 +703,7 @@
   }
 
   window.takeSnapshot = function () {
-    if (video.readyState < 2) { logChat("sys", "No video to capture."); return; }
-
+    if (video.readyState < 2) { return; }
     const canvas = $("snap-canvas");
     const rotated = currentRotation === 90 || currentRotation === 270;
     canvas.width  = rotated ? video.videoHeight : video.videoWidth;
@@ -788,7 +732,6 @@
 
     canvas.toBlob(blob => {
       const url = URL.createObjectURL(blob);
-
       const a    = document.createElement("a");
       a.href     = url;
       a.download = name;
@@ -802,23 +745,14 @@
 
       const img    = document.createElement("img");
       img.src      = url;
-      img.title    = "Click to open full size";
       img.onclick = () => window.open(url);
 
       const meta  = document.createElement("span");
       meta.className   = "thumb-meta";
       meta.textContent = ts.replace("T", " ");
 
-      const dl    = document.createElement("a");
-      dl.className  = "thumb-dl";
-      dl.href       = url;
-      dl.download   = name;
-      dl.textContent = "Save again";
-
-      row.append(img, meta, dl);
+      row.append(img, meta);
       strip.prepend(row);
-
-      logChat("sys", `📷 Downloaded: ${name}`);
     }, "image/png");
   };
 
@@ -829,9 +763,7 @@
     }
   });
 
-  window.chatKeydown = function (e) {
-    if (e.key === "Enter") sendChat();
-  };
+  window.chatKeydown = e => { if (e.key === "Enter") sendChat(); };
 
   window.sendChat = function () {
     const input = $("chat-input");
@@ -843,7 +775,7 @@
   };
 
   function sendControl(cmd, value) {
-    if (!dc || dc.readyState !== "open") { logChat("sys", "DataChannel not open."); return; }
+    if (!dc || dc.readyState !== "open") { return; }
     dc.send(JSON.stringify({ type: "control", cmd, value }));
   }
 
@@ -860,13 +792,9 @@
   }
 
   let currentRotation = 0;
-
   window.rotateVideo = function (delta) {
-    if (delta === 0) {
-      currentRotation = 0;
-    } else {
-      currentRotation = ((currentRotation + delta) % 360 + 360) % 360;
-    }
+    if (delta === 0) currentRotation = 0;
+    else currentRotation = ((currentRotation + delta) % 360 + 360) % 360;
     video.classList.remove("rot-90", "rot-180", "rot-270");
     if (currentRotation !== 0) video.classList.add(`rot-${currentRotation}`);
     $("btn-rot-reset").textContent = currentRotation === 0 ? "0°" : `${currentRotation}°`;
