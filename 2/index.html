@@ -6,17 +6,327 @@
 <title>Walkie-Talkie</title>
 <style>
   :root {
-    --bg: #09090b; --bg-gradient: radial-gradient(ellipse at 50% 0%, #1a1020 0%, #09090b 60%);
-    --surface: #141417; --surface-hover: #1c1c20; --border: #252529;
-    --text: #f1f1f3; --dim: #6b6b73; --dim-light: #8e8e98;
-    --accent: #ef4444; --accent-glow: rgba(239,68,68,0.35);
-    --green: #22c55e; --green-glow: rgba(34,197,94,0.3);
-    --yellow: #eab308;
+    --case: #1a1d1a; --case-light: #232723; --case-dark: #0f110f;
+    --grille: #111311; --lcd-bg: #1e2a1a; --lcd-text: #8fbc6b;
+    --text: #d4d6d0; --dim: #6e7568; --dim-light: #90998a;
+    --accent: #f04a2a; --accent-glow: rgba(240,74,42,0.4);
+    --green: #5cb85c; --green-glow: rgba(92,184,92,0.35);
+    --yellow: #f0ad4e; --orange: #f04a2a;
     --font: 'Inter', system-ui, -apple-system, sans-serif;
-    --radius-sm: 10px; --radius: 16px; --radius-xl: 24px;
+    --radius-sm: 6px; --radius: 12px;
     --ptt-size: 148px;
     --safe-b: env(safe-area-inset-bottom, 12px);
     --safe-t: env(safe-area-inset-top, 0px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font); background: #0d0f0d;
+    background-image:
+      radial-gradient(ellipse at 50% 0%, #1a2218 0%, #0d0f0d 55%),
+      repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.003) 3px, rgba(255,255,255,0.003) 4px);
+    color: var(--text); min-height: 100dvh; display: flex; flex-direction: column;
+    align-items: center; -webkit-tap-highlight-color: transparent; user-select: none;
+    -webkit-user-select: none; padding: calc(10px + var(--safe-t)) 12px var(--safe-b);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    width: 100%; max-width: 400px; display: flex; flex-direction: column;
+    align-items: center; gap: 12px; flex: 1; padding-bottom: 8px;
+  }
+
+  /* ── Device shell ── */
+  .device-shell {
+    width: 100%; flex: 1; display: flex; flex-direction: column; gap: 10px;
+    background: linear-gradient(180deg, #1e221d 0%, #171a16 30%, #141714 100%);
+    border-radius: 22px; padding: 18px 16px 14px;
+    box-shadow:
+      0 2px 0 #2a2e28 inset,
+      0 8px 32px rgba(0,0,0,0.6),
+      0 1px 0 rgba(255,255,255,0.04) inset;
+    border: 1px solid #252823;
+    position: relative; overflow: hidden;
+  }
+  /* Subtle texture on case */
+  .device-shell::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    border-radius: 22px;
+  }
+
+  /* ── Speaker grille ── */
+  .speaker-grille {
+    width: 100%; height: 40px; background: var(--grille); border-radius: 8px;
+    display: flex; flex-direction: column; gap: 4px; padding: 8px 12px;
+    position: relative; z-index: 1;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
+  }
+  .grille-line {
+    height: 2px; background: #1a1e18; border-radius: 1px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  /* ── LCD display ── */
+  .lcd-display {
+    width: 100%; background: var(--lcd-bg); border-radius: 8px; padding: 10px 14px;
+    position: relative; z-index: 1;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03);
+    border: 1px solid #1a1f16;
+  }
+  .lcd-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.72rem; color: var(--lcd-text);
+    letter-spacing: 0.04em; gap: 8px;
+  }
+  .lcd-row.top { margin-bottom: 4px; opacity: 0.7; font-size: 0.6rem; }
+  .lcd-ch {
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-weight: 600; font-size: 0.85rem; color: #a8d68a;
+  }
+  .lcd-ch-label { font-size: 0.55rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.1em; }
+  .lcd-status { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .lcd-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .lcd-dot.on { background: #5cb85c; box-shadow: 0 0 6px rgba(92,184,92,0.6); }
+  .lcd-dot.off { background: #3a4a2a; }
+  .lcd-dot.tx { background: #f04a2a; box-shadow: 0 0 8px rgba(240,74,42,0.7); animation: txBlink 0.6s steps(2) infinite; }
+  @keyframes txBlink { 50% { opacity: 0.3; } }
+
+  /* ── Channel input (inside LCD) ── */
+  .lcd-input {
+    background: none; border: none; color: #a8d68a; font-family: inherit;
+    font-size: 0.85rem; font-weight: 600; outline: none; width: 100%;
+    letter-spacing: 0.04em;
+  }
+  .lcd-input::placeholder { color: #3a4a2a; }
+  .lcd-btn-row { display: flex; gap: 4px; flex-shrink: 0; }
+  .lcd-btn {
+    background: rgba(143,188,107,0.1); border: 1px solid rgba(143,188,107,0.2);
+    color: var(--lcd-text); font-size: 0.65rem; padding: 2px 8px; border-radius: 4px;
+    cursor: pointer; font-family: inherit; letter-spacing: 0.04em;
+    transition: all 0.15s;
+  }
+  .lcd-btn:active { background: rgba(143,188,107,0.25); }
+
+  /* ── Status bar inside LCD ── */
+  .status-row {
+    display: flex; align-items: center; gap: 8px; font-size: 0.65rem;
+    color: var(--lcd-text); opacity: 0.8; font-family: 'SF Mono', monospace;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot.red { background: #f04a2a; box-shadow: 0 0 5px rgba(240,74,42,0.6); }
+  .dot.green { background: #5cb85c; box-shadow: 0 0 6px rgba(92,184,92,0.6); animation: lcdPulse 2s ease-in-out infinite; }
+  .dot.yellow { background: #f0ad4e; box-shadow: 0 0 5px rgba(240,173,78,0.5); }
+  @keyframes lcdPulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  .status-sep { opacity: 0.3; }
+
+  /* ── VU meter (signal-style) ── */
+  .vu-block {
+    width: 100%; position: relative; z-index: 1;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .vu-header {
+    display: flex; justify-content: space-between; font-size: 0.55rem;
+    color: var(--dim-light); text-transform: uppercase; letter-spacing: 0.12em;
+    font-weight: 600;
+  }
+  .vu-bars {
+    display: flex; gap: 2px; height: 14px; align-items: flex-end;
+  }
+  .vu-seg {
+    flex: 1; height: 100%; background: #1e221d; border-radius: 1px;
+    transition: background 0.08s;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .vu-seg.l1 { background: #3a5a2a; }
+  .vu-seg.l2 { background: #5a8a3a; }
+  .vu-seg.l3 { background: #8ab83a; }
+  .vu-seg.l4 { background: #c8c840; }
+  .vu-seg.l5 { background: #e8a030; box-shadow: 0 0 4px rgba(240,74,42,0.4); }
+  .vu-seg.l6 { background: #f04020; box-shadow: 0 0 8px rgba(240,74,42,0.7); }
+
+  /* ── PTT Button ── */
+  .ptt-container {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    width: 100%; padding: 4px 0; position: relative; z-index: 1;
+    min-height: 120px;
+  }
+  .ptt-btn {
+    width: var(--ptt-size); height: var(--ptt-size); border-radius: 50%;
+    border: 4px solid #3a1508;
+    background: radial-gradient(circle at 35% 30%, #c04020, #8a1a08 70%, #4a0a02 100%);
+    color: #ffd8c8; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; position: relative;
+    transition: transform 0.12s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s;
+    box-shadow:
+      0 6px 20px rgba(0,0,0,0.6),
+      0 2px 6px rgba(0,0,0,0.4),
+      inset 0 2px 4px rgba(255,255,255,0.15),
+      inset 0 -3px 6px rgba(0,0,0,0.4);
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Grip texture */
+  .ptt-btn::after {
+    content: ''; position: absolute; inset: 8px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.04);
+    pointer-events: none;
+  }
+  .ptt-inner {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    position: relative; z-index: 2;
+  }
+  .ptt-btn .icon { font-size: 2.2rem; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+  .ptt-btn .ptt-label {
+    font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+
+  /* PTT ring (knurled edge) */
+  .ptt-ring {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    border: 2px solid rgba(0,0,0,0.2);
+  }
+  .ptt-ring-1 { width: calc(100% + 12px); height: calc(100% + 12px); border-style: dashed; border-color: rgba(255,255,255,0.04); }
+  .ptt-ring-2 { width: calc(100% + 26px); height: calc(100% + 26px); border-color: rgba(255,255,255,0.02); }
+
+  /* Pressed */
+  .ptt-btn:active, .ptt-btn.pressed {
+    transform: scale(0.93);
+    box-shadow:
+      0 3px 8px rgba(0,0,0,0.7),
+      0 0 48px rgba(240,74,42,0.4),
+      inset 0 4px 8px rgba(0,0,0,0.5);
+  }
+
+  /* Talking */
+  .ptt-btn.talking {
+    border-color: #ff6030;
+    box-shadow:
+      0 6px 20px rgba(0,0,0,0.6),
+      0 0 64px rgba(240,74,42,0.5),
+      0 0 100px rgba(240,74,42,0.2),
+      inset 0 2px 4px rgba(255,160,100,0.2),
+      inset 0 -3px 6px rgba(0,0,0,0.4);
+    animation: txGlow 0.5s ease-in-out infinite;
+  }
+  .ptt-btn.talking .ptt-ring-1 { border-color: rgba(255,100,40,0.2); animation: ringPulse 0.5s ease-in-out infinite; }
+  .ptt-btn.talking .ptt-ring-2 { border-color: rgba(255,100,40,0.08); animation: ringPulse 0.5s ease-in-out 0.1s infinite; }
+  .ptt-btn.talking .icon { transform: scale(1.06); }
+
+  @keyframes txGlow {
+    0%,100% { box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 48px rgba(240,74,42,0.5), 0 0 100px rgba(240,74,42,0.2), inset 0 2px 4px rgba(255,160,100,0.2), inset 0 -3px 6px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 80px rgba(240,74,42,0.7), 0 0 140px rgba(240,74,42,0.35), inset 0 2px 4px rgba(255,160,100,0.3), inset 0 -3px 6px rgba(0,0,0,0.4); }
+  }
+  @keyframes ringPulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+
+  /* Warning */
+  .ptt-btn.warning {
+    border-color: #c89420;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 48px rgba(240,173,78,0.4), inset 0 2px 4px rgba(255,200,100,0.15), inset 0 -3px 6px rgba(0,0,0,0.4);
+    animation: warnGlow 0.5s ease-in-out infinite;
+  }
+  @keyframes warnGlow {
+    0%,100% { box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 32px rgba(240,173,78,0.3), inset 0 2px 4px rgba(255,200,100,0.15), inset 0 -3px 6px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 60px rgba(240,173,78,0.5), inset 0 2px 4px rgba(255,200,100,0.25), inset 0 -3px 6px rgba(0,0,0,0.4); }
+  }
+
+  /* Busy */
+  .ptt-btn.floor-busy {
+    border-color: #2a2a25; background: radial-gradient(circle at 35% 30%, #3a3a35, #1a1a15 70%, #0a0a05 100%);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6); cursor: not-allowed; opacity: 0.8;
+  }
+  .ptt-btn.floor-busy .icon { filter: grayscale(0.7); opacity: 0.5; }
+  .ptt-btn.floor-busy .ptt-label { color: #5a5a55; }
+  .ptt-btn.busy-flash { border-color: #f0ad4e !important; box-shadow: 0 0 40px rgba(240,173,78,0.5) !important; }
+
+  /* ── Knobs row ── */
+  .knobs-row {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    position: relative; z-index: 1; padding: 0 4px;
+  }
+  .knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .knob-label { font-size: 0.5rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; }
+  .knob {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #3a3d38, #1a1c18 70%);
+    border: 2px solid #2a2d28; position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.04);
+  }
+  .knob::after {
+    content: ''; position: absolute; top: 6px; left: 50%;
+    transform: translateX(-50%) rotate(var(--knob-angle, 0deg));
+    transform-origin: 50% calc(50% - 6px + 24px); /* pivot at knob center */
+    width: 3px; height: 10px; background: #6e7568; border-radius: 2px;
+  }
+  .knob-vol { width: 48px; height: 48px; }
+  .knob-vol input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 48px; height: 48px;
+    background: none; position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    border-radius: 50%; z-index: 1;
+  }
+  .knob-vol::after {
+    top: 6px; height: 12px;
+    transform-origin: 50% calc(50% - 6px + 24px);
+    /* --knob-angle set by JS, range: -135deg (vol=0) to +135deg (vol=100) */
+    transform: translateX(-50%) rotate(var(--knob-angle, 0deg));
+  }
+    -webkit-appearance: none; appearance: none; width: 48px; height: 48px;
+    background: none; position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    border-radius: 50%;
+  }
+  .knob-vol-value { font-size: 0.55rem; color: var(--lcd-text); font-family: monospace; }
+
+  /* ── Footer ── */
+  .footer {
+    font-size: 0.55rem; color: var(--dim); text-align: center;
+    letter-spacing: 0.05em; position: relative; z-index: 1;
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: max(28px, var(--safe-b)); left: 50%; transform: translateX(-50%);
+    background: #1e221d; border: 1px solid #3a3d35; padding: 10px 20px;
+    border-radius: 20px; font-size: 0.78rem; font-weight: 500; z-index: 100; opacity: 0;
+    transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.7);
+    font-family: 'SF Mono', monospace; letter-spacing: 0.03em;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+
+  /* ── Responsive ── */
+  @media (max-width: 400px) {
+    :root { --ptt-size: 126px; }
+    .ptt-btn .icon { font-size: 1.8rem; }
+    .ptt-btn .ptt-label { font-size: 0.65rem; }
+    .lcd-ch { font-size: 0.75rem; }
+    .lcd-input { font-size: 0.75rem; }
+    .device-shell { padding: 14px 12px 10px; gap: 8px; }
+  }
+  @media (max-width: 340px) {
+    :root { --ptt-size: 108px; }
+    .ptt-btn .icon { font-size: 1.5rem; }
+    .ptt-btn .ptt-label { font-size: 0.6rem; }
+    .device-shell { padding: 10px 8px 8px; gap: 6px; border-radius: 16px; }
+    .ptt-ring-1, .ptt-ring-2 { display: none; }
+  }
+  @media (min-height: 800px) {
+    :root { --ptt-size: 162px; }
+    .ptt-btn .icon { font-size: 2.5rem; }
+    .ptt-btn .ptt-label { font-size: 0.78rem; }
+    .speaker-grille { height: 50px; }
+  }
+  @media (max-height: 500px) and (orientation: landscape) {
+    :root { --ptt-size: 90px; }
+    .device-shell { gap: 4px; padding: 8px 10px; }
+    .speaker-grille { display: none; }
+    .lcd-display { padding: 6px 10px; }
+    .ptt-btn .icon { font-size: 1.3rem; }
+    .ptt-btn .ptt-label { font-size: 0.55rem; }
+    .ptt-ring-1, .ptt-ring-2 { display: none; }
+    .footer { display: none; }
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -268,72 +578,108 @@
 <body>
 
 <div class="container">
-  <div class="header">
-    <h1>Walkie-Talkie</h1>
-    <div class="subtitle">Tap &bull; Talk &bull; Share &mdash; no accounts</div>
-  </div>
+  <div class="device-shell">
 
-  <div class="channel-card">
-    <span class="hash">#</span>
-    <input id="channelInput" type="text" placeholder="channel-name" maxlength="40" autocomplete="off" spellcheck="false">
-    <span class="btn-divider"></span>
-    <button class="btn-icon" id="copyBtn" title="Copy link">📋</button>
-    <button class="btn-icon" id="newBtn" title="New channel">🔄</button>
-  </div>
-
-  <div class="info-card">
-    <div class="status-row">
-      <span class="dot" id="statusDot"></span>
-      <span id="statusText">Connecting...</span>
-      <span class="status-sep">&bull;</span>
-      <span id="listenerCount">—</span>
+    <!-- Speaker grille -->
+    <div class="speaker-grille">
+      <div class="grille-line"></div>
+      <div class="grille-line"></div>
+      <div class="grille-line"></div>
+      <div class="grille-line"></div>
+      <div class="grille-line"></div>
     </div>
-    <div class="vu-wrap">
-      <div class="vu-header">
-        <span class="vu-label">Mic</span>
-        <span class="vu-peak" id="vuMicPeak"></span>
+
+    <!-- LCD display -->
+    <div class="lcd-display">
+      <div class="lcd-row top">
+        <span>CH</span>
+        <span id="lcdTime">--:--</span>
       </div>
-      <div class="vu-track"><div class="vu-fill" id="vuMic"></div></div>
-    </div>
-    <div class="vu-wrap">
-      <div class="vu-header">
-        <span class="vu-label">Speaker</span>
-        <span class="vu-peak" id="vuSpkPeak"></span>
+      <div class="lcd-row">
+        <span class="lcd-ch-label">#</span>
+        <input class="lcd-input" id="channelInput" type="text" placeholder="--------" maxlength="40" autocomplete="off" spellcheck="false">
+        <span class="lcd-btn-row">
+          <button class="lcd-btn" id="copyBtn">COPY</button>
+          <button class="lcd-btn" id="newBtn">NEW</button>
+        </span>
       </div>
-      <div class="vu-track"><div class="vu-fill" id="vuSpk"></div></div>
+      <div class="lcd-row" style="margin-top:4px;">
+        <span class="status-row">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">CONNECTING</span>
+        </span>
+        <span class="status-row">
+          <span class="lcd-dot on" id="lcdRx"></span>
+          <span style="font-size:0.6rem;">RX</span>
+          <span class="lcd-dot off" id="lcdTx" style="margin-left:4px;"></span>
+          <span style="font-size:0.6rem;">TX</span>
+          <span style="margin-left:6px;" id="listenerCount">--</span>
+        </span>
+      </div>
     </div>
-  </div>
 
-  <div class="ptt-container">
-    <button class="ptt-btn" id="pttBtn">
-      <span class="ptt-ring ptt-ring-1"></span>
-      <span class="ptt-ring ptt-ring-2"></span>
-      <span class="ptt-inner">
-        <span class="icon">🎙️</span>
-        <span class="ptt-label">Hold to talk</span>
-      </span>
-    </button>
-  </div>
+    <!-- Signal meters -->
+    <div class="vu-block" id="vuMicBlock">
+      <div class="vu-header"><span>MIC</span><span id="vuMicPeak"></span></div>
+      <div class="vu-bars" id="vuMicBars"></div>
+    </div>
+    <div class="vu-block" id="vuSpkBlock">
+      <div class="vu-header"><span>SPK</span><span id="vuSpkPeak"></span></div>
+      <div class="vu-bars" id="vuSpkBars"></div>
+    </div>
 
-  <div class="vol-row">
-    <span class="vol-icon">🔈</span>
-    <input type="range" id="volSlider" min="0" max="100" value="80" aria-label="Volume">
-    <span class="vol-icon">🔊</span>
-  </div>
+    <!-- PTT Button -->
+    <div class="ptt-container">
+      <button class="ptt-btn" id="pttBtn">
+        <span class="ptt-ring ptt-ring-1"></span>
+        <span class="ptt-ring ptt-ring-2"></span>
+        <span class="ptt-inner">
+          <span class="icon">🎙️</span>
+          <span class="ptt-label">PTT</span>
+        </span>
+      </button>
+    </div>
 
-  <div class="footer" id="footerInfo">Audio: checking…</div>
+    <!-- Volume knob -->
+    <div class="knobs-row">
+      <div class="knob-wrap">
+        <div class="knob knob-vol">
+          <input type="range" id="volSlider" min="0" max="100" value="80" aria-label="Volume">
+        </div>
+        <span class="knob-label">VOL</span>
+        <span class="knob-vol-value" id="volValue">80</span>
+      </div>
+      <div class="footer" id="footerInfo">OPUS 100ms</div>
+      <div style="width:48px;"></div>
+    </div>
+
+  </div>
 
   <div class="toast" id="toast"></div>
 </div>
 
 <script type="module">
 import { connect } from 'https://esm.sh/nats.ws@1.28.0';
+import FingerprintJS from 'https://esm.sh/@fingerprintjs/fingerprintjs@3';
 
 // ── Audio config ──
-const CHUNK_MS = 100;        // 100ms chunks (low latency, efficient Opus frames)
+const CHUNK_MS = 100;        // 100ms chunks
 const OPUS_CODECS = [        // Opus only — NEVER raw PCM/WAV
   'audio/webm;codecs=opus',
   'audio/ogg;codecs=opus',
+];
+
+// ── Channel / security config ──
+const CHANNEL_ID_LEN = 16;   // base62 chars → huge search space
+const WORDLIST = [
+  'alpha','bravo','charlie','delta','echo','foxtrot','golf','hotel',
+  'india','juliet','kilo','lima','mike','november','oscar','papa',
+  'quebec','romeo','sierra','tango','uniform','victor','whiskey',
+  'xray','yankee','zulu','atlas','blaze','cobra','dragon','eagle',
+  'falcon','ghost','hammer','inferno','jaguar','kappa','lightning',
+  'meteor','nebula','omega','phantom','quartz','raptor','shadow',
+  'thunder','ultra','vortex','wolf','xenon','yeti','zenith','amber',
+  'bolt','crystal','drift','ember','frost','glacier','haven','onyx',
 ];
 
 // ═══════════════════════════════════════
@@ -341,6 +687,10 @@ const OPUS_CODECS = [        // Opus only — NEVER raw PCM/WAV
 // ═══════════════════════════════════════
 const state = {
   channel: '',
+  passphrase: '',       // channel passphrase (from URL hash or freshly generated)
+  fingerprint: '',      // FingerprintJS visitorId
+  realUser: 'bootstrap', // real NATS user (fetched from auth service at runtime)
+  realPass: 'bootstrap', // real NATS password (never hardcoded in source)
   connected: false,
   talking: false,
   micReady: false,
@@ -370,6 +720,7 @@ const state = {
   talkStartTs: 0,
   maxTalkMs: 115000, // 1:55 (5s grace before hard 2:00)
   warnAtMs: 105000,  // warn at 1:45 (10s before auto-release)
+  talkRequested: false, // true while PTT held; checked after each await in startTalk
 };
 
 // ═══════════════════════════════════════
@@ -383,22 +734,34 @@ const pttBtn = $('pttBtn');
 const statusDot = $('statusDot');
 const statusText = $('statusText');
 const listenerCount = $('listenerCount');
-const vuMic = $('vuMic');
-const vuSpk = $('vuSpk');
+const vuMicBars = $('vuMicBars');
+const vuSpkBars = $('vuSpkBars');
+const lcdTx = $('lcdTx');
+const lcdRx = $('lcdRx');
+const lcdTime = $('lcdTime');
 const volSlider = $('volSlider');
+const volValue = $('volValue');
 const footerInfo = $('footerInfo');
 const toastEl = $('toast');
 
 // ═══════════════════════════════════════
 //  Helpers
 // ═══════════════════════════════════════
-function randomChannel() {
-  const adj = ['brave','calm','cool','dark','fierce','gentle','happy','keen','loud','mighty',
-               'nimble','proud','quick','sharp','swift','wild','bold','bright','crisp','deep'];
-  const noun = ['eagle','fox','hawk','lion','owl','puma','raven','shark','tiger','viper',
-                'bear','deer','elk','frog','hawk','lynx','mole','newt','pike','wolf'];
-  const pick = (a) => a[Math.floor(Math.random() * a.length)];
-  return `${pick(adj)}-${pick(noun)}-${Math.floor(Math.random() * 99) + 1}`;
+function randomId(len = CHANNEL_ID_LEN) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({length: len}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+function randomPassphrase(words = 4) {
+  const picked = [];
+  for (let i = 0; i < words; i++) {
+    picked.push(WORDLIST[Math.floor(Math.random() * WORDLIST.length)]);
+  }
+  return picked.join('-');
+}
+
+function generateChannelCreds() {
+  return { id: randomId(), passphrase: randomPassphrase() };
 }
 
 function toast(msg, ms = 2000) {
@@ -411,24 +774,76 @@ function toast(msg, ms = 2000) {
 function updateStatus(dotClass, text) {
   statusDot.className = `dot ${dotClass}`;
   statusText.textContent = text;
+  updateLCD(dotClass, state.talking);
 }
 
-function updateVU(element, value) {
+// Build segmented VU bar elements once
+(function initVUBars() {
+  for (const container of [vuMicBars, vuSpkBars]) {
+    for (let i = 0; i < 14; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'vu-seg';
+      container.appendChild(seg);
+    }
+  }
+})();
+
+function updateVU(barsContainer, value) {
   const pct = Math.min(100, Math.max(0, value));
-  element.style.width = pct + '%';
-  element.classList.toggle('hot', pct > 65 && pct <= 85);
-  element.classList.toggle('clip', pct > 85);
+  const active = Math.round(pct / 100 * barsContainer.children.length);
+  for (let i = 0; i < barsContainer.children.length; i++) {
+    const seg = barsContainer.children[i];
+    seg.className = 'vu-seg';
+    if (i < active) {
+      if (i < 5) seg.className = 'vu-seg l1';
+      else if (i < 7) seg.className = 'vu-seg l2';
+      else if (i < 9) seg.className = 'vu-seg l3';
+      else if (i < 11) seg.className = 'vu-seg l4';
+      else if (i < 13) seg.className = 'vu-seg l5';
+      else seg.className = 'vu-seg l6';
+    }
+  }
 }
+
+function updateLCD(status, txActive) {
+  lcdRx.className = status === 'green' ? 'lcd-dot on' : 'lcd-dot off';
+  lcdTx.className = txActive ? 'lcd-dot tx' : 'lcd-dot off';
+  // Update clock
+  const now = new Date();
+  lcdTime.textContent = now.getHours().toString().padStart(2,'0') + ':' +
+                        now.getMinutes().toString().padStart(2,'0');
+}
+setInterval(() => {
+  const now = new Date();
+  if (lcdTime) lcdTime.textContent = now.getHours().toString().padStart(2,'0') + ':' +
+                                      now.getMinutes().toString().padStart(2,'0');
+}, 15000);
+
+// Volume knob rotation: 0 → -135deg, 100 → +135deg
+function updateKnobAngle(val) {
+  const angle = -135 + (val / 100) * 270; // map 0-100 to -135 to +135
+  const knobEl = document.querySelector('.knob-vol');
+  if (knobEl) knobEl.style.setProperty('--knob-angle', angle + 'deg');
+}
+volSlider.addEventListener('input', () => {
+  if (volValue) volValue.textContent = volSlider.value;
+  updateKnobAngle(volSlider.value);
+});
+// Set initial angle
+updateKnobAngle(volSlider.value);
 
 // ═══════════════════════════════════════
 //  NATS
 // ═══════════════════════════════════════
-async function connectNATS() {
+async function connectNATS(user = 'bootstrap', pass = 'bootstrap') {
+  // bootstrap:bootstrap is the only credential visible in HTML source.
+  // It can ONLY call walkie.auth.> — useless for accessing audio channels.
+  // Real credentials are fetched from the auth service at runtime.
   try {
     const nc = await connect({
       servers: ['wss://tunnel.knitnox.com'],
-      user: 'agent2',
-      pass: 'agent2_password',
+      user: user,
+      pass: pass,
       maxReconnectAttempts: -1,
       reconnectTimeWait: 2000,
       timeout: 5000,
@@ -500,7 +915,7 @@ function handleCtrl(ctrl) {
     case 'stream-start':
       // New transmission — reset MSE for clean decode
       resetMediaSource();
-      updateVU(vuSpk, 15);
+      updateVU(vuSpkBars, 15);
       break;
     case 'stream-end':
       // Transmission ended — no action, buffer plays out
@@ -598,7 +1013,7 @@ function drainQueue() {
   if (state.chunkQueue.length === 0) return;
 
   // Update VU meter from queue depth (crude proxy for incoming audio)
-  updateVU(vuSpk, Math.min(state.chunkQueue.length * 15, 70));
+  updateVU(vuSpkBars, Math.min(state.chunkQueue.length * 15, 70));
 
   state.isAppending = true;
   try {
@@ -642,7 +1057,7 @@ function setupAudioOutput() {
       if (state.vuSpkNode) {
         state.vuSpkNode.getByteFrequencyData(spkData);
         const avg = spkData.reduce((a, b) => a + b, 0) / spkData.length;
-        updateVU(vuSpk, avg * 1.5);
+        updateVU(vuSpkBars, avg * 1.5);
       }
       requestAnimationFrame(pollSpk);
     }
@@ -697,7 +1112,7 @@ async function initMic() {
         if (state.vuMicNode) {
           state.vuMicNode.getByteFrequencyData(micData);
           const avg = micData.reduce((a, b) => a + b, 0) / micData.length;
-          updateVU(vuMic, state.talking ? avg * 1.5 : avg * 0.4);
+          updateVU(vuMicBars, state.talking ? avg * 1.5 : avg * 0.4);
         }
         requestAnimationFrame(pollMic);
       }
@@ -732,7 +1147,7 @@ function releaseMic() {
   }
   state.micReady = false;
   state.vuMicNode = null;
-  updateVU(vuMic, 0);
+  updateVU(vuMicBars, 0);
   footerInfo.textContent = state.supportedCodec
     ? `🎤 Opus ${CHUNK_MS}ms ready`
     : '🎤 Ready (Opus required to talk)';
@@ -779,29 +1194,34 @@ async function startTalk() {
   // ── Floor check ──
   if (state.floorOccupied) {
     toast('🔒 Channel busy — someone else is talking');
-    // Flash the button to indicate busy
     pttBtn.classList.add('busy-flash');
     setTimeout(() => pttBtn.classList.remove('busy-flash'), 300);
     return;
   }
 
+  state.talkRequested = true;  // user is holding PTT
+
   if (!state.nats || !state.connected) {
     toast('Not connected — retrying…');
-    try { await connectNATS(); subscribeAll(); } catch (e) { toast('Cannot connect'); return; }
+    try { await connectNATS(state.realUser, state.realPass); subscribeAll(); } catch (e) { toast('Cannot connect'); return; }
   }
+  if (!state.talkRequested) { releaseMic(); return; }  // released during reconnect
   if (!state.channel) {
-    joinChannel(randomChannel());
+    joinChannel(); // generates new channel creds + creates
+    await connectToChannel(); // bootstrap → auth → agent2 → subscribe
   }
 
   // Ensure AudioContext is running
   if (state.audioCtx && state.audioCtx.state === 'suspended') {
     await state.audioCtx.resume();
   }
+  if (!state.talkRequested) { releaseMic(); return; }  // released during resume
 
   // Acquire mic (only now — releases when done talking)
   if (!state.micReady) {
     try { await initMic(); } catch (e) { return; }
   }
+  if (!state.talkRequested) { releaseMic(); return; }  // released during mic init — MUST free the stream we just acquired
 
   // ── Claim the floor ──
   state.myClaimTs = Date.now();
@@ -821,8 +1241,8 @@ async function startTalk() {
   // Create + start recorder
   state.mediaRecorder = createRecorder();
   if (!state.mediaRecorder) {
-    // Release floor if recorder creation fails
     state.floorOccupied = false;
+    state.talkRequested = false;
     releaseMic();
     toast('Cannot access microphone');
     return;
@@ -836,8 +1256,8 @@ async function startTalk() {
 
   pttBtn.classList.add('talking');
   pttBtn.querySelector('.icon').textContent = '🔴';
-  pttBtn.querySelector('.ptt-label').textContent = 'Talking…';
-  vuMic.classList.add('hot');
+  pttBtn.querySelector('.ptt-label').textContent = 'TX';
+  updateLCD('green', true); // TX LED on
 
   // ── Auto-release timer ──
   startTalkTimer();
@@ -868,14 +1288,43 @@ function forceStopTalk(reason) {
 }
 
 function endTalk() {
+  // Signal any in-progress startTalk() to abort at its next await
+  state.talkRequested = false;
+
+  // If startTalk hasn't reached recorder creation yet, just clean up and return.
+  // The startTalk() awaits will see talkRequested=false and abort themselves.
+  if (!state.talking) {
+    // startTalk may have already claimed the floor — release it
+    if (state.floorOccupied && state.floorOwner === state.floorOwnerId) {
+      state.floorOccupied = false;
+      state.floorOwner = '';
+      state.floorOwnerId = '';
+      state.myClaimTs = 0;
+      updatePTTState();
+      if (state.nats && state.connected && state.channel) {
+        try {
+          state.nats.publish(`walkie.${state.channel}.ctrl`,
+            JSON.stringify({ type: 'floor-released', id: state.floorOwnerId || 'aborted' }));
+        } catch (e) { /* ignore */ }
+      }
+    }
+    releaseMic();
+    pttBtn.classList.remove('talking', 'warning', 'floor-busy');
+    pttBtn.querySelector('.icon').textContent = '🎙️';
+    pttBtn.querySelector('.icon').textContent = '🎙️';
+    pttBtn.querySelector('.ptt-label').textContent = 'PTT';
+    updateVU(vuMicBars, 0);
+    return;
+  }
+
   clearInterval(state.talkTimer);
   state.talkTimer = null;
 
   pttBtn.classList.remove('talking', 'warning');
   pttBtn.querySelector('.icon').textContent = '🎙️';
-  pttBtn.querySelector('.ptt-label').textContent = 'Hold to talk';
-  vuMic.classList.remove('hot');
-  updateVU(vuMic, 0);
+  pttBtn.querySelector('.ptt-label').textContent = 'PTT';
+  updateVU(vuMicBars, 0);
+  updateLCD('green', false); // TX LED off
 
   // Stop recording (ondataavailable + onstop fire; state.talking still true so
   // handleAudioChunk drops any final self-chunks)
@@ -921,12 +1370,12 @@ function updatePTTState() {
     // Someone else has the floor — show disabled
     pttBtn.classList.add('floor-busy');
     pttBtn.querySelector('.icon').textContent = '🔒';
-    pttBtn.querySelector('.ptt-label').textContent = 'Channel busy';
+    pttBtn.querySelector('.ptt-label').textContent = 'BUSY';
   } else {
     pttBtn.classList.remove('floor-busy');
     if (!state.talking) {
       pttBtn.querySelector('.icon').textContent = '🎙️';
-      pttBtn.querySelector('.ptt-label').textContent = 'Hold to talk';
+      pttBtn.querySelector('.ptt-label').textContent = 'PTT';
     }
   }
 }
@@ -934,15 +1383,26 @@ function updatePTTState() {
 // ═══════════════════════════════════════
 //  Channel management
 // ═══════════════════════════════════════
-function joinChannel(name) {
-  name = name.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-  if (!name) { name = randomChannel(); }
+function joinChannel(name, passphrase = '') {
+  // name = channelId; if empty, generate a new channel
+  if (!name) {
+    const creds = generateChannelCreds();
+    name = creds.id;
+    passphrase = creds.passphrase;
+  }
+  if (!passphrase) {
+    passphrase = randomPassphrase();
+  }
 
   state.channel = name;
+  state.passphrase = passphrase;
   channelInput.value = name;
-  window.location.hash = '#' + name;
 
-  // Reset floor state for new channel
+  // URL hash: #channelId:passphrase — simple, shareable
+  window.location.hash = `#${name}:${passphrase}`;
+
+  // Abort any in-progress startTalk and reset floor
+  state.talkRequested = false;
   if (state.talking) endTalk();
   state.floorOccupied = false;
   state.floorOwner = '';
@@ -952,25 +1412,104 @@ function joinChannel(name) {
 
   unsubscribe();
   resetMediaSource();  // fresh audio pipeline for new channel
-  subscribeAll();
-  startHeartbeat();
 
   document.title = `📻 ${name} — Walkie-Talkie`;
   toast(`Joined #${name}`);
 }
 
+async function authenticateWithService() {
+  // Call walkie.auth.creds to fetch REAL credentials from auth service.
+  // This validates the passphrase, rate-limits by fingerprint, and
+  // returns agent2 credentials that are NEVER in the HTML source.
+  if (!state.nats || !state.connected) return null;
+
+  const payload = JSON.stringify({
+    fingerprint: state.fingerprint,
+    channel_id: state.channel,
+    passphrase: state.passphrase,
+  });
+
+  try {
+    const reply = await state.nats.request('walkie.auth.creds', payload, { timeout: 5000 });
+    const result = JSON.parse(new TextDecoder().decode(reply.data));
+    if (result.ok) {
+      if (result.occupants !== undefined) {
+        listenerCount.textContent = `👤 ${result.occupants}`;
+      }
+      return result; // { ok: true, server, user, pass }
+    } else {
+      toast(`❌ ${result.error || 'Auth denied'}`);
+      return null;
+    }
+  } catch (e) {
+    console.error('Auth service unreachable:', e.message);
+    toast('❌ Auth service unreachable — cannot connect');
+    return null;
+  }
+}
+
+async function connectToChannel() {
+  // Close existing connection
+  if (state.nats) {
+    try { await state.nats.close(); } catch (e) { /* ignore */ }
+    state.nats = null;
+    state.connected = false;
+  }
+
+  try {
+    // Step 1: Connect as bootstrap (can only call walkie.auth.>)
+    // bootstrap:bootstrap is the only credential visible in source
+    await connectNATS('bootstrap', 'bootstrap');
+
+    // Step 2: Fetch real credentials from auth service
+    const creds = await authenticateWithService();
+    if (!creds || !creds.ok) {
+      updateStatus('red', 'Auth denied');
+      return;
+    }
+
+    // Step 3: Close bootstrap connection
+    try { await state.nats.close(); } catch (e) { /* ignore */ }
+    state.nats = null;
+    state.connected = false;
+
+    // Step 4: Reconnect with REAL credentials (never in source)
+    state.realUser = creds.user;
+    state.realPass = creds.pass;
+    await connectNATS(creds.user, creds.pass);
+
+    // If auth service is down, fallback had no occupants info
+    if (creds.occupants !== undefined) {
+      listenerCount.textContent = `👤 ${creds.occupants}`;
+    }
+
+    subscribeAll();
+    startHeartbeat();
+  } catch (e) {
+    updateStatus('red', 'Connection failed');
+    toast('Auth failed — check channel link');
+  }
+}
+
 function startHeartbeat() {
   clearInterval(state.heartbeatTimer);
-  // Send periodic presence (also acts as keep-alive and listener count)
-  // In a real system you'd tally these server-side; here we just ping
-  if (state.nats && state.connected && state.channel) {
+  state.heartbeatTimer = setInterval(async () => {
+    if (!state.nats || !state.connected || !state.channel) return;
+
+    // Ping presence
     state.nats.publish(`walkie.${state.channel}.ctrl`,
       JSON.stringify({ type: 'presence', ts: Date.now() }));
-  }
-  state.heartbeatTimer = setInterval(() => {
-    if (state.nats && state.connected && state.channel) {
-      state.nats.publish(`walkie.${state.channel}.ctrl`,
-        JSON.stringify({ type: 'presence', ts: Date.now() }));
+
+    // Poll real occupant count from auth service
+    try {
+      const reply = await state.nats.request('walkie.auth.status',
+        JSON.stringify({ channel_id: state.channel }), { timeout: 2000 });
+      const result = JSON.parse(new TextDecoder().decode(reply.data));
+      if (result.ok && result.occupants !== undefined) {
+        listenerCount.textContent = `👤 ${result.occupants}`;
+      }
+    } catch (e) {
+      // Auth service might be down — leave count as-is
     }
   }, 5000);
 }
@@ -1021,16 +1560,35 @@ document.addEventListener('keyup', (e) => {
 
 // Channel input
 channelInput.addEventListener('change', () => {
-  const name = channelInput.value.trim();
-  if (name) joinChannel(name);
+  handleChannelInput();
 });
 channelInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     channelInput.blur();
-    const name = channelInput.value.trim();
-    if (name) joinChannel(name);
+    handleChannelInput();
   }
 });
+
+function handleChannelInput() {
+  let raw = channelInput.value.trim();
+  if (!raw) return;
+
+  // Strip URL prefix if pasted full URL
+  const hashIdx = raw.lastIndexOf('#');
+  if (hashIdx !== -1) raw = raw.slice(hashIdx + 1);
+
+  // Parse channelId:passphrase format
+  const colonIdx = raw.indexOf(':');
+  if (colonIdx !== -1) {
+    const channelId = raw.slice(0, colonIdx);
+    const passphrase = raw.slice(colonIdx + 1);
+    joinChannel(channelId, passphrase);
+  } else {
+    // Just a channel ID (no passphrase) — auth service will auto-create or deny
+    joinChannel(raw, '');
+  }
+  connectToChannel();  // re-auth + re-subscribe on new channel
+}
 
 // Buttons
 copyBtn.addEventListener('click', () => {
@@ -1042,49 +1600,75 @@ copyBtn.addEventListener('click', () => {
 });
 
 newBtn.addEventListener('click', () => {
-  joinChannel(randomChannel());
+  joinChannel(); // generates fresh channel + passphrase, marks as creator
+  connectToChannel(); // bootstrap → auth → agent2 → subscribe
 });
 
 // ═══════════════════════════════════════
 //  Init
 // ═══════════════════════════════════════
 async function init() {
-  // 1. Set up audio pipeline FIRST (need element before joinChannel → resetMediaSource)
-  setupAudioOutput();
-  resetMediaSource(); // triggers sourceopen → onSourceOpen → ready to receive
-
-  // 2. Determine channel from URL hash
-  let channel = window.location.hash.slice(1) || randomChannel();
-  channel = channel.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-  if (!channel) channel = randomChannel();
-
-  // 3. Join (will reset MSE again — harmless, ensures clean pipeline for the channel)
-  joinChannel(channel);
-
-  // 4. Connect NATS (joinChannel's subscribeAll is no-op until connected, so we re-sub after)
+  // 1. Load fingerprint (stable browser ID for rate limiting)
   try {
-    await connectNATS();
-    subscribeAll();
-    startHeartbeat();
+    const fp = await FingerprintJS.load();
+    const result = await fp.get();
+    state.fingerprint = result.visitorId;
+    console.log('[fp]', state.fingerprint.slice(0, 16) + '...');
+  } catch (e) {
+    console.warn('FingerprintJS failed, using anonymous:', e);
+    state.fingerprint = 'anon-' + randomId(8);
+  }
+
+  // 2. Set up audio pipeline
+  setupAudioOutput();
+  resetMediaSource();
+
+  // 3. Parse URL hash: #channelId:passphrase
+  const hash = window.location.hash.slice(1);
+  let channelId = '', passphrase = '';
+
+  if (hash) {
+    const parts = hash.split(':');
+    channelId = parts[0] || '';
+    passphrase = parts[1] || '';
+  }
+
+  if (!channelId) {
+    // No hash → generate new channel
+    const creds = generateChannelCreds();
+    channelId = creds.id;
+    passphrase = creds.passphrase;
+  }
+
+  // 4. Join (sets state, URL hash — does not connect)
+  joinChannel(channelId, passphrase);
+
+  // 5. Connect: bootstrap → auth service → agent2 → subscribe
+  try {
+    await connectToChannel();
   } catch (e) {
     updateStatus('red', 'Connection failed');
     toast('Server unreachable — will retry');
     const retry = () => {
-      connectNATS().then(() => { subscribeAll(); startHeartbeat(); })
-        .catch(() => setTimeout(retry, 5000));
+      connectToChannel().catch(() => setTimeout(retry, 5000));
     };
     setTimeout(retry, 5000);
   }
 
   // Mic is acquired on-demand during PTT press, released on release
   footerInfo.textContent = '🎤 Press hold to talk (mic activates only then)';
-  listenerCount.textContent = '👤 —';
+  // occupant count set by connectToChannel() above — don't overwrite
 
   // Handle hash changes
   window.addEventListener('hashchange', () => {
-    const name = window.location.hash.slice(1);
-    if (name && name !== state.channel) {
-      joinChannel(name); // joinChannel calls resetMediaSource internally
+    const raw = window.location.hash.slice(1);
+    if (!raw) return;
+    const parts = raw.split(':');
+    const channelId = parts[0];
+    if (channelId && channelId !== state.channel) {
+      const passphrase = parts[1] || '';
+      joinChannel(channelId, passphrase);
+      connectToChannel();  // re-auth + re-subscribe on new channel
     }
   });
 }
