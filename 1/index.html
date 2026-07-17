@@ -462,12 +462,12 @@
     if (cam === "0") {
       $("nats-user").value    = "agent1";
       $("nats-pass").value    = "agent1_password";
-      $("nats-subject").value = "webrtc.signaling.cam0";
+      $("nats-subject").value = "webrtc.signaling";
       document.title = "Pi Vision — Cam 0";
     } else if (cam === "1") {
-      $("nats-user").value    = "agent2";
-      $("nats-pass").value    = "agent2_password";
-      $("nats-subject").value = "webrtc.signaling.cam1";
+      $("nats-user").value    = "agent1";
+      $("nats-pass").value    = "agent1_password";
+      $("nats-subject").value = "webrtc.signaling";
       document.title = "Pi Vision — Cam 1";
     }
   })();
