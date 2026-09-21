@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Md Mizanur Rahman (Tanim) - Portfolio</title>
+  <title>☆ Md Mizanur Rahman (Tanim) - Portfolio</title>
   <meta name="description" content="Md Mizanur Rahman (Tanim) — IoT & Full-Stack Developer, Edge AI & GenAI Integration. Portfolio and resume.">
   <style>
     :root {
@@ -35,32 +35,16 @@
       margin-bottom: 2rem;
       border-bottom: 1px solid var(--border);
       padding-bottom: 1.5rem;
+      text-align: center;
     }
 
     h1 { font-size: 2rem; color: var(--text); }
-
-    .star {
-      display: inline-block;
-      margin-right: 0.45rem;
-      font-size: 2.1rem;
-      line-height: 1;
-      color: #ffffff;
-      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7));
-      animation: star-glow 2.2s ease-in-out infinite;
-    }
-
-    @keyframes star-glow {
-      0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)); }
-      50% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1)) drop-shadow(0 0 26px rgba(255, 255, 255, 0.65)); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .star { animation: none; }
-    }
     .subtitle { font-size: 1.1rem; color: var(--accent); margin-top: 0.25rem; }
     .contact { margin-top: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
     .contact a { color: var(--text-muted); text-decoration: none; }
     .contact a:hover { color: var(--accent); }
+    .contact svg { width: 1em; height: 1em; fill: currentColor; vertical-align: -0.125em; margin-right: 0.25rem; }
+    .icon-lg { font-size: 1.2em; vertical-align: middle; margin-right: 0.25rem; }
 
     /* AI Buttons Section */
     .ai-box {
@@ -117,7 +101,7 @@
     .project:hover { border-color: var(--accent); transform: translateY(-2px); }
     .project h3 { font-size: 1rem; }
     .project p { color: var(--text-muted); font-size: 0.9rem; margin: 0.25rem 0 0.5rem; }
-    .project a { color: var(--accent); text-decoration: none; font-size: 0.85rem; }
+    .project a { color: var(--accent); text-decoration: none; font-size: 0.85rem; overflow-wrap: anywhere; word-break: break-word; }
     .project a:hover { text-decoration: underline; }
 
     /* Skills */
@@ -126,7 +110,8 @@
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem;
     }
-    .skill-cat { background: var(--card-bg); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); }
+    .skill-cat { background: var(--card-bg); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); transition: border-color 0.2s ease, transform 0.2s ease; }
+    .skill-cat:hover { border-color: var(--accent); transform: translateY(-2px); }
     .skill-cat strong { color: var(--text); display: block; margin-bottom: 0.25rem; font-size: 0.9rem; }
     .skill-cat span { font-size: 0.85rem; color: var(--text-muted); }
 
@@ -187,16 +172,16 @@
 
   <div class="container">
     <header>
-      <h1><span class="star" aria-hidden="true">☆</span>Md Mizanur Rahman (Tanim)</h1>
+      <h1>Md Mizanur Rahman (Tanim)</h1>
       <div class="subtitle">IoT &amp; Full-Stack Developer — Edge AI &amp; GenAI Integration</div>
       <div class="contact">
-        Ílhavo, Aveiro, Portugal · <a href="tel:+351920798728">+351 920 798 728</a> ·
-        <a href="mailto:tanimtbh@gmail.com">tanimtbh@gmail.com</a> <br>
-        <a href="https://tanimtbh.github.io" target="_blank" rel="noopener">tanimtbh.github.io</a> ·
-        <a href="https://tanimtbh.github.io/resume-tanim.pdf" target="_blank" rel="noopener">CV (PDF)</a> ·
-        <a href="https://github.com/tanimtbh" target="_blank" rel="noopener">github.com/tanimtbh</a>
-        <a href="https://github.com/tanim2023" target="_blank" rel="noopener">github.com/tanim2023</a> ·
-        <a href="https://www.linkedin.com/in/md-mizanur-rahman-4103311a2" target="_blank" rel="noopener">linkedin.com/in/md-mizanur-rahman-4103311a2</a>
+        📍 Ílhavo, Aveiro, Portugal · <a href="tel:+351920798728">📞 +351 920 798 728</a> ·
+        <a href="mailto:tanimtbh@gmail.com">✉️ tanimtbh@gmail.com</a> <br>
+        <a href="https://tanimtbh.github.io" target="_blank" rel="noopener"><span class="icon-lg">🌐</span> tanimtbh.github.io</a> ·
+        <a href="https://tanimtbh.github.io/resume-tanim.pdf" target="_blank" rel="noopener">📄 CV (PDF)</a> ·
+        <a href="https://github.com/tanimtbh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>github.com/tanimtbh</a>
+        <a href="https://github.com/tanim2023" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>github.com/tanim2023</a> <br>
+        <a href="https://www.linkedin.com/in/md-mizanur-rahman-4103311a2" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>linkedin.com/in/md-mizanur-rahman-4103311a2</a>
       </div>
     </header>
 
@@ -245,30 +230,6 @@
     </section>
 
     <section>
-      <h2>Selected Projects</h2>
-      <div class="project">
-        <h3>Dispenser Fault-Tolerant App</h3>
-        <p>Fault-tolerant dispenser control application built on an actor-model design.</p>
-        <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">github.com/tanimtbh/dispenser_fault_tolerant_app ↗</a>
-      </div>
-      <div class="project">
-        <h3>Hands-On Effective Use of LLMs</h3>
-        <p>Internal workshop materials on applying LLMs to real development tasks.</p>
-        <a href="https://github.com/tanimtbh/hands_on_effective_use_of_llm_workshop" target="_blank" rel="noopener">github.com/tanimtbh/hands_on_effective_use_of_llm_workshop ↗</a>
-      </div>
-      <div class="project">
-        <h3>Custom Modbus RTU (STM32)</h3>
-        <p>STM32 firmware project implementing a custom Modbus RTU protocol.</p>
-        <a href="https://github.com/tanimtbh/custom_modbus_rtu" target="_blank" rel="noopener">github.com/tanimtbh/custom_modbus_rtu ↗</a>
-      </div>
-      <div class="project">
-        <h3>Nimai</h3>
-        <p>Telegram bot built with the OpenAI Agent SDK and the KuzuDB embedded graph database (hobby project).</p>
-        <a href="https://github.com/tanimtbh/nimai" target="_blank" rel="noopener">github.com/tanimtbh/nimai ↗</a>
-      </div>
-    </section>
-
-    <section>
       <h2>Skills</h2>
       <div class="skills-grid">
         <div class="skill-cat">
@@ -291,6 +252,33 @@
           <strong>Tools &amp; DevOps</strong>
           <span>Git, GitHub, Linux (bare metal)</span>
         </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Selected Projects</h2>
+      <div class="project">
+        <h3>Nimai</h3>
+        <p>Telegram bot built with the OpenAI Agent SDK and the KuzuDB embedded graph database (hobby project).</p>
+        <a href="https://github.com/tanimtbh/nimai" target="_blank" rel="noopener">github.com/tanimtbh/nimai ↗</a>
+      </div>
+      <div class="project">
+        <h3>Dispenser Fault-Tolerant App</h3>
+        <p>Fault-tolerant dispenser control application built on an actor-model design. This project i made personally based on my company real problem to showcase my skills and necessity of actor model.</p>
+        <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">github.com/tanimtbh/dispenser_fault_tolerant_app ↗</a>
+      </div>
+      <div class="project">
+        <h3>Hands-On Effective Use of LLMs</h3>
+        <p>Internal workshop materials on applying LLMs to real development tasks.</p>
+        <a href="https://github.com/tanimtbh/hands_on_effective_use_of_llm_workshop" target="_blank" rel="noopener">github.com/tanimtbh/hands_on_effective_use_of_llm_workshop ↗</a>
+      </div>
+      <div class="project">
+        <h3>Custom Modbus RTU (STM32)</h3>
+        <p>STM32 firmware project implementing a custom Modbus RTU protocol.</p>
+      </div>
+      <div class="project">
+        <h3>Recipe CookBook (Next.js)</h3>
+        <p>Next.js-based cookbook application for converting human-written cooking instructions into a machine-readable format.</p>
       </div>
     </section>
 
