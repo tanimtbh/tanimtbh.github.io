@@ -38,6 +38,25 @@
     }
 
     h1 { font-size: 2rem; color: var(--text); }
+
+    .star {
+      display: inline-block;
+      margin-right: 0.45rem;
+      font-size: 2.1rem;
+      line-height: 1;
+      color: #ffffff;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7));
+      animation: star-glow 2.2s ease-in-out infinite;
+    }
+
+    @keyframes star-glow {
+      0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)); }
+      50% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1)) drop-shadow(0 0 26px rgba(255, 255, 255, 0.65)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .star { animation: none; }
+    }
     .subtitle { font-size: 1.1rem; color: var(--accent); margin-top: 0.25rem; }
     .contact { margin-top: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
     .contact a { color: var(--text-muted); text-decoration: none; }
@@ -168,7 +187,7 @@
 
   <div class="container">
     <header>
-      <h1>Md Mizanur Rahman (Tanim)</h1>
+      <h1><span class="star" aria-hidden="true">☆</span>Md Mizanur Rahman (Tanim)</h1>
       <div class="subtitle">IoT &amp; Full-Stack Developer — Edge AI &amp; GenAI Integration</div>
       <div class="contact">
         Ílhavo, Aveiro, Portugal · <a href="tel:+351920798728">+351 920 798 728</a> ·
