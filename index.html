@@ -3,326 +3,222 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TaNiM</title>
-  
+  <title>Md Mizanur Rahman (Tanim) - Portfolio</title>
   <style>
-* {
-    margin: 0;
-    padding: 0;
-    top: 0;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    font-family: 'Raleway', sans-serif;
-}
-.main-container{
-      display: flex;
-      flex-direction: column;
-      position:absolute;
-
-}
-
-#navbar {
-    display:flex;
-    align-items: center;
-    justify-content:space-between;
-    flex-wrap: wrap;
-    flex-grow: 0;
-    flex-shrink: 0;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: auto;
-    background: #be3144; 
-    box-shadow: 0 2px 0 #4b121a;
-    z-index: 10;
-}
-.main{
-    flex-grow: 1;
-    position: relative;
-    overflow-y: auto;
-}
-#welcome-section {
-    height: 100vh;
-    background-color: #000;
-    background-image: linear-gradient(
-    62deg, #3a3d40 0%, #181719 100%);
-    display: flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-}
-
-#profile-links{
-  height: 100vh;
-    background-color: #000;
-    background-image: linear-gradient(
-    62deg, #3a3d40 0%, #181719 100%);
-    display: flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-}
-#profile-links> p{
-    font-family: 'Raleway', sans-serif;
-    font-style: italic;
-    text-align: center;
-    font-size: 1.7rem;
-    color: rgb(187, 180, 154);
-}
-.my_name {
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --border: #334155;
+    }
     
-    font-family: 'Raleway', sans-serif;
-    font-weight: 700px;
-    text-align: center;
-    font-size: 5rem;
-    color: cornsilk;
-}
-.lets {
-    margin-top: 3rem;
-    font-family: 'Raleway', sans-serif;
-    font-weight: 700px;
-    text-align: center;
-    font-size: 3rem;
-    color: cornsilk;
-}
-#welcome-section > p {
-    font-size: 3rem;
-    font-weight: 200;
-    font-style: italic;
-    color:#be3144;
-}
-.nav-list> li >a{
-        text-decoration: none;
-        color:#ffffff;
-        display: block;
-        font-size: 1.7rem;
-        padding: 1rem;
-      }
-.nav-list> li >a:hover{
-        text-decoration: none;
-        background-color:#45567d;
-        color:#ffffff;
-        display: block;
-        font-size: 2.2rem;
-        padding: 1rem;
-      }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
 
-    .nav-list {
-        display: flex;
-        list-style-type: none;
-        font-size: 16px;
-        padding-right: 50px;
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
 
-        
-        
-      }
-      .logo{
-        text-decoration: none;
-        color:#ffffff;
-        font-size: 2.2rem;
-        padding: 1rem;
-        font-family: 'Lucida Console';
+    header {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
 
-      }
-      .profile-pic{
-        width:200px;
-        border-radius: 50%;
-        object-fit:cover;
-      }
-      #projects{
-        background-color: #45567d;
-        display: flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-      }
-    .projects-intro{
-        max-width: 640px;
-        margin: 0 auto 3rem auto;
-        border-bottom: 0.2rem solid #f0f0f0;
-        font-size: 2.5rem;
-        font-family: 'Raleway', sans-serif;
-        font-weight: 700;
-        text-align: center;
-        color: #f0f0f0;
-        padding-top: 100px;
-}
-.projects-grid{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-.project-tile{
-    background: #303841;
-    border-radius: 5px;
-    text-decoration: none;
-    color:#ffffff;
-    font-size: 1.7rem;
-    padding: 0.1rem;
-    margin: 10px;
-    transition: background 0.3s;
-}
+    h1 { font-size: 2rem; color: var(--text); }
+    .subtitle { font-size: 1.1rem; color: var(--accent); margin-top: 0.25rem; }
+    .contact { margin-top: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+    .contact a { color: var(--text-muted); text-decoration: none; }
+    .contact a:hover { color: var(--accent); }
 
-.project-tile:hover{
-
-  background: #be3144;
-
-}
-.project-image{
-    height: 270px;
-    width: 300px;
-    object-fit:cover;
+    /* AI Buttons Section */
+    .ai-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .ai-box p { margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-muted); }
+    .btn-group { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
     
-}
-.project-title{
- text-align: center;
-}
-.code{
-    color: #303841;
-    transition: color 0.3s ease-in;
-}
-.project-tile:hover .code{ 
-    color: rgb(245, 180, 14);
-}
+    .ai-btn {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid var(--border);
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .ai-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+    .ai-btn.chatgpt { background: #10a37f; }
+    .ai-btn.claude { background: #d97706; }
 
-.social-links{
-   margin-bottom: 1rem;
-}
-.social-links> a{
-        text-decoration: none;
-        color:#ffffff;
-        font-size: 1.6rem;
-        padding: 1rem;
-}
-footer{
-    border-top: 5px solid #be3144;
-    background-color: #303841;
-    font-weight: 300;
-    color:#ffffff;
-    font-size: 1.6rem;
-    padding: 1rem;
-    text-align: center;
-}
-.wywtd{
-    margin-bottom: 1rem;
+    /* Content Sections */
+    section { margin-bottom: 2rem; }
+    h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
+    .item { margin-bottom: 1.25rem; }
+    .item-header { display: flex; justify-content: space-between; flex-wrap: wrap; }
+    .item-title { font-weight: bold; }
+    .item-date { color: var(--text-muted); font-size: 0.85rem; }
+    ul { list-style-type: square; margin-left: 1.2rem; margin-top: 0.5rem; }
+    li { margin-bottom: 0.4rem; color: var(--text-muted); }
 
-}
-#profile-link:hover{
-  color: #be3144;
-  font-weight: 900;
-
-}
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .skill-cat { background: var(--card-bg); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); }
+    .skill-cat strong { color: var(--text); display: block; margin-bottom: 0.25rem; font-size: 0.9rem; }
+    .skill-cat span { font-size: 0.85rem; color: var(--text-muted); }
   </style>
-  <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css">
 </head>
-
-
 <body>
-<div class="main-container">
-    
-   <nav id="navbar">
-    <p class="logo">&lt;/TaNiM&gt;</p>
-    <ul class="nav-list">
-        <li>
-          <a href="#welcome-section">About</a>
-        </li>
-        <li>
-          <a href="#projects">Work</a>
-        </li>
-        <li>
-          <a href="#profile-links">Contact</a>
-        </li>
-      </ul>
-   </nav>
- <main class="main">
-   <section id="welcome-section">
-       <img class="profile-pic" src="img/Daco_2569650.png" alt="">
-       <h1 class="my_name">Hey I am TaNiM </h1>
-       <p>a web developer</p>
-  
-   </section>
 
-   <section id="projects">
-    <h2 class="projects-intro">These are some of my projects</h2>
-    <div class="projects-grid">
-        <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
-            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
-            <p class="project-title">
-              <span class="code">&lt;</span>
-              Tribute Page
-              <span class="code">/&gt;</span>
-            </p>
-          </a> 
+  <div class="container">
+    <header>
+      <h1>Md Mizanur Rahman (Tanim)</h1>
+      <div class="subtitle">IoT & Full-Stack Developer — Edge AI & GenAI Integration</div>
+      <div class="contact">
+        Ílhavo, Aveiro, Portugal · +351 920 798 728 · tanimtbh@gmail.com <br>
+        <a href="https://tanimtbh.github.io/v2" target="_blank">tanimtbh.github.io/v2</a> · 
+        <a href="https://github.com/teamwac" target="_blank">github.com/teamwac</a>
+      </div>
+    </header>
 
-          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
-            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
-            <p class="project-title">
-              <span class="code">&lt;</span>
-              Tribute Page
-              <span class="code">/&gt;</span>
-            </p>
-          </a> 
-
-          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
-            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
-            <p class="project-title">
-              <span class="code">&lt;</span>
-              Tribute Page
-              <span class="code">/&gt;</span>
-            </p>
-          </a> 
-
-          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
-            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
-            <p class="project-title">
-              <span class="code">&lt;</span>
-              Tribute Page
-              <span class="code">/&gt;</span>
-            </p>
-          </a> 
-          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
-            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
-            <p class="project-title">
-              <span class="code">&lt;</span>
-              Tribute Page
-              <span class="code">/&gt;</span>
-            </p>
-          </a> 
-          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
-            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
-            <p class="project-title">
-              <span class="code">&lt;</span>
-              Tribute Page
-              <span class="code">/&gt;</span>
-            </p>
-          </a> 
-          <a href="https://codepen.io/freeCodeCamp/full/zNqgVx" target="_blank" class="project-tile">
-            <img class="project-image" src="https://cdn.freecodecamp.org/testable-projects-fcc/images/tribute.jpg" alt="project">
-            <p class="project-title">
-              <span class="code">&lt;</span>
-              Tribute Page
-              <span class="code">/&gt;</span>
-            </p>
-          </a> 
+    <!-- Interactive AI Prompt Section -->
+    <div class="ai-box">
+      <p>🤖 <strong>Ask an AI about my experience:</strong> Click a button below to launch an AI chat loaded with my full CV context.</p>
+      <div class="btn-group">
+        <button onclick="openAI('chatgpt')" class="ai-btn chatgpt">Chat with ChatGPT</button>
+        <button onclick="openAI('claude')" class="ai-btn claude">Chat with Claude</button>
+      </div>
     </div>
-   </section>
 
-   <section id="profile-links">
-    <h1 class="lets">Let's work together...</h1>
-    <p class="wywtd">What you want to do?</p>
-    <div class="social-links">
-        <a id="profile-link" href="https://www.facebook.com/tanimtbh/" target="_blank" ><i class="fab fa-facebook-square"></i> Facebook</a>
-        <a id="profile-link"  href="https://github.com/tanimtbh/" target="_blank" ><i class="fab fa-github"></i> GitHub</a>
-        <a id="profile-link"  href="https://twitter.com/hole_team" target="_blank" ><i class="fab fa-twitter"></i> Twitter</a>
-        <a id="profile-link"  href="mailto:tanimtbh@gmail.com" ><i class="fas fa-at"></i> Send a mail</a>
-        <a id="profile-link" href="tel:555-555-5555" ><i class="fas fa-mobile-alt"></i> Call me</a>
-    </div>
-   </section>
-   <footer>
-       <p>Created By ©TaNim | Freecodecamp Test</p>
-   </footer>
-</main>
+    <section>
+      <h2>Summary</h2>
+      <p style="color: var(--text-muted);">
+        IoT and full-stack developer with many years of challenging experience spanning embedded systems, web platforms, and automation, with a rare crossover into generative AI integration and local/edge AI. Currently a Developer at Wish and Cook in Portugal, building and maintaining the company's IoT gateway and a custom Modbus protocol stack in Python and C, and integrating generative AI into products and internal workflows.
+      </p>
+    </section>
+
+    <section>
+      <h2>Experience</h2>
+      <div class="item">
+        <div class="item-header">
+          <span class="item-title">Developer — Wish and Cook, Ílhavo, Portugal</span>
+          <span class="item-date">2023 – Present</span>
+        </div>
+        <ul>
+          <li>Build and maintain the company's IoT infrastructure, a custom Modbus protocol and gateway written in Python and C with MQTT messaging.</li>
+          <li>Write custom applications and scripts for hardware testing and validation.</li>
+          <li>Built a generative-AI pipeline converting human cooking instructions into machine-readable format for a Next.js cookbook.</li>
+        </ul>
+      </div>
+
+      <div class="item">
+        <div class="item-header">
+          <span class="item-title">Independent Developer — Sweden (remote)</span>
+          <span class="item-date">2018 – 2023</span>
+        </div>
+        <ul>
+          <li>Built Nawras Foods e-commerce platform on Shopify with custom FastAPI/Python backend automating product sync and invoice generation in Fortnox ERP.</li>
+          <li>Delivered full-stack web and automation projects for multiple international clients.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Skills</h2>
+      <div class="skills-grid">
+        <div class="skill-cat">
+          <strong>Languages</strong>
+          <span>Python, C, JavaScript</span>
+        </div>
+        <div class="skill-cat">
+          <strong>AI & Data</strong>
+          <span>GenAI (OpenAI, Anthropic, DeepInfra), Vector DBs (Qdrant, Chroma), Graph DBs (KuzuDB, Neo4j)</span>
+        </div>
+        <div class="skill-cat">
+          <strong>Web & Backend</strong>
+          <span>React, Next.js, FastAPI, REST APIs, Shopify</span>
+        </div>
+        <div class="skill-cat">
+          <strong>IoT & Edge</strong>
+          <span>ESP32, STM32, Raspberry Pi, Modbus, MQTT, Edge AI (YOLO, MobileNet v2)</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Raw Markdown Resume Data
+    const markdownCV = `# Md Mizanur Rahman (Tanim)
+**IoT & Full-Stack Developer — Edge AI & GenAI Integration**
+Ílhavo, Aveiro, Portugal · +351 920 798 728 · tanimtbh@gmail.com · tanimtbh.github.io/v2 · github.com/teamwac
+
+## Summary
+IoT and full-stack developer with many years of challenging experience spanning embedded systems, web platforms, and automation — with a rare crossover into generative AI integration and local/edge AI. Currently a Developer at Wish and Cook in Portugal, building and maintaining the company's IoT gateway and a custom Modbus protocol stack in Python and C, and integrating generative AI into products and internal workflows. Previously ran an independent development practice in Sweden delivering full-stack e-commerce and ERP automation for multiple clients.
+
+## Experience
+### Developer — Wish and Cook, Ílhavo, Portugal (2023 – Present)
+- Build and maintain the company's IoT infrastructure, a custom Modbus protocol and gateway written in Python and C with MQTT messaging.
+- Wrote testing scripts for hardware validation.
+- Built GenAI pipeline converting cooking instructions into machine-readable formats for Next.js app.
+
+### Independent Developer — Sweden (2018 – 2023)
+- Built Nawras Foods e-commerce on Shopify with FastAPI backend connected to Fortnox ERP.
+- Delivered full-stack web and automation projects.
+
+## Selected Projects
+- Dispenser Fault-Tolerant App (Actor Model design) - github.com/teamwac/dispenser_fault_tolerant_app
+- Hands-On Effective Use of LLMs - github.com/teamwac/hands_on_effective_use_of_llm
+- Nimai - Telegram bot built with OpenAI Agent SDK and KuzuDB.
+
+## Education
+- BSc in Electronics and Communication Engineering — Sylhet International University (2012 – 2016)
+- Graduate Coursework in Intelligent Transport Systems — Linköping University, Sweden (2018)
+
+## Skills
+- Languages: Python, C, JavaScript
+- AI: GenAI (OpenAI, Anthropic, OpenRouter), Vector DBs (Qdrant, Chroma), Graph DBs (KuzuDB)
+- Web: React, Next.js, FastAPI, REST APIs
+- IoT: ESP32/STM32/Raspberry Pi, Modbus, MQTT, Edge AI (MobileNet v2, YOLO)
+`;
+
+    function openAI(platform) {
+      const prompt = `You are an assistant representing Md Mizanur Rahman (Tanim). Use the Markdown CV below to answer any questions about Tanim's background, technical skills, and experience.\n\nCV:\n${markdownCV}\n\nHi! How can I help you learn more about Tanim's background?`;
+      const encodedPrompt = encodeURIComponent(prompt);
+
+      let url = "";
+      if (platform === 'chatgpt') {
+        url = `https://chatgpt.com/?q=${encodedPrompt}`;
+      } else if (platform === 'claude') {
+        url = `https://claude.ai/new?q=${encodedPrompt}`;
+      }
+
+      if (url) {
+        window.open(url, '_blank');
+      }
+    }
+  </script>
 </body>
-</div>
 </html>
