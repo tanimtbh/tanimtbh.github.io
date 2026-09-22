@@ -173,7 +173,7 @@
   <div class="container">
     <header>
       <h1>Md Mizanur Rahman (Tanim)</h1>
-      <div class="subtitle">IoT &amp; Full-Stack Developer — Edge AI &amp; GenAI Integration</div>
+      <div class="subtitle">IoT &amp; Full-Stack Developer | Edge AI &amp; GenAI Integration</div>
       <div class="contact">
         📍 Ílhavo, Aveiro, Portugal · <a href="tel:+351920798728">📞 +351 920 798 728</a> ·
         <a href="mailto:tanimtbh@gmail.com">✉️ tanimtbh@gmail.com</a> <br>
@@ -188,7 +188,7 @@
     <div class="ai-box">
       <p>🤖 <strong>Ask an AI about my experience:</strong> Click a button below to launch an AI chat loaded with my full CV context.</p>
       <div class="btn-group">
-        <a href="https://tanimtbh.github.io/resume-tanim.pdf" target="_blank" rel="noopener" class="ai-btn cv">📄 Download CV</a>
+        <button id="copy-md-btn" onclick="copyMarkdown()" class="ai-btn cv">📋 Copy CV (Markdown)</button>
         <button onclick="openAI('chatgpt')" class="ai-btn chatgpt">Chat with ChatGPT</button>
         <button onclick="openAI('claude')" class="ai-btn claude">Chat with Claude</button>
       </div>
@@ -233,7 +233,8 @@
       <div class="skills-grid">
         <div class="skill-cat">
           <strong>Programming Languages</strong>
-          <span>Python, C, JavaScript</span>
+          <span>Python, C, JavaScript</span><br>  
+          <span> Occasionally Learning : Elixir OTP</span>
         </div>
         <div class="skill-cat">
           <strong>AI &amp; Data</strong>
@@ -263,7 +264,7 @@
       </div>
       <div class="project">
         <h3>Dispenser Fault-Tolerant App</h3>
-        <p>Fault-tolerant dispenser control application built on an actor-model design. This project i made personally based on my company real problem to showcase my skills and necessity of actor model.</p>
+        <p>Fault-tolerant dispenser control application built on an actor-model design. This project i made personally based on my company real problem to showcase my skills and necessity of actor model. (Abstract)</p>
         <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">github.com/tanimtbh/dispenser_fault_tolerant_app ↗</a>
       </div>
       <div class="project">
@@ -273,11 +274,11 @@
       </div>
       <div class="project">
         <h3>Custom Modbus RTU (STM32)</h3>
-        <p>STM32 firmware project implementing a custom Modbus RTU protocol.</p>
+        <p>STM32 firmware project implementing a custom Modbus RTU protocol. (feel free to ask for more details)</p>
       </div>
       <div class="project">
         <h3>Recipe CookBook (Next.js)</h3>
-        <p>Next.js-based cookbook application for converting human-written cooking instructions into a machine-readable format.</p>
+        <p>Next.js-based cookbook application for converting human-written cooking instructions into a machine-readable format. (feel free to ask for more details)</p>
       </div>
     </section>
 
@@ -327,7 +328,7 @@
     // Raw Markdown Resume Data
     const markdownCV = `# Md Mizanur Rahman (Tanim)
 **IoT & Full-Stack Developer — Edge AI & GenAI Integration**
-Ílhavo, Aveiro, Portugal · +351 920 798 728 · tanimtbh@gmail.com · tanimtbh.github.io/v2 · github.com/teamwac · linkedin.com/in/md-mizanur-rahman-4103311a2
+Ílhavo, Aveiro, Portugal · +351 920 798 728 · tanimtbh@gmail.com · tanimtbh.github.io · github.com/tanimtbh · linkedin.com/in/md-mizanur-rahman-4103311a2
 
 ## Summary
 IoT and full-stack developer with many years of challenging experience spanning embedded systems, web platforms, and automation — with a rare crossover into generative AI integration and local/edge AI. Currently a Developer at Wish and Cook in Portugal, building and maintaining the company's IoT gateway and a custom Modbus protocol stack in Python and C, and integrating generative AI into products and internal workflows. Previously ran an independent development practice in Sweden delivering full-stack e-commerce and ERP automation for multiple clients. Passionate about fault-tolerant software, edge computing, local/edge AI, and AI-driven automation. Even though i never get chance to work with Elixir (BEAM VM) but i am very interested and optimistic in learning it and exploring its capabilities for building fault-tolerant and highly concurrent systems. Open to remote or hybrid roles across the EU.
@@ -355,6 +356,7 @@ IoT and full-stack developer with many years of challenging experience spanning 
 
 ## Skills
 - Programming Languages: Python, C, JavaScript
+- Occasionally Learning : Elixir OTP
 - AI & Data: Generative AI integration (OpenAI, Anthropic, DeepInfra, OpenRouter, local models), vector databases (Qdrant, Chroma), graph databases (KuzuDB, Neo4j), data analysis
 - Web & Backend: React, Next.js, FastAPI, REST APIs, Shopify
 - IoT & Embedded: Microcontrollers (ESP32 / STM32 / Raspberry Pi), Modbus, MQTT, Edge Computing, Edge AI (MobileNet v2, YOLO)
@@ -367,6 +369,30 @@ IoT and full-stack developer with many years of challenging experience spanning 
 ## Availability
 Actively seeking remote or hybrid roles to accommodate Portuguese language studies and integration activities.
 `;
+
+    async function copyMarkdown() {
+      const btn = document.getElementById('copy-md-btn');
+      const original = btn.innerHTML;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(markdownCV);
+        } else {
+          // Fallback for older browsers / non-HTTPS contexts
+          const ta = document.createElement('textarea');
+          ta.value = markdownCV;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
+        btn.innerHTML = '✅ Copied to clipboard!';
+      } catch (err) {
+        btn.innerHTML = '⚠️ Copy failed — select manually';
+      }
+      setTimeout(() => { btn.innerHTML = original; }, 2500);
+    }
 
     function openAI(platform) {
       const prompt = `You are an assistant representing Md Mizanur Rahman (Tanim). Use the Markdown CV below to answer any questions about Tanim's background, technical skills, and experience.\n\nCV:\n${markdownCV}\n\nHi! How can I help you learn more about Tanim's background?`;
