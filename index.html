@@ -186,7 +186,7 @@
 
     <!-- Interactive AI Prompt Section -->
     <div class="ai-box">
-      <p>🤖 <strong>Ask an AI about my experience:</strong> Click a button below to launch an AI chat loaded with my full CV context.</p>
+      <p>🤖 <strong>Ask an AI about my experience:</strong> Launch an AI chat with my full CV context, or copy the CV as Markdown with recruiter-friendly instructions.</p>
       <div class="btn-group">
         <button id="copy-md-btn" onclick="copyMarkdown()" class="ai-btn cv">📋 Copy CV (Markdown)</button>
         <button onclick="openAI('chatgpt')" class="ai-btn chatgpt">Chat with ChatGPT</button>
@@ -371,16 +371,22 @@ IoT and full-stack developer with 5+ years of challenging experience spanning em
 Actively seeking remote or hybrid roles to accommodate Portuguese language studies and integration activities.
 `;
 
+    // Shared instructions: lets any LLM act as a neutral assistant for recruiters reviewing this CV
+    const llmInstruction = `You are a hiring assistant helping a recruiter or hiring manager evaluate the candidate whose CV is provided below. The candidate supplied this CV themselves. Answer the recruiter's questions about the candidate using the CV below.`;
+
+    // Full text used by the copy button and the AI chat launchers
+    const llmPrompt = `${llmInstruction}\n\nCV:\n${markdownCV}`;
+
     async function copyMarkdown() {
       const btn = document.getElementById('copy-md-btn');
       const original = btn.innerHTML;
       try {
         if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(markdownCV);
+          await navigator.clipboard.writeText(llmPrompt);
         } else {
           // Fallback for older browsers / non-HTTPS contexts
           const ta = document.createElement('textarea');
-          ta.value = markdownCV;
+          ta.value = llmPrompt;
           ta.style.position = 'fixed';
           ta.style.opacity = '0';
           document.body.appendChild(ta);
@@ -396,7 +402,7 @@ Actively seeking remote or hybrid roles to accommodate Portuguese language studi
     }
 
     function openAI(platform) {
-      const prompt = `You are an assistant representing Md Mizanur Rahman (Tanim). Use the Markdown CV below to answer any questions about Tanim's background, technical skills, and experience.\n\nCV:\n${markdownCV}\n\nHi! How can I help you learn more about Tanim's background?`;
+      const prompt = `${llmPrompt}\n\nHi! How can I help you learn more about Tanim's background and potential?`;
       const encodedPrompt = encodeURIComponent(prompt);
 
       let url = "";
