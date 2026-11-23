@@ -3,419 +3,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>☆ Md Mizanur Rahman (Tanim) - Portfolio</title>
-  <meta name="description" content="Md Mizanur Rahman (Tanim) — IoT & Full-Stack Developer, Edge AI & GenAI Integration. Portfolio and resume.">
+  <title>Tanim</title>
+  <meta name="description" content="Software for things that have to keep running: devices, gateways, and the AI tools around them.">
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --border: #334155;
+      --bg: #f6f4ef;
+      --ink: #1a1a18;
+      --muted: #6b6a64;
+      --line: #dedbd2;
+      --accent: #c2410c;
+      --led: #2f9e44;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121211;
+        --ink: #ecebe6;
+        --muted: #8f8d86;
+        --line: #2a2a27;
+        --accent: #fb923c;
+        --led: #51cf66;
+      }
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
+      background: var(--bg);
+      color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
       line-height: 1.6;
-      padding: 2rem 1rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: clamp(3rem, 14vh, 9rem) 1.25rem 3rem;
     }
 
-    ::selection { background: rgba(56, 189, 248, 0.3); }
+    main { width: 100%; max-width: 34rem; }
 
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
+    .mono {
+      font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.02em;
     }
 
-    header {
-      margin-bottom: 2rem;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 1.5rem;
-      text-align: center;
+    h1 {
+      font-size: clamp(2.75rem, 12vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
     }
 
-    h1 { font-size: 2rem; color: var(--text); }
-    .subtitle { font-size: 1.1rem; color: var(--accent); margin-top: 0.25rem; }
-    .contact { margin-top: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
-    .contact a { color: var(--text-muted); text-decoration: none; }
-    .contact a:hover { color: var(--accent); }
-    .contact svg { width: 1em; height: 1em; fill: currentColor; vertical-align: -0.125em; margin-right: 0.25rem; }
-    .icon-lg { font-size: 1.2em; vertical-align: middle; margin-right: 0.25rem; }
-
-    /* AI Buttons Section */
-    .ai-box {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-bottom: 2rem;
-      text-align: center;
+    .lede {
+      margin-top: 1.25rem;
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 26rem;
+      text-wrap: balance;
     }
-    .ai-box p { margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-muted); }
-    .btn-group { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
 
-    .ai-btn {
-      background: #000000;
-      color: #ffffff;
-      border: 1px solid var(--border);
-      padding: 0.6rem 1.2rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
+    h2 { margin: 3.5rem 0 0.5rem; font-weight: 400; }
+
+    ul { list-style: none; border-top: 1px solid var(--line); }
+
+    li a {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      column-gap: 1rem;
+      align-items: baseline;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--line);
+      color: inherit;
       text-decoration: none;
     }
-    .ai-btn:hover { transform: translateY(-2px); opacity: 0.9; }
-    .ai-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .ai-btn.chatgpt { background: #10a37f; }
-    .ai-btn.claude { background: #d97706; }
-    .ai-btn.cv { background: var(--accent); color: #0f172a; }
-
-    /* Content Sections */
-    section { margin-bottom: 2rem; }
-    h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
-    .item { margin-bottom: 1.25rem; }
-    .item-header { display: flex; justify-content: space-between; flex-wrap: wrap; }
-    .item-title { font-weight: bold; }
-    .item-date { color: var(--text-muted); font-size: 0.85rem; }
-    ul { list-style-type: square; margin-left: 1.2rem; margin-top: 0.5rem; }
-    li { margin-bottom: 0.4rem; color: var(--text-muted); }
-
-    /* Selected Projects */
-    .project {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem 1.1rem;
-      margin-bottom: 0.8rem;
-      transition: border-color 0.2s ease, transform 0.2s ease;
+    li strong { font-weight: 600; transition: color 0.15s; }
+    li span { grid-column: 1; color: var(--muted); font-size: 0.95rem; }
+    li i {
+      grid-row: 1;
+      grid-column: 2;
+      font-style: normal;
+      color: var(--muted);
+      transition: transform 0.15s, color 0.15s;
     }
-    .project:hover { border-color: var(--accent); transform: translateY(-2px); }
-    .project h3 { font-size: 1rem; }
-    .project p { color: var(--text-muted); font-size: 0.9rem; margin: 0.25rem 0 0.5rem; }
-    .project a { color: var(--accent); text-decoration: none; font-size: 0.85rem; overflow-wrap: anywhere; word-break: break-word; }
-    .project a:hover { text-decoration: underline; }
+    li a:hover strong, li a:hover i { color: var(--accent); }
+    li a:hover i { transform: translateX(4px); }
 
-    /* Skills */
-    .skills-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-    .skill-cat { background: var(--card-bg); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); transition: border-color 0.2s ease, transform 0.2s ease; }
-    .skill-cat:hover { border-color: var(--accent); transform: translateY(-2px); }
-    .skill-cat strong { color: var(--text); display: block; margin-bottom: 0.25rem; font-size: 0.9rem; }
-    .skill-cat span { font-size: 0.85rem; color: var(--text-muted); }
-
-    /* Languages */
-    .lang-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-    .lang-card { background: var(--card-bg); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); }
-    .lang-card strong { color: var(--text); display: block; font-size: 0.9rem; }
-    .lang-card span { font-size: 0.85rem; color: var(--text-muted); }
-
-    /* Availability */
-    .availability {
-      background: var(--card-bg);
-      border: 1px solid var(--accent);
-      border-left: 4px solid var(--accent);
-      border-radius: 8px;
-      padding: 1.1rem 1.25rem;
-      color: var(--text-muted);
-      font-size: 0.95rem;
-    }
-    .availability strong { color: var(--text); }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
 
     footer {
-      margin-top: 2.5rem;
-      padding-top: 1.25rem;
-      border-top: 1px solid var(--border);
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.85rem;
+      margin-top: 3rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
     }
-    footer a { color: var(--text-muted); text-decoration: none; }
-    footer a:hover { color: var(--accent); }
+    footer a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
+    footer a:hover { color: var(--accent); border-color: var(--accent); }
 
-    @media (max-width: 600px) {
-      h1 { font-size: 1.6rem; }
-      .ai-btn { width: 100%; justify-content: center; }
+    #up { font-variant-numeric: tabular-nums; }
+
+    .led {
+      display: inline-block;
+      width: 0.5rem;
+      height: 0.5rem;
+      margin-right: 0.4rem;
+      border-radius: 50%;
+      background: var(--led);
+      animation: pulse 2s ease-in-out infinite;
     }
-
-    @media print {
-      :root {
-        --bg: #ffffff;
-        --card-bg: #ffffff;
-        --text: #111827;
-        --text-muted: #4b5563;
-        --accent: #0284c7;
-        --border: #d1d5db;
-      }
-      body { padding: 0; }
-      .ai-box, footer { display: none; }
-      .project:hover { transform: none; }
+    @keyframes pulse { 50% { opacity: 0.3; } }
+    @media (prefers-reduced-motion: reduce) {
+      .led { animation: none; }
+      li strong, li i { transition: none; }
     }
   </style>
 </head>
 <body>
+  <main>
+    <h1>Tanim</h1>
+    <p class="lede">I build software for things that have to keep running: devices, gateways, and the AI tools around them.</p>
 
-  <div class="container">
-    <header>
-      <h1>Md Mizanur Rahman (Tanim)</h1>
-      <div class="subtitle">IoT &amp; Full-Stack Developer | Edge AI &amp; GenAI Integration</div>
-      <div class="contact">
-        📍 Ílhavo, Aveiro, Portugal · <a href="tel:+351920798728">📞 +351 920 798 728</a> ·
-        <a href="mailto:tanimtbh@gmail.com">✉️ tanimtbh@gmail.com</a> <br>
-        <a href="https://tanimtbh.github.io" target="_blank" rel="noopener"><span class="icon-lg">🌐</span> tanimtbh.github.io</a> ·
-        <a href="https://tanimtbh.github.io/resume-tanim.pdf" target="_blank" rel="noopener">📄 CV (PDF)</a> ·
-        <a href="https://github.com/tanimtbh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>github.com/tanimtbh</a><br>
-        <a href="https://www.linkedin.com/in/md-mizanur-rahman-4103311a2" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>linkedin.com/in/md-mizanur-rahman-4103311a2</a>
-      </div>
-    </header>
+    <h2 class="mono">work</h2>
+    <ul>
+      <li>
+        <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">
+          <strong>Dispenser</strong>
+          <span>Device control that survives its own failures, built on the actor model.</span>
+          <i aria-hidden="true">→</i>
+        </a>
+      </li>
+      <li>
+        <a href="https://github.com/tanimtbh/nimai" target="_blank" rel="noopener">
+          <strong>Nimai</strong>
+          <span>A Telegram bot with an agent for a brain and a graph for a memory.</span>
+          <i aria-hidden="true">→</i>
+        </a>
+      </li>
+      <li>
+        <a href="cad/">
+          <strong>CAD Terms</strong>
+          <span>A visual glossary of CAD and 3D-printing words.</span>
+          <i aria-hidden="true">→</i>
+        </a>
+      </li>
+    </ul>
 
-    <!-- Interactive AI Prompt Section -->
-    <div class="ai-box">
-      <p>🤖 <strong>Ask an AI about my experience:</strong> Launch an AI chat with my full CV context, or copy the CV as Markdown with recruiter-friendly instructions.</p>
-      <div class="btn-group">
-        <button id="copy-md-btn" onclick="copyMarkdown()" class="ai-btn cv">📋 Copy CV (Markdown)</button>
-        <button onclick="openAI('chatgpt')" class="ai-btn chatgpt">Chat with ChatGPT</button>
-        <button onclick="openAI('claude')" class="ai-btn claude">Chat with Claude</button>
-      </div>
-    </div>
-
-    <section>
-      <h2>Summary</h2>
-      <p style="color: var(--text-muted);">
-        IoT and full-stack developer with 5+ years of challenging experience spanning embedded systems, web platforms, and automation with a rare crossover into generative AI integration and local/edge AI. Currently a Developer at Wish and Cook in Portugal, building and maintaining the company's IoT gateway and a custom Modbus protocol stack in Python and C, and integrating generative AI into products and internal workflows. Previously ran an independent development practice in Sweden delivering full-stack e-commerce and ERP automation for multiple clients. Passionate about fault-tolerant software, edge computing, local/edge AI, and AI-driven automation. Although I have never had the chance to work with Elixir (BEAM VM), I am very interested in and optimistic about learning it and exploring its capabilities for building fault-tolerant and highly concurrent systems. Open to remote or hybrid roles across the EU.
-      </p>
-    </section>
-
-    <section>
-      <h2>Experience</h2>
-      <div class="item">
-        <div class="item-header">
-          <span class="item-title">Developer: Wish and Cook, Ílhavo, Portugal</span>
-          <span class="item-date">2023 – Present</span>
-        </div>
-        <ul>
-          <li>Build and maintain the company's custom Modbus RTU protocol and gateway written in Python and C with MQTT messaging, architected around a fault-tolerant actor model.</li>
-          <li>Write custom applications and scripts for hardware testing and validation.</li>
-          <li>Built a generative-AI pipeline that converts human-written cooking instructions into a machine-readable format, editable in a Next.js-based cookbook.</li>
-          <li>Support the team with data analysis, architecture decisions, and programming challenges.</li>
-        </ul>
-      </div>
-
-      <div class="item">
-        <div class="item-header">
-          <span class="item-title">Independent Developer: Sweden (remote)</span>
-          <span class="item-date">2018 – 2023</span>
-        </div>
-        <ul>
-          <li>Built the Nawras Foods e-commerce platform on Shopify with a custom FastAPI/Python backend that automates product sync and generates offers and invoices in Fortnox ERP.</li>
-          <li>Delivered full-stack web and automation projects for multiple clients.</li>
-        </ul>
-      </div>
-    </section>
-
-    <section>
-      <h2>Skills</h2>
-      <div class="skills-grid">
-        <div class="skill-cat">
-          <strong>Programming Languages</strong>
-          <span>Python, C, JavaScript</span><br>  
-          <span>Occasionally Learning: Elixir OTP</span>
-        </div>
-        <div class="skill-cat">
-          <strong>AI &amp; Data</strong>
-          <span>Generative AI integration (OpenAI, Anthropic, DeepInfra, OpenRouter, local models), vector DBs (Qdrant, Chroma), graph DBs (KuzuDB, Neo4j), data analysis</span>
-        </div>
-        <div class="skill-cat">
-          <strong>Web &amp; Backend</strong>
-          <span>React, Next.js, FastAPI, REST APIs, Shopify</span>
-        </div>
-        <div class="skill-cat">
-          <strong>IoT &amp; Embedded</strong>
-          <span>ESP32, STM32, Raspberry Pi, Modbus, MQTT, Edge Computing, Edge AI (MobileNet v2, YOLO)</span>
-        </div>
-        <div class="skill-cat">
-          <strong>Tools &amp; DevOps</strong>
-          <span>Git, GitHub, Linux (bare metal)</span>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Selected Projects</h2>
-      <div class="project">
-        <h3>Nimai</h3>
-        <p>Telegram bot built with the OpenAI Agent SDK and the KuzuDB embedded graph database (hobby project).</p>
-        <a href="https://github.com/tanimtbh/nimai" target="_blank" rel="noopener">github.com/tanimtbh/nimai ↗</a>
-      </div>
-      <div class="project">
-        <h3>Dispenser Fault-Tolerant App</h3>
-        <p>Fault-tolerant dispenser control application built on an actor-model design. This project I made personally, based on a real problem at my company, to showcase my skills and the necessity of the actor model. (Abstract)</p>
-        <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">github.com/tanimtbh/dispenser_fault_tolerant_app ↗</a>
-      </div>
-      <div class="project">
-        <h3>Hands-On Effective Use of LLMs</h3>
-        <p>Internal workshop materials on applying LLMs to real development tasks.</p>
-        <a href="https://github.com/tanimtbh/hands_on_effective_use_of_llm_workshop" target="_blank" rel="noopener">github.com/tanimtbh/hands_on_effective_use_of_llm_workshop ↗</a>
-      </div>
-      <div class="project">
-        <h3>Custom Modbus RTU (STM32)</h3>
-        <p>STM32 firmware project implementing a custom Modbus RTU protocol. (Feel free to ask for more details)</p>
-      </div>
-      <div class="project">
-        <h3>Recipe CookBook (Next.js)</h3>
-        <p>Next.js-based cookbook application for converting human-written cooking instructions into a machine-readable format. (Feel free to ask for more details)</p>
-      </div>
-    </section>
-
-    <section>
-      <h2>Education</h2>
-      <div class="item">
-        <div class="item-header">
-          <span class="item-title">BSc in Electronics and Communication Engineering, Sylhet International University, Sylhet, Bangladesh</span>
-          <span class="item-date">2012 – 2016</span>
-        </div>
-      </div>
-      <div class="item">
-        <div class="item-header">
-          <span class="item-title">Graduate Coursework in Intelligent Transport Systems and Logistics, Linköping University, Norrköping, Sweden</span>
-          <span class="item-date">2018</span>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Languages</h2>
-      <div class="lang-grid">
-        <div class="lang-card">
-          <strong>English</strong>
-          <span>Professional working proficiency</span>
-        </div>
-        <div class="lang-card">
-          <strong>Bengali (Bangla)</strong>
-          <span>Native</span>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Availability</h2>
-      <div class="availability">
-        <strong>Actively seeking remote or hybrid roles</strong> to accommodate Portuguese language studies and integration activities.
-      </div>
-    </section>
-
-    <footer>
-      © 2026 Md Mizanur Rahman (Tanim) · Ílhavo, Portugal · <a href="mailto:tanimtbh@gmail.com">tanimtbh@gmail.com</a>
+    <footer class="mono">
+      <a href="https://github.com/tanimtbh" target="_blank" rel="noopener">github.com/tanimtbh</a>
+      <span><span class="led"></span>up <span id="up">00:00:00</span>, no crashes</span>
     </footer>
-  </div>
+  </main>
 
   <script>
-    // Raw Markdown Resume Data
-    const markdownCV = `# Md Mizanur Rahman (Tanim)
-**IoT & Full-Stack Developer — Edge AI & GenAI Integration**
-Ílhavo, Aveiro, Portugal · +351 920 798 728 · tanimtbh@gmail.com · tanimtbh.github.io · github.com/tanimtbh · linkedin.com/in/md-mizanur-rahman-4103311a2
-
-## Summary
-IoT and full-stack developer with 5+ years of challenging experience spanning embedded systems, web platforms, and automation with a rare crossover into generative AI integration and local/edge AI. Currently a Developer at Wish and Cook in Portugal, building and maintaining the company's IoT gateway and a custom Modbus protocol stack in Python and C, and integrating generative AI into products and internal workflows. Previously ran an independent development practice in Sweden delivering full-stack e-commerce and ERP automation for multiple clients. Passionate about fault-tolerant software, edge computing, local/edge AI, and AI-driven automation. Although I have never had the chance to work with Elixir (BEAM VM), I am very interested in and optimistic about learning it and exploring its capabilities for building fault-tolerant and highly concurrent systems. Open to remote or hybrid roles across the EU.
-
-## Experience
-### Developer — Wish and Cook, Ílhavo, Portugal (2023 – Present)
-- Build and maintain the company's custom Modbus RTU protocol and gateway written in Python and C with MQTT messaging, architected around a fault-tolerant actor model.
-- Write custom applications and scripts for hardware testing and validation.
-- Built a generative-AI pipeline that converts human-written cooking instructions into a machine-readable format, editable in a Next.js-based cookbook.
-- Support the team with data analysis, architecture decisions, and programming challenges.
-
-### Independent Developer — Sweden, remote (2018 – 2023)
-- Built the Nawras Foods e-commerce platform on Shopify with a custom FastAPI/Python backend that automates product sync and generates offers and invoices in Fortnox ERP.
-- Delivered full-stack web and automation projects for multiple clients.
-
-## Selected Projects
-- Nimai — Telegram bot built with the OpenAI Agent SDK and the KuzuDB embedded graph database (hobby project) (github.com/tanimtbh/nimai)
-- Dispenser Fault-Tolerant App — Fault-tolerant dispenser control application built on an actor-model design. This project I made personally, based on a real problem at my company, to showcase my skills and the necessity of the actor model. (Abstract) (github.com/tanimtbh/dispenser_fault_tolerant_app)
-- Hands-On Effective Use of LLMs — Internal workshop materials on applying LLMs to real development tasks (github.com/tanimtbh/hands_on_effective_use_of_llm_workshop)
-- Custom Modbus RTU (STM32) — STM32 firmware project implementing a custom Modbus RTU protocol. (Feel free to ask for more details)
-- Recipe CookBook (Next.js) — Next.js-based cookbook application for converting human-written cooking instructions into a machine-readable format. (Feel free to ask for more details)
-
-## Education
-- BSc in Electronics and Communication Engineering — Sylhet International University, Sylhet, Bangladesh (2012 – 2016)
-- Graduate Coursework in Intelligent Transport Systems and Logistics — Linköping University, Norrköping, Sweden (2018)
-
-## Skills
-- Programming Languages: Python, C, JavaScript
-- Occasionally Learning: Elixir OTP
-- AI & Data: Generative AI integration (OpenAI, Anthropic, DeepInfra, OpenRouter, local models), vector DBs (Qdrant, Chroma), graph DBs (KuzuDB, Neo4j), data analysis
-- Web & Backend: React, Next.js, FastAPI, REST APIs, Shopify
-- IoT & Embedded: ESP32, STM32, Raspberry Pi, Modbus, MQTT, Edge Computing, Edge AI (MobileNet v2, YOLO)
-- Tools & DevOps: Git, GitHub, Linux (bare metal)
-
-## Languages
-- English — Professional working proficiency
-- Bengali (Bangla) — Native
-
-## Availability
-Actively seeking remote or hybrid roles to accommodate Portuguese language studies and integration activities.
-`;
-
-    // Shared instructions: lets any LLM act as a neutral assistant for recruiters reviewing this CV
-    const llmInstruction = `You are a hiring assistant helping a recruiter or hiring manager evaluate the candidate whose CV is provided below. The candidate supplied this CV themselves. Answer the recruiter's questions about the candidate using the CV below.`;
-
-    // Full text used by the copy button and the AI chat launchers
-    const llmPrompt = `${llmInstruction}\n\nCV:\n${markdownCV}`;
-
-    async function copyMarkdown() {
-      const btn = document.getElementById('copy-md-btn');
-      const original = btn.innerHTML;
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(llmPrompt);
-        } else {
-          // Fallback for older browsers / non-HTTPS contexts
-          const ta = document.createElement('textarea');
-          ta.value = llmPrompt;
-          ta.style.position = 'fixed';
-          ta.style.opacity = '0';
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
-        }
-        btn.innerHTML = '✅ Copied to clipboard!';
-      } catch (err) {
-        btn.innerHTML = '⚠️ Copy failed — select manually';
-      }
-      setTimeout(() => { btn.innerHTML = original; }, 2500);
-    }
-
-    function openAI(platform) {
-      const prompt = `${llmPrompt}\n\nHi! How can I help you learn more about Tanim's background and potential?`;
-      const encodedPrompt = encodeURIComponent(prompt);
-
-      let url = "";
-      if (platform === 'chatgpt') {
-        url = `https://chatgpt.com/?q=${encodedPrompt}`;
-      } else if (platform === 'claude') {
-        url = `https://claude.ai/new?q=${encodedPrompt}`;
-      }
-
-      if (url) {
-        window.open(url, '_blank');
-      }
-    }
+    // Tiny uptime counter: how long this page has been running.
+    const up = document.getElementById('up');
+    const start = Date.now();
+    const pad = n => String(n).padStart(2, '0');
+    setInterval(() => {
+      const s = Math.floor((Date.now() - start) / 1000);
+      up.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+    }, 1000);
   </script>
 </body>
 </html>
