@@ -27,3 +27,50 @@ export function copyButton(text, label = 'Copy') {
   });
   return button;
 }
+
+// ---- Python code with colours ------------------------------------------------
+
+const PYTHON = /(#.*$)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|\b(\d+(?:\.\d+)?)\b|\b(with|as|from|import|for|in|def|return|lambda|if|else|not|and|or|None|True|False)\b|\b([A-Z][A-Za-z0-9_]*)\b/gm;
+const TOKEN_CLASS = ['', 'tok-c', 'tok-s', 'tok-n', 'tok-k', 'tok-t'];
+
+export function highlight(code) {
+  const out = [];
+  let last = 0;
+  for (const match of code.matchAll(PYTHON)) {
+    if (match.index > last) out.push(code.slice(last, match.index));
+    const kind = match.findIndex((group, i) => i > 0 && group !== undefined);
+    out.push(el('span', { class: TOKEN_CLASS[kind], text: match[0] }));
+    last = match.index + match[0].length;
+  }
+  out.push(code.slice(last));
+  return out;
+}
+
+// ---- phrases with values you can change ---------------------------------------
+
+/** Text with {marked values}: the parts you are meant to change. */
+export function fillIn(text) {
+  return text.split(/(\{[^}]*\})/).filter(Boolean).map((piece) =>
+    piece.startsWith('{') ? slot(piece.slice(1, -1)) : piece);
+}
+
+/** One marked value. Click it and type to put in your own. */
+export function slot(value) {
+  const node = el('span', { class: 'slot', role: 'textbox', spellcheck: 'false', title: 'Click to change', 'aria-label': 'Example value, click to change', text: value });
+  try {
+    node.contentEditable = 'plaintext-only';
+  } catch {
+    node.contentEditable = 'true'; // older browsers
+  }
+  // the first click selects the whole value, so typing replaces it
+  node.addEventListener('focus', () => setTimeout(() => {
+    if (document.activeElement === node) getSelection().selectAllChildren(node);
+  }, 0));
+  node.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === 'Escape') {
+      event.preventDefault();
+      node.blur();
+    }
+  });
+  return node;
+}

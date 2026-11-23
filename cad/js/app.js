@@ -1,8 +1,9 @@
 // Page logic: loading the terms, navigation, search and the term pages.
 
-import { copyButton, el } from './dom.js';
+import { copyButton, el, fillIn, highlight } from './dom.js';
+import { EXAMPLES } from './guide-data.js';
+import { renderExample, renderExamples, renderSetup, renderWhy } from './guide.js';
 import { icon } from './icons.js';
-import { addPhrase, onPhraseCount, phraseCount, renderAgentPage, renderPromptPage } from './tools.js';
 import { LEGEND, Viewer, renderThumb } from './viewer.js';
 
 const main = document.getElementById('main');
@@ -149,8 +150,8 @@ function applySearch() {
   store.results = find(query);
   store.picked = 0;
   renderNav();
-  if (TOOL_PAGES.includes(currentPage())) {
-    if (query) location.hash = '#/'; // searching from a tool page shows the results
+  if (isGuidePage()) {
+    if (query) location.hash = '#/'; // searching from a guide page shows the results
   } else if (!currentTermId()) renderHome();
   else if (query) nav.scrollTop = 0;
 }
@@ -163,8 +164,17 @@ function clearSearch() {
 
 // ---- sidebar --------------------------------------------------------------
 
-const TOOL_PAGES = ['prompt', 'agent'];
+const GUIDE_PAGES = [
+  { hash: 'examples', name: 'Example prompts', icon: 'say', note: 'Real prompts, the agent’s replies and the parts they made.' },
+  { hash: 'setup', name: 'Setup', icon: 'wrench', note: 'Install VS Code, uv, Claude Code and the OCP viewer, step by step.' },
+  { hash: 'why', name: 'Why build123d', icon: 'versus', note: 'Why code and a viewer suit an AI agent better than other CAD tools.' },
+];
 const currentPage = () => location.hash.replace(/^#\/?/, '');
+const currentExample = () => {
+  const match = location.hash.match(/^#\/e\/([^/?]+)/);
+  return match ? EXAMPLES.find((example) => example.id === decodeURIComponent(match[1])) : null;
+};
+const isGuidePage = () => GUIDE_PAGES.some((page) => page.hash === currentPage()) || Boolean(currentExample());
 
 function currentTermId() {
   const match = location.hash.match(/^#\/t\/([^/?]+)/);
@@ -211,15 +221,14 @@ function renderNav() {
         el('span', { class: 'cat-ico' }, icon('grid', 15)),
         el('span', { class: 'nav-group-name', text: 'All terms' }),
         el('span', { class: 'count', text: String(store.terms.length) }))),
-    el('li', {},
-      el('a', { href: '#/prompt', class: 'nav-group', 'aria-current': currentPage() === 'prompt' && 'page' },
-        el('span', { class: 'cat-ico' }, icon('pen', 15)),
-        el('span', { class: 'nav-group-name', text: 'Prompt builder' }),
-        phraseCount() > 0 && el('span', { class: 'badge', title: 'Phrases collected', text: String(phraseCount()) }))),
-    el('li', {},
-      el('a', { href: '#/agent', class: 'nav-group', 'aria-current': currentPage() === 'agent' && 'page' },
-        el('span', { class: 'cat-ico' }, icon('book', 15)),
-        el('span', { class: 'nav-group-name', text: 'Glossary for your agent' })))),
+    GUIDE_PAGES.map((page) => {
+      const here = currentPage() === page.hash || (page.hash === 'examples' && Boolean(currentExample()));
+      return el('li', {},
+        el('a', { href: `#/${page.hash}`, class: 'nav-group', 'aria-current': here && 'page' },
+          el('span', { class: 'cat-ico' }, icon(page.icon, 15)),
+          el('span', { class: 'nav-group-name', text: page.name }),
+          page.hash === 'examples' && el('span', { class: 'count', text: String(EXAMPLES.length) })));
+    })),
     ...store.categories.map((category) =>
       el('section', {},
         el('h2', {},
@@ -279,15 +288,10 @@ function renderHome(group = currentGroupId()) {
     }
   } else {
     if (!group) {
-      page.push(el('div', { class: 'tools' },
-        el('a', { class: 'tool', href: '#/prompt' },
-          el('span', { class: 'cat-ico cat-ico-lg' }, icon('pen', 22)),
-          el('span', {}, el('strong', { text: 'Prompt builder' }),
-            el('small', { text: 'Collect phrases and a project brief into one prompt for your agent.' }))),
-        el('a', { class: 'tool', href: '#/agent' },
-          el('span', { class: 'cat-ico cat-ico-lg' }, icon('book', 22)),
-          el('span', {}, el('strong', { text: 'Glossary for your agent' }),
-            el('small', { text: 'Every term and build123d note in one text file your agent can read.' })))));
+      page.push(el('div', { class: 'tools' }, GUIDE_PAGES.map((item) =>
+        el('a', { class: 'tool', href: `#/${item.hash}` },
+          el('span', { class: 'cat-ico cat-ico-lg' }, icon(item.icon, 22)),
+          el('span', {}, el('strong', { text: item.name }), el('small', { text: item.note }))))));
     }
     page.push(chips(group));
     for (const category of shown) {
@@ -307,55 +311,12 @@ function renderHome(group = currentGroupId()) {
 
 // ---- term page ------------------------------------------------------------
 
-const PYTHON = /(#.*$)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|\b(\d+(?:\.\d+)?)\b|\b(with|as|from|import|for|in|def|return|lambda|if|else|not|and|or|None|True|False)\b|\b([A-Z][A-Za-z0-9_]*)\b/gm;
-const TOKEN_CLASS = ['', 'tok-c', 'tok-s', 'tok-n', 'tok-k', 'tok-t'];
-
-function highlight(code) {
-  const out = [];
-  let last = 0;
-  for (const match of code.matchAll(PYTHON)) {
-    if (match.index > last) out.push(code.slice(last, match.index));
-    const kind = match.findIndex((group, i) => i > 0 && group !== undefined);
-    out.push(el('span', { class: TOKEN_CLASS[kind], text: match[0] }));
-    last = match.index + match[0].length;
-  }
-  out.push(code.slice(last));
-  return out;
-}
-
 function heading(shape, title) {
   return el('h2', {}, icon(shape, 15), title);
 }
 
 function section(shape, title, ...content) {
   return el('section', {}, el('div', { class: 'sec-head' }, heading(shape, title)), ...content);
-}
-
-/** Text with {marked values}: the parts you are meant to change. */
-function fillIn(text) {
-  return text.split(/(\{[^}]*\})/).filter(Boolean).map((piece) =>
-    piece.startsWith('{') ? slot(piece.slice(1, -1)) : piece);
-}
-
-/** One marked value. Click it and type to put in your own. */
-function slot(value) {
-  const node = el('span', { class: 'slot', role: 'textbox', spellcheck: 'false', title: 'Click to change', 'aria-label': 'Example value, click to change', text: value });
-  try {
-    node.contentEditable = 'plaintext-only';
-  } catch {
-    node.contentEditable = 'true'; // older browsers
-  }
-  // the first click selects the whole value, so typing replaces it
-  node.addEventListener('focus', () => setTimeout(() => {
-    if (document.activeElement === node) getSelection().selectAllChildren(node);
-  }, 0));
-  node.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' || event.key === 'Escape') {
-      event.preventDefault();
-      node.blur();
-    }
-  });
-  return node;
 }
 
 const plain = (text) => text.replace(/[{}]/g, '');
@@ -367,23 +328,16 @@ function sayList(term) {
     el('div', { class: 'sec-head' }, heading('say', 'Say it to your agent')),
     el('ul', { class: 'say-list' }, term.say.map((entry) => {
       const line = el('p', {}, fillIn(entry.text));
-      const idle = () => [icon('plus', 12), 'Add to prompt'];
-      const add = el('button', { type: 'button', class: 'copy', title: 'Collect this phrase in the prompt builder' }, idle());
-      add.addEventListener('click', () => {
-        addPhrase(term.name, term.id, line.textContent);
-        add.replaceChildren('Added');
-        setTimeout(() => add.replaceChildren(...idle()), 1600);
-      });
-      // both buttons read the line as it is now, with any values you changed
+      // the button copies the line as it is now, with any values you changed
       return el('li', { class: 'say' },
         el('div', { class: 'say-top' },
           el('span', { class: 'say-for', text: entry.for }),
-          el('span', { class: 'say-tools' }, add, copyButton(() => line.textContent))),
+          copyButton(() => line.textContent)),
         line);
     })),
     marked && el('p', { class: 'note' }, el('span', { class: 'slot slot-demo', text: 'Marked values' }),
-      ' are examples. Click one to type your own, then copy the phrase or add it to the ',
-      el('a', { href: '#/prompt', text: 'prompt builder' }), '.'));
+      ' are examples. Click one to type your own, then copy the phrase. See how whole prompts are put together in the ',
+      el('a', { href: '#/examples', text: 'example prompts' }), '.'));
 }
 
 function sizeTable(table) {
@@ -397,8 +351,16 @@ function sizeTable(table) {
     table.note && el('p', { class: 'note', text: table.note }));
 }
 
-function buildStage(term, model) {
-  const start = model.thumb;
+/**
+ * The picture area: buttons to choose a picture, the 3D view and a legend.
+ * options.legend   other words for the colours, as { role: text }
+ * options.start    which picture to show first (default: the model's own choice)
+ * options.onSelect called with the number of the picture whenever it changes
+ * The element returned has a select(number) function, to change the picture from outside.
+ */
+function buildStage(name, model, options = {}) {
+  const start = options.start ?? model.thumb;
+  const words = { ...LEGEND, ...options.legend };
   const view3d = el('div', { class: 'stage-3d' });
   const viewSvg = el('div', { class: 'stage-svg', hidden: true });
   const legend = el('ul', { class: 'legend' });
@@ -411,7 +373,7 @@ function buildStage(term, model) {
   if (model.states.some((state) => state.type === '3d')) {
     try {
       viewer = new Viewer(view3d);
-      viewer.setModel(model, term.name);
+      viewer.setModel(model, name);
     } catch (error) {
       console.warn(error);
       viewer = null;
@@ -430,9 +392,10 @@ function buildStage(term, model) {
     if (flat) viewSvg.innerHTML = state.svg; // made by our own build script
     else viewer?.show(index);
 
-    const roles = flat ? [] : state.meshes.map((mesh) => mesh.role).filter((role) => LEGEND[role]);
+    const roles = flat ? [] : state.meshes.map((mesh) => mesh.role).filter((role) => words[role]);
     legend.replaceChildren(...[...new Set(roles)].map((role) =>
-      el('li', {}, el('i', { style: `background: var(--m-${role})` }), LEGEND[role])));
+      el('li', {}, el('i', { style: `background: var(--m-${role === 'zone' ? 'clash' : role})` }), words[role])));
+    options.onSelect?.(index);
   }
 
   const stage = el('div', { class: 'stage' },
@@ -441,6 +404,7 @@ function buildStage(term, model) {
       reset),
     el('div', { class: 'stage-frame' }, view3d, viewSvg),
     el('div', { class: 'stage-foot' }, legend, hint));
+  stage.select = select;
   select(start);
   return stage;
 }
@@ -499,13 +463,34 @@ async function renderTerm(term) {
   }
   if (mine !== ticket) return;
 
-  stageSlot.replaceWith(buildStage(term, model));
+  stageSlot.replaceWith(buildStage(term.name, model));
   if (model.code) {
     codeSlot.replaceWith(el('section', {},
       el('div', { class: 'sec-head' }, heading('code', 'In build123d'), copyButton(model.code)),
       el('div', { class: 'code' }, el('pre', {}, el('code', {}, highlight(model.code)))),
       term.codeNote && el('p', { class: 'note', text: term.codeNote })));
   }
+}
+
+// What the guide pages need from this file.
+const guide = {
+  thumb: (id) => thumbBox({ id }),
+  term: (id) => store.byId.get(id),
+  termUrl,
+};
+
+async function showExample(example) {
+  const mine = ++ticket;
+  const page = renderExample(main, guide, example);
+  let model;
+  try {
+    model = await loadModel(example.id);
+  } catch {
+    if (mine === ticket) page.failed();
+    return;
+  }
+  if (mine !== ticket) return;
+  page.ready(model, (options) => buildStage(example.title, model, options));
 }
 
 function renderMissing() {
@@ -526,10 +511,13 @@ function route(moveFocus = true) {
   setMenu(false);
 
   const id = currentTermId();
-  const hash = location.hash.replace(/^#\/?/, '');
+  const hash = currentPage();
+  const example = currentExample();
   if (!hash || currentGroupId()) renderHome();
-  else if (hash === 'prompt') renderPromptPage(main);
-  else if (hash === 'agent') renderAgentPage(main, store.terms.length);
+  else if (hash === 'examples') renderExamples(main, guide);
+  else if (hash === 'setup') renderSetup(main, guide);
+  else if (hash === 'why') renderWhy(main, guide);
+  else if (example) showExample(example);
   else if (id && store.byId.has(id)) renderTerm(store.byId.get(id));
   else renderMissing();
 
@@ -664,7 +652,6 @@ async function start() {
   });
 
   store.results = find('');
-  onPhraseCount(() => { if (!store.query.trim()) renderNav(); });
   route(false);
 }
 

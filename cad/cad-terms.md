@@ -12,27 +12,76 @@ A shared vocabulary between a person and an AI agent that writes build123d code 
 - A hole described only by a screw size, such as an M3 hole, needs one more fact: clearance, thread-in or insert. Ask if it is missing.
 - Put every dimension in a named variable at the top of the script and derive positions from those variables.
 - If a dimension, a position or a side is not stated, ask. Do not guess silently, and list any assumption you make.
+- A distance between holes or pins is centre to centre unless the person says edge to edge.
+- In a design with several parts, keep each part in its own file with its own origin, and place the parts only in the assembly file. Never union separate parts.
+- A bought part (screw, motor, bearing, circuit board, aluminium profile) is reference geometry. Never change its size and never export it for printing.
+- After any change to an assembly, check every pair of parts for overlap and report the result.
 
 ## build123d notes to remember
 
+- **Sketch and profile:** Shapes inside one BuildSketch are joined into a single profile. Give a shape mode=Mode.SUBTRACT to cut it out of the profile.
+- **Taper and draft:** extrude(taper=8) leans every wall inward by 8°. A negative angle leans them outward. The sketch you start from keeps its size.
 - **Boolean operations:** Inside a BuildPart block the same three choices are mode=Mode.ADD, Mode.SUBTRACT and Mode.INTERSECT.
 - **Shell:** build123d has no function called shell. Use offset with a negative amount, and pass the faces to remove as openings.
 - **Offset:** An outward offset rounds the outside corners by default. Pass kind=Kind.INTERSECTION to keep them sharp. The same offset function hollows a solid when you give it a 3D part: see Shell.
 - **Pattern:** GridLocations and PolarLocations only choose the places. Whatever you create inside the with block is made once at every place.
 - **Mirror:** Plane.YZ mirrors left to right, Plane.XZ front to back and Plane.XY top to bottom. Inside BuildPart the copy is joined to what is already there.
+- **Emboss and engrave:** Text() makes a flat sketch of the letters. Extrude it by a positive amount to emboss, or by a negative amount with mode=Mode.SUBTRACT to engrave. Sketch it on the face it belongs to, so it reads correctly from outside.
 - **Through hole and blind hole:** Hole with no depth goes right through. Give depth= for a blind hole. The hole starts at the current location and goes down into the part.
 - **Countersink:** build123d defaults to an 82° cone, which fits US inch screws. Metric countersunk screws use 90°, so set counter_sink_angle=90.
 - **Slot:** SlotOverall takes the full end-to-end length. SlotCenterToCenter takes the distance between the centres of the two round ends. Say which one you mean.
+- **Pocket:** Sketch on the face, then extrude by a negative amount with mode=Mode.SUBTRACT. The negative amount cuts into the part.
+- **Cutout:** Plane.XZ.offset(15) is a plane 15 mm in front of the origin, on the front wall of a part that deep. In a sketch there, X is left to right and the second coordinate is the height. A negative extrude then cuts into the wall.
+- **Keyhole slot:** A keyhole is a Circle and a SlotCenterToCenter in the same sketch, cut through together.
+- **Vent slots:** Put SlotOverall inside GridLocations in one sketch, then cut the whole sketch through the wall with a single extrude.
 - **Nut trap:** major_radius=False makes the radius reach the flat sides, so the size you give is the nut's flat-to-flat width.
+- **Hinge:** Model both halves in the closed position. To show the hinge open, rotate one half about the hinge axis: move the axis to the origin, rotate, and move it back.
 - **Face, edge, vertex:** sort_by orders items along a direction so you can take the first or last. group_by collects items that sit at the same position. filter_by keeps items of one kind or direction.
 - **Directions and axes:** sort_by(Axis.Y)[0] is the face furthest toward −Y, the front. [-1] is the one furthest toward +Y, the back. The same works with Axis.X and Axis.Z.
+- **Origin and datum:** align=(Align.MIN, Align.MIN, Align.MIN) puts the corner of a Box at the origin, so positions from a drawing can be typed in unchanged. Locations inside Locations add up, which moves a whole set of positions at once.
+- **Rotation:** Rot(Z=30) turns a shape about the Z axis through the origin. To turn about another point, move that point to the origin, rotate, and move back: Pos(15, 0, 0) * Rot(Z=30) * Pos(-15, 0, 0) * shape. The moves are applied from right to left.
 - **Align:** Every build123d shape is centred by default, in all three directions. That is why a Box often ends up half below the plane. Pass align=(Align.CENTER, Align.CENTER, Align.MIN) to sit it on top.
 - **Concentric:** Features created at the same Locations are concentric automatically. Problems start when one of them is placed by hand with its own coordinates.
+- **Tangent:** TangentArc starts in the direction of the line before it. line @ 1 is the end point of a line and line % 1 is its direction there.
+- **Parallel, perpendicular, normal:** face.normal_at() gives the direction pointing out of a face. Locations(face) places things at the centre of the face, turned to match it, so a Hole made there follows the normal.
 - **Diameter and radius:** Circle, Cylinder, Hole and fillet in build123d all take a radius. Keep the diameter in a named variable and divide by two where it is used.
+- **Spacing and pitch:** GridLocations takes centre-to-centre spacing and centres the whole pattern on the current location.
+- **Bounding box:** part.bounding_box().size gives the three overall sizes as .X, .Y and .Z. The box always follows the axes, so turning a part can change it.
+- **Keep-out zone:** Model the zone as its own solid and intersect it with the part: (part & zone).volume must be 0. Show it see-through in the viewer, and never join it to the part.
+- **Exploded view:** Keep the real positions in the assembly and add the extra gap only for the picture. The OCP viewer can also pull the parts of an assembly apart for you, with its Explode tool.
+- **Splitting a part:** split(part, bisect_by=plane, keep=Keep.TOP) keeps the piece on the side the plane faces. Keep.BOTTOM keeps the other piece, and Keep.BOTH returns both.
+- **Assembly:** Compound(label=..., children=[...]) groups placed parts without joining them. Give every part a label, and the OCP viewer lists the assembly as a tree with those names.
+- **Joint (mate):** RigidJoint(label, part, Location(...)) marks a fixed point. RevoluteJoint(label, part, axis=Axis(...)) marks a turning axis. a.joints["x"].connect_to(b.joints["y"]) moves part b into place, and a revolute joint also takes angle=.
+- **Interference check:** (a & b).volume is the volume two parts share: 0 means no overlap. Parts that only touch share a face but no volume, so they pass.
+- **Bought part:** Keep each bought part in its own function or file and give it a label. Use import_step() when the maker offers a STEP file. Otherwise a few Box and Cylinder shapes with the right outside sizes and hole positions are enough.
+- **STEP, STL and 3MF:** export_step(part, "name.step") and import_step("name.step") keep the exact shape. export_stl(part, "name.stl") makes triangles: a smaller tolerance= gives smoother curves and a larger file. For 3MF, use the Mesher class.
+- **Aluminium extrusion:** The profile is one sketch extruded to the length of the bar. A simple stand-in with the 20 mm square, the four slots and the centre hole is enough to design against.
+- **Shaft and hub:** A D-shaped bore is a circle with a rectangle subtracted from it in the same sketch, then cut through the hub.
+- **Bearing seat:** A bearing seat is a counterbore: CounterBoreHole with the seat as the wide part and the through hole as the narrow part.
 
 ## Making solids
 
 Ways to turn a flat sketch into a 3D shape, and to combine or copy shapes.
+
+### Sketch and profile
+
+Also called: sketch, profile, outline, cross-section.
+
+A sketch is a flat drawing made on a plane, built from lines, arcs, circles and rectangles. The closed outline it forms is called the profile. Extrude, revolve, loft and sweep all turn a profile into a solid. The outline must be closed, with no gaps and no lines that cross, so that it has a clear inside.
+
+```python
+with BuildPart() as part:
+    with BuildSketch() as profile:          # a sketch: flat shapes drawn on a plane
+        RectangleRounded(40, 26, 5)
+        Circle(6, mode=Mode.SUBTRACT)       # a hole in the profile
+    extrude(amount=10)                      # the closed profile becomes a solid
+```
+
+Code note: Shapes inside one BuildSketch are joined into a single profile. Give a shape mode=Mode.SUBTRACT to cut it out of the profile.
+
+Not the same as Plane: A plane is the invisible sheet you draw on. A sketch is the drawing itself.
+
+Not the same as Section view: A profile is a shape you draw to build a solid. A section view is a cut through a finished solid, to look inside.
 
 ### Extrude
 
@@ -112,11 +161,37 @@ with BuildPart() as part:
     sweep()
 ```
 
-Printing: A tube running sideways has a small overhang at the top of its inside. Up to roughly 8 mm inside diameter this usually prints without support.
+Printing: A tube running sideways has a small overhang at the top of its inside. Up to roughly 6 mm inside diameter this usually prints without support. Above that, see Teardrop hole.
 
 Not the same as Extrude: Extrude pushes the profile in a straight line. Sweep can follow any path.
 
 Not the same as Loft: Sweep moves one profile along a path. Loft blends between different profiles.
+
+### Taper and draft
+
+Also called: draft angle, tapered, sloped walls, cone shape.
+
+A tapered part gets steadily narrower along its length, so its walls lean and are not parallel. The lean is given as an angle from straight: 0° is a straight wall and a few degrees is a gentle taper. A tapered pin centres itself in a tapered hole and wedges tight. In moulding the same lean is called draft, and it lets the part slide out of the mould.
+
+```python
+with BuildPart() as straight:
+    with BuildSketch():
+        RectangleRounded(30, 30, 4)
+    extrude(amount=24)                  # walls go straight up
+
+with BuildPart() as tapered:
+    with BuildSketch():
+        RectangleRounded(30, 30, 4)
+    extrude(amount=24, taper=8)         # every wall leans inward by 8°
+```
+
+Code note: extrude(taper=8) leans every wall inward by 8°. A negative angle leans them outward. The sketch you start from keeps its size.
+
+Printing: A part that narrows toward the top prints without support. One that widens toward the top is an overhang: keep the lean within 45° of vertical.
+
+Not the same as Chamfer: A chamfer cuts off the edge only. A taper leans the whole wall.
+
+Not the same as Loft: A taper keeps the same shape and shrinks it evenly. A loft can change into a different shape.
 
 ### Boolean operations
 
@@ -134,6 +209,8 @@ overlap = box & cylinder    # intersect: keep only the shared part
 ```
 
 Code note: Inside a BuildPart block the same three choices are mode=Mode.ADD, Mode.SUBTRACT and Mode.INTERSECT.
+
+Not the same as Assembly: A union melts solids into one piece. An assembly keeps every part separate and only places it.
 
 ### Shell
 
@@ -221,9 +298,11 @@ Code note: Plane.YZ mirrors left to right, Plane.XZ front to back and Plane.XY t
 
 Not the same as Pattern: A mirror makes one flipped copy. A pattern makes several copies that all face the same way.
 
-## Edges and strength
+Not the same as Rotation: A mirror flips a shape into its reflection. A rotation only turns it, and can never make the mirrored shape.
 
-Small features that soften sharp edges and stiffen thin walls.
+## Edges and details
+
+Small features that soften sharp edges, stiffen thin walls and add markings.
 
 ### Fillet
 
@@ -280,6 +359,35 @@ Printing: Make a rib at least 1.2 mm thick. A gusset with a 45° slope prints wi
 
 Not the same as Fillet: A fillet rounds the corner itself. A rib adds a brace across the corner, which stiffens a tall wall far more.
 
+### Emboss and engrave
+
+Also called: raised text, engraved text, deboss, lettering, label, logo.
+
+Embossed text is raised above the surface, like the letters on a coin. Engraved text is cut into it, like an inscription in stone. Both start from the same flat outline of the letters, which is pushed outward or cut inward by a small depth. They are used to label ports, mark a version number, or show which way round a part goes.
+
+```python
+depth = 0.8
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+with BuildPart() as raised:
+    Box(44, 20, 3, align=low)
+    with BuildSketch(Plane.XY.offset(3)):               # on the top face
+        Text("ON", font_size=14)
+    extrude(amount=depth)                               # emboss: adds material
+
+with BuildPart() as sunk:
+    Box(44, 20, 3, align=low)
+    with BuildSketch(Plane.XY.offset(3)):
+        Text("ON", font_size=14)
+    extrude(amount=-depth, mode=Mode.SUBTRACT)          # engrave: cuts material
+```
+
+Code note: Text() makes a flat sketch of the letters. Extrude it by a positive amount to emboss, or by a negative amount with mode=Mode.SUBTRACT to engrave. Sketch it on the face it belongs to, so it reads correctly from outside.
+
+Printing: Keep letters at least 5 mm tall, with strokes of 0.8 mm or more, and 0.4 to 0.8 mm deep or high. On the face that touches the bed only engraved text can print, because raised text would lift the part off the bed.
+
+Not the same as Pocket: Engraving is a very shallow pocket in the shape of letters, made to be read. A pocket is made to hold something.
+
 ## Holes and slots
 
 Openings for screws, pins and cables.
@@ -322,6 +430,8 @@ Printing: With the opening facing up it prints cleanly. Facing down, the flat st
 
 Not the same as Countersink: A counterbore has a flat step for cylinder-head screws. A countersink is a cone for flat-head screws.
 
+Not the same as Bearing seat: The shape is the same. A counterbore hides a screw head. A bearing seat holds a bearing and must fit it closely.
+
 ### Countersink
 
 Also called: csk.
@@ -359,7 +469,121 @@ Code note: SlotOverall takes the full end-to-end length. SlotCenterToCenter take
 
 Printing: A slot through a flat plate prints cleanly. Cut sideways through a standing wall, its long flat top becomes a bridge.
 
-Not the same as Groove: A slot goes right through the material. A groove is a channel cut only part of the way in.
+Not the same as Pocket: A slot goes right through the material. A pocket, or a groove, which is a long narrow pocket, is cut only part of the way in.
+
+### Pocket
+
+Also called: recess, cavity, groove, pocket cut.
+
+A pocket is an area cut down into a face to a set depth, leaving a floor. Its outline can be any closed shape: a rectangle for a battery, a circle for a magnet, a hexagon for a nut. A long, narrow pocket is called a groove. Say the outline, where it is, and how deep it goes.
+
+```python
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+depth = 6
+
+with BuildPart() as part:
+    Box(50, 34, 10, align=low)
+    with BuildSketch(part.faces().sort_by(Axis.Z)[-1]):     # sketch on the top face
+        RectangleRounded(30, 18, 3)
+    extrude(amount=-depth, mode=Mode.SUBTRACT)              # cut down, but not through
+```
+
+Code note: Sketch on the face, then extrude by a negative amount with mode=Mode.SUBTRACT. The negative amount cuts into the part.
+
+Printing: A pocket that opens upward prints cleanly. One that opens downward has a roof that must be bridged: keep it narrow, or turn the part over.
+
+Not the same as Through hole and blind hole: A blind hole is round and made for a screw or pin. A pocket can have any outline.
+
+Not the same as Slot: A slot goes right through the material. A pocket stops part of the way and has a floor.
+
+Not the same as Shell: Shell hollows the whole part and leaves thin walls. A pocket removes one chosen area.
+
+### Cutout
+
+Also called: opening, port, window, aperture, connector opening.
+
+A cutout is an opening cut through a wall so that something can pass through or be reached: a USB plug, a display, a button, a cable. To place one, the agent needs four facts: which wall, the size of the opening, where its centre is, and how much room to leave around the thing that goes through it.
+
+```python
+wall = 2
+port_w, port_h = 9.0, 3.3       # the USB-C socket on the board
+gap = 0.5                       # room around it, on every side
+port_z = 7                      # centre of the socket above the outside bottom
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+with BuildPart() as case:
+    Box(40, 30, 16, align=low)
+    offset(amount=-wall, openings=case.faces().sort_by(Axis.Z)[-1])   # open box
+    with BuildSketch(Plane.XZ.offset(15)):          # the outside of the front wall
+        with Locations((0, port_z)):
+            SlotOverall(port_w + 2 * gap, port_h + 2 * gap)
+    extrude(amount=-wall, mode=Mode.SUBTRACT)       # cut through that one wall
+```
+
+Code note: Plane.XZ.offset(15) is a plane 15 mm in front of the origin, on the front wall of a part that deep. In a sketch there, X is left to right and the second coordinate is the height. A negative extrude then cuts into the wall.
+
+Printing: The flat top of an opening in a standing wall is a bridge, which is fine up to about 20 to 30 mm. Rounded ends or a 45° chamfered top print more cleanly than a wide flat top.
+
+Not the same as Pocket: A cutout goes right through a wall. A pocket stops part of the way and has a floor.
+
+Not the same as Slot: A slot is a long hole with round ends that lets a screw move. A cutout is shaped to fit one particular thing.
+
+### Keyhole slot
+
+Also called: keyhole, keyhole hanger, wall-mount slot, hanging slot.
+
+A keyhole slot is a round hole, large enough for a screw head, joined to a narrow slot that fits only the shank of the screw. You push the part over the screw head and let it drop. The head is then behind the narrow slot and cannot pull out. It lets you hang a box on a wall and lift it off again without tools.
+
+```python
+head = 8.5        # round entry: the screw head passes through
+shank = 4.5       # narrow slot: only the shank of the screw fits
+travel = 8        # how far the part drops onto the screw
+thick = 3
+
+with BuildPart() as plate:
+    Box(30, 36, thick, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    with BuildSketch(Plane.XY.offset(thick)):
+        Circle(head / 2)
+        with Locations((0, travel / 2)):
+            SlotCenterToCenter(travel, shank, rotation=90)
+    extrude(amount=-thick, mode=Mode.SUBTRACT)
+```
+
+Code note: A keyhole is a Circle and a SlotCenterToCenter in the same sketch, cut through together.
+
+Printing: Printed flat on the bed, a keyhole in a back plate needs no support. The rim of the narrow slot carries the whole weight, so keep the plate at least 2.5 mm thick there.
+
+Good to know: Measure your screws first. The round entry must be a little larger than the head. The slot must be a little wider than the shank and clearly narrower than the head.
+
+Not the same as Slot: A slot is the same width all along. A keyhole slot has one wide end for the screw head to pass through.
+
+### Vent slots
+
+Also called: vents, grille, louvres, air slots, ventilation holes.
+
+Vents are a row or grid of narrow openings that let air move through a wall. They cool the electronics, and they let a temperature, humidity or gas sensor feel the air of the room. The openings are kept narrow so that fingers and tools cannot reach inside. A grille is a larger area filled with such openings. A louvre is a vent with angled slats, so that nothing can see or drip straight in.
+
+```python
+slot_w = 2.4        # narrow: keeps fingers and screwdrivers out
+strip = 3.6         # solid material left between two slots
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+with BuildPart() as wall:
+    Box(46, 2, 34, align=low)                         # a standing side wall
+    with BuildSketch(Plane.XZ.offset(1)):             # its front face
+        with Locations((0, 17)):
+            with GridLocations(slot_w + strip, 0, 6, 1):
+                SlotOverall(20, slot_w, rotation=90)  # tall, narrow slots
+    extrude(amount=-2, mode=Mode.SUBTRACT)
+```
+
+Code note: Put SlotOverall inside GridLocations in one sketch, then cut the whole sketch through the wall with a single extrude.
+
+Printing: In a standing wall, make the slots tall and narrow: only the small round top of each one hangs in the air. Slots that run sideways each need a bridge as long as the slot. In a flat lid, either direction prints well.
+
+Not the same as Pattern: A pattern is the tool that repeats a feature. Vents are one thing you make with it.
+
+Not the same as Cutout: A cutout is one opening sized for one thing. Vents are many small openings for air.
 
 ### Teardrop hole
 
@@ -428,7 +652,7 @@ Clearance holes are the standard medium fit. Thread-in holes are the standard dr
 
 Printing: Printed holes come out a little small. For a clearance hole this rarely matters. For a thread-in hole, start with the table value plus 0.2 mm and test with one screw before you print the whole part.
 
-Good to know: M3 is the usual choice for small printed cases. M2.5 fits the mounting holes of a Raspberry Pi. M2 suits very small boards and sensors.
+Good to know: M3 is the usual choice for small printed cases. M2.5 fits the mounting holes of a Raspberry Pi. M2 suits very small boards and sensors. The length of a countersunk (flat-head) screw includes its head, because the head sits inside the part.
 
 Not the same as Self-tapping screw: A machine screw, such as M3, has a fine thread made for nuts and inserts. A self-tapping screw has a coarse, sharp thread made for biting into plastic, and its sizes are named differently.
 
@@ -561,6 +785,51 @@ with BuildPart() as lid:
 Printing: Leave about 0.2 mm of clearance on each side. Make the lip at least 1 mm thick, or it will not survive being opened and closed.
 
 Not the same as Snap fit: A lip only keeps the lid in position. A snap fit actually holds it closed.
+
+### Hinge
+
+Also called: pin hinge, barrel hinge, knuckle hinge, pivot.
+
+A hinge lets one part swing against another about a fixed line, the hinge axis. In the usual pin hinge each part carries a row of short tubes called knuckles. The knuckles of the two parts alternate along the axis, and a pin pushed through all of them holds the parts together while letting them turn. The pin can be a piece of filament, a metal rod or a long screw.
+
+```python
+pin = 3.0           # pin diameter
+knuckle = 7.0       # outside diameter of the barrel around the pin
+gap = 0.3           # between knuckles, and around the pin
+length = 30         # along the hinge axis (Y)
+seg = (length - 4 * gap) / 5        # five knuckles with four gaps between them
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+
+def leaf(side, mine):
+    """side: -1 is the left leaf, +1 the right. mine: the knuckles it owns."""
+    with BuildPart() as part:
+        with Locations((side * 14, 0, 0)):
+            Box(20, length, 3, align=low)                           # the flat leaf
+        for i in mine:
+            y = -length / 2 + seg / 2 + i * (seg + gap)
+            with Locations((0, y, knuckle / 2)):
+                Cylinder(knuckle / 2, seg, rotation=(90, 0, 0))     # one knuckle
+            with Locations((side * 2.25, y, 0)):
+                Box(4.5, seg, 3, align=low)                         # joins it to the leaf
+        with Locations((0, 0, knuckle / 2)):                        # hole for the pin
+            Cylinder(pin / 2 + gap, length, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
+    return part.part
+
+
+left = leaf(-1, (0, 2, 4))      # the knuckles alternate
+right = leaf(+1, (1, 3))
+```
+
+Code note: Model both halves in the closed position. To show the hinge open, rotate one half about the hinge axis: move the axis to the origin, rotate, and move it back.
+
+Printing: Leave 0.3 mm between neighbouring knuckles and around the pin, or they fuse together. A hinge printed already assembled, with the pin as part of one half, is called print-in-place and needs 0.3 to 0.4 mm gaps everywhere.
+
+Not the same as Living hinge: A living hinge has no pin. It is a thin strip of plastic that bends, printed as part of both halves. It needs a tough material such as PETG or TPU, and it wears out sooner.
+
+Not the same as Snap fit: A hinge lets a lid swing. A snap fit holds it shut. A hinged lid usually needs both.
+
+Not the same as Joint (mate): A hinge is the physical part. A revolute joint is how an assembly describes the same turning movement.
 
 ### Sliding dovetail
 
@@ -702,6 +971,8 @@ Printing: For most printers the XY plane is the print bed and Z is the direction
 
 Not the same as Align: A plane says where you are working. Align says which point of the new shape lands there.
 
+Not the same as Sketch and profile: A plane is the invisible sheet. A sketch is what you draw on it.
+
 ### Directions and axes
 
 Also called: front, back, left, right, orientation, X, Y, Z.
@@ -727,6 +998,55 @@ Printing: On most printers the bed is the XY plane and Z is the height, so the b
 
 Not the same as Plane: A direction is a way to point: up, or toward +X. A plane is a flat surface, named by the two axes that lie in it.
 
+### Origin and datum
+
+Also called: origin, datum, reference point, zero point, measured from.
+
+The origin is the point where X, Y and Z are all zero. Every position in the model is a distance from it. A datum is the more general idea: any point, edge or face that you choose to measure from, such as the bottom-left corner of a circuit board. The same hole has different numbers depending on the datum, so always say what a position is measured from.
+
+```python
+board_w, board_h, thick = 60, 30, 1.6
+# hole positions as the drawing gives them: measured from the bottom-left corner
+holes = [(4, 4), (56, 4), (4, 26), (40, 20)]
+
+with BuildPart() as board:
+    # put that same corner at the origin, so the numbers can be used as they are
+    Box(board_w, board_h, thick, align=(Align.MIN, Align.MIN, Align.MIN))
+    with Locations((0, 0, thick)):          # on the top face
+        with Locations(*holes):
+            Hole(radius=1.6)
+```
+
+Code note: align=(Align.MIN, Align.MIN, Align.MIN) puts the corner of a Box at the origin, so positions from a drawing can be typed in unchanged. Locations inside Locations add up, which moves a whole set of positions at once.
+
+Good to know: Board drawings often measure from one corner, and some count Y downward. Check which corner, and which way Y points, before you copy the numbers.
+
+Not the same as Align: The origin is where zero is. Align decides which point of a new shape is put there.
+
+Not the same as Directions and axes: Directions say which way is positive. The origin says where the counting starts.
+
+### Rotation
+
+Also called: rotate, turn, angle, tilt, orientation.
+
+A rotation turns a shape about an axis by an angle in degrees. Three things must be said: which axis, which point the axis passes through, and which way. A positive angle about Z is counter-clockwise when you look down from above. The same rule holds for X and Y, looking from the positive end of the axis back toward the origin. Unless told otherwise, a shape turns about the origin, not about its own middle.
+
+```python
+arm = Box(30, 8, 4, align=(Align.MIN, Align.CENTER, Align.MIN))     # starts at the origin, points along +X
+
+turned = Rot(Z=30) * arm            # +30° about the Z axis: turns around the origin
+back = Rot(Z=-30) * arm             # a negative angle turns the other way
+
+# to turn it around its own middle: move the middle to the origin, turn, move back
+on_the_spot = Pos(15, 0, 0) * Rot(Z=30) * Pos(-15, 0, 0) * arm
+```
+
+Code note: Rot(Z=30) turns a shape about the Z axis through the origin. To turn about another point, move that point to the origin, rotate, and move back: Pos(15, 0, 0) * Rot(Z=30) * Pos(-15, 0, 0) * shape. The moves are applied from right to left.
+
+Not the same as Mirror: A rotation turns a shape and keeps it the same. A mirror flips it into its reflection, which no rotation can produce.
+
+Not the same as Align: Align chooses which point of a shape sits at a location. Rotation chooses which way the shape faces there.
+
 ### Align
 
 Also called: alignment, anchor point, centred.
@@ -745,6 +1065,8 @@ Code note: Every build123d shape is centred by default, in all three directions.
 Printing: Keeping the bottom of your part at z = 0 matches the print bed, so heights in the model are heights above the bed.
 
 Not the same as Plane: Align says which point of the new shape lands at the location. A plane says where that location is and which way is up.
+
+Not the same as Origin and datum: Align decides which point of a shape is placed. The origin is where that point lands when no other location is given.
 
 ### Concentric
 
@@ -766,6 +1088,59 @@ with BuildPart() as part:
 Code note: Features created at the same Locations are concentric automatically. Problems start when one of them is placed by hand with its own coordinates.
 
 Not the same as Tangent: Concentric circles share a centre and never touch. Tangent circles touch at exactly one point.
+
+### Tangent
+
+Also called: tangential, smooth transition, blends smoothly.
+
+A line is tangent to a circle when it just touches it at one point and does not cross it. Two curves are tangent where they meet and carry on in the same direction, so the join is smooth and has no corner. A fillet is tangent to both faces it connects, which is why it feels smooth. Asking for tangent joins is how you get an outline that flows, and does not look like separate pieces stuck together.
+
+```python
+with BuildLine() as smooth:
+    start = Line((0, 0), (30, 0))
+    bend = TangentArc(start @ 1, (45, 15), tangent=start % 1)   # leaves the line in the same direction
+    Line(bend @ 1, (45, 35))
+
+with BuildLine() as kinked:
+    Line((0, 0), (30, 0))
+    ThreePointArc((30, 0), (36.5, 8.5), (45, 15))               # an arc, but not a tangent one
+    Line((45, 15), (45, 35))
+```
+
+Code note: TangentArc starts in the direction of the line before it. line @ 1 is the end point of a line and line % 1 is its direction there.
+
+Printing: A smooth, tangent outline also prints better: the nozzle does not have to stop and turn sharply, which leaves a mark at every corner.
+
+Not the same as Concentric: Tangent circles touch at exactly one point. Concentric circles share a centre and never touch.
+
+Not the same as Fillet: Tangent describes how two curves meet. A fillet is a feature that makes such a smooth meeting along an edge.
+
+### Parallel, perpendicular, normal
+
+Also called: square to, at right angles, 90 degrees, normal direction, face normal.
+
+Two lines or faces are parallel when they point the same way and stay the same distance apart. They are perpendicular when they meet at 90°. The normal of a face is the direction pointing straight out of it, perpendicular to the surface. On a sloped face, a hole made along the normal goes in square to the slope, which is not the same as straight down.
+
+```python
+with BuildPart() as part:
+    with BuildSketch(Plane.XZ):                     # side view: a block with a sloped top
+        Polygon((0, 0), (40, 0), (40, 10), (0, 26), align=None)
+    extrude(amount=12, both=True)
+
+    slope = part.faces().sort_by(Axis.Z)[-1]        # the sloped face
+    normal = slope.normal_at()                      # the direction pointing straight out of it
+
+    with Locations(slope):                          # a location on the face, facing along its normal
+        Hole(radius=3, depth=8)                     # so the hole goes in at 90° to the slope
+```
+
+Code note: face.normal_at() gives the direction pointing out of a face. Locations(face) places things at the centre of the face, turned to match it, so a Hole made there follows the normal.
+
+Printing: A hole along the normal of a sloped face is tilted in the printer too, so the upper side of its inside is an overhang. Up to about 45° of tilt this prints without support.
+
+Not the same as Tangent: Perpendicular lines cross at 90°. A tangent line only touches a curve and runs along it.
+
+Not the same as Plane: A plane is a flat surface. Its normal is the one direction that points straight out of it.
 
 ### Flush, proud, recessed
 
@@ -809,6 +1184,94 @@ with BuildPart() as part:
 Code note: Circle, Cylinder, Hole and fillet in build123d all take a radius. Keep the diameter in a named variable and divide by two where it is used.
 
 Not the same as Fillet: A fillet is the one feature normally given as a radius: a 4 mm fillet means a 4 mm radius.
+
+### Spacing and pitch
+
+Also called: centre to centre, center to center, pitch, hole spacing, c-c.
+
+Spacing is the distance between two features. For holes and pins it is almost always measured from the centre of one to the centre of the next, because that number stays the same whatever size the holes are. Measured edge to edge, the same two holes give a smaller number. Pitch is the spacing of a row of identical things, such as the 2.54 mm between the pins of a header.
+
+```python
+spacing_x, spacing_y = 58, 23       # centre to centre, as board drawings give it
+
+with BuildPart() as plate:
+    Box(66, 31, 2)
+    with GridLocations(spacing_x, spacing_y, 2, 2):     # the spacing is between centres
+        Hole(radius=1.4)
+
+pitch = 2.54                        # the spacing of a row of equal things: header pins
+with BuildPart() as header:
+    Box(8 * pitch, pitch, 2.5)
+    with GridLocations(pitch, 0, 8, 1):
+        Box(0.64, 0.64, 8.5)
+```
+
+Code note: GridLocations takes centre-to-centre spacing and centres the whole pattern on the current location.
+
+Good to know: 2.54 mm is one tenth of an inch, the standard pitch of breadboards and most header pins. A row of 8 pins measures 7 × 2.54 = 17.78 mm from the first pin centre to the last.
+
+Not the same as Pattern: A pattern is the operation that repeats a feature. Spacing is the number you give it.
+
+Not the same as Clearance: Spacing is the distance between two features of one part. Clearance is the gap between two different parts.
+
+### Bounding box
+
+Also called: overall size, overall dimensions, envelope, extents, outer size.
+
+The bounding box of a part is the smallest box, lined up with the X, Y and Z axes, that contains all of it. Its three sides are the overall length, width and height of the part. It is the quick way to check that a part came out the size you expected, that it fits on the printer, and that it fits in the space you have for it.
+
+```python
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+with BuildPart() as part:
+    Box(50, 30, 4, align=low)
+    with Locations((-23, 0, 4)):
+        Box(4, 30, 26, align=low)
+    with Locations((8, 0, 4)):
+        Cylinder(radius=9, height=10, align=low)
+
+size = part.part.bounding_box().size
+print(f"{size.X:.0f} × {size.Y:.0f} × {size.Z:.0f} mm")         # 50 × 30 × 30 mm
+
+bed_x, bed_y, bed_z = 220, 220, 250                             # the build volume of your printer
+fits = size.X <= bed_x and size.Y <= bed_y and size.Z <= bed_z
+```
+
+Code note: part.bounding_box().size gives the three overall sizes as .X, .Y and .Z. The box always follows the axes, so turning a part can change it.
+
+Printing: Compare the bounding box with the build volume of your printer before anything else, and leave a few millimetres spare at the edges of the bed.
+
+Not the same as Keep-out zone: A bounding box measures the space a part takes up. A keep-out zone is space you reserve, which parts must stay out of.
+
+### Keep-out zone
+
+Also called: keep-out, clearance zone, reserved space, no-go zone.
+
+A keep-out zone is a volume you reserve, which no part of the design may enter. Typical ones are the space for a battery, the room a plug and its cable need outside a connector, the area around an antenna, and the path of a screwdriver to a screw. Give the zone as a box with a size and a position, and the agent can test it. A request to leave some room cannot be tested.
+
+```python
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+with BuildPart() as case:
+    Box(46, 34, 14, align=low)
+    offset(amount=-2, openings=case.faces().sort_by(Axis.Z)[-1])
+    with Locations((17, 11, 2)):
+        Cylinder(radius=3, height=8, align=low)             # a screw boss
+
+# keep-out zone: the space the battery needs, with 1 mm to spare all round
+battery_zone = Pos(-4, 0, 2) * Box(32, 22, 9, align=low)
+
+overlap = case.part & battery_zone
+print(overlap.volume)                                       # 0: nothing is in the zone
+```
+
+Code note: Model the zone as its own solid and intersect it with the part: (part & zone).volume must be 0. Show it see-through in the viewer, and never join it to the part.
+
+Good to know: Tall components on a board need a zone too. Say the height of the tallest one, so the lid and any ribs stay clear of it.
+
+Not the same as Clearance: Clearance is a small gap between two parts that fit together. A keep-out zone is a whole volume left empty for something else.
+
+Not the same as Interference check: A keep-out zone is the rule. An interference check is how you test that the rule is kept.
 
 ### Parameter
 
@@ -871,6 +1334,39 @@ Printing: Slicing your model open is the quickest way to check wall thickness an
 
 Not the same as Orthographic views: A section view cuts the part open. An orthographic view shows the uncut outside and marks hidden edges with dashes.
 
+### Exploded view
+
+Also called: exploded drawing, explode, assembly drawing.
+
+An exploded view shows the parts of an assembly moved apart from each other, each along the direction in which it is put on. The parts stay lined up, so you can see what goes where and in what order. Nothing in the design changes: it is only a way of looking at it.
+
+```python
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+with BuildPart() as base:
+    Box(44, 32, 14, align=low)
+    offset(amount=-2, openings=base.faces().sort_by(Axis.Z)[-1])
+    with Locations((0, 0, 2)), GridLocations(34, 22, 2, 2):
+        Cylinder(radius=3, height=12, align=low)            # corner posts
+    with Locations((0, 0, 14)), GridLocations(34, 22, 2, 2):
+        Hole(radius=1.25, depth=8)
+
+with BuildPart() as lid:
+    Box(44, 32, 2, align=low)
+    with Locations((0, 0, 2)), GridLocations(34, 22, 2, 2):
+        Hole(radius=1.7)
+
+gap = 14                                        # how far to pull the parts apart
+lid_placed = Pos(0, 0, 14) * lid.part           # where the lid really sits
+lid_exploded = Pos(0, 0, 14 + gap) * lid.part   # moved along Z, the way it goes on
+```
+
+Code note: Keep the real positions in the assembly and add the extra gap only for the picture. The OCP viewer can also pull the parts of an assembly apart for you, with its Explode tool.
+
+Not the same as Section view: A section view cuts parts open to show the inside. An exploded view moves whole parts apart and cuts nothing.
+
+Not the same as Assembly: The assembly is the parts in their real positions. An exploded view is a picture of it with the parts moved apart.
+
 ## Fit and printing
 
 What decides whether a part prints well and fits together.
@@ -893,6 +1389,8 @@ with BuildPart() as socket:
 Printing: Printed holes come out slightly small. On an FDM printer start with 0.2 mm per side for a sliding fit and 0.1 mm for a snug fit, then test-print and adjust.
 
 Not the same as Tolerance: Clearance is a gap you choose. Tolerance is how far the real size may differ from the size you asked for, because no printer is exact.
+
+Not the same as Interference check: An interference fit is a squeeze you design on purpose. An interference check looks for overlaps you did not intend.
 
 ### Tolerance
 
@@ -960,3 +1458,328 @@ A printed part is a stack of thin layers. The plastic within one layer is strong
 Printing: Decide which face goes on the bed before you design clips, hooks and thin posts, and tell your agent. Lay them along the layers, or thicken them and add a fillet at the root.
 
 Not the same as Overhang: Overhang is about whether a shape can be printed at all. Layer direction is about how strong it is once printed.
+
+### Splitting a part
+
+Also called: split, cut in two, parting line, divide into pieces.
+
+Splitting means cutting a finished part into two or more pieces along a plane. You do it when the part is too large for the printer, or when one piece would print much better in a different orientation. The pieces are joined again with glue or screws, and small pins or keys across the cut make them line up exactly.
+
+```python
+with BuildPart() as rail:
+    Box(90, 16, 10)
+    with GridLocations(30, 0, 3, 1):
+        Hole(radius=2.2)
+
+cut = Plane.YZ                          # the cutting plane: across the middle, facing +X
+right = split(rail.part, bisect_by=cut, keep=Keep.TOP)       # the side the plane faces
+left = split(rail.part, bisect_by=cut, keep=Keep.BOTTOM)     # the other side
+
+# two 3 mm pins line the halves up again: each hole goes 5 mm into both halves
+pin_holes = [Pos(0, y, 0) * Cylinder(1.6, 10, rotation=(0, 90, 0)) for y in (-5, 5)]
+left -= pin_holes
+right -= pin_holes
+```
+
+Code note: split(part, bisect_by=plane, keep=Keep.TOP) keeps the piece on the side the plane faces. Keep.BOTTOM keeps the other piece, and Keep.BOTH returns both.
+
+Printing: Glue alone on a flat cut is weak. Add pins, a lap joint or screws across the split, and put it where the part carries the least load.
+
+Not the same as Section view: A section view only looks at a cut. Splitting really divides the part into pieces.
+
+Not the same as Lap joint: Splitting divides the part. A lap joint is one good way to put the pieces back together.
+
+## Assemblies and bought parts
+
+Putting several parts together, and designing around parts you buy: screws, motors, bearings and aluminium frame.
+
+### Assembly
+
+Also called: assembly model, sub-assembly, multi-part design.
+
+An assembly is a set of separate parts shown together, in the positions they have in the finished product. Each part stays its own solid. It is modelled on its own, and printed or bought on its own. The assembly only records which parts there are and where each one sits. A group of parts inside a larger assembly is called a sub-assembly.
+
+```python
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+# each part is modelled on its own, around its own origin
+with BuildPart() as base_builder:
+    Box(44, 32, 12, align=low)
+    offset(amount=-2, openings=base_builder.faces().sort_by(Axis.Z)[-1])
+    with Locations((0, 0, 2)), GridLocations(30, 18, 2, 2):
+        Cylinder(radius=2.5, height=3, align=low)           # posts for the board
+
+base = base_builder.part
+board = Box(36, 24, 1.6, align=low)
+lid = Box(44, 32, 2, align=low)
+base.label, board.label, lid.label = "base", "board", "lid"
+
+# the assembly only says where each part goes
+node = Compound(label="sensor node", children=[
+    base,
+    Pos(0, 0, 5) * board,           # on the posts, 3 mm above the floor
+    Pos(0, 0, 12) * lid,            # on top of the walls
+])
+
+for part in node.children:
+    print(part.label, part.location.position)
+```
+
+Code note: Compound(label=..., children=[...]) groups placed parts without joining them. Give every part a label, and the OCP viewer lists the assembly as a tree with those names.
+
+Good to know: Seeing everything together is how you find the mistakes that no single part shows: a lid that does not reach, a screw that hits a wall, a plug that cannot go in.
+
+Not the same as Boolean operations: A union melts solids into one piece. An assembly keeps every part separate and only places it.
+
+Not the same as Exploded view: The assembly has the parts in their real positions. An exploded view is a picture of it with the parts moved apart.
+
+### Joint (mate)
+
+Also called: mate, constraint, connection point, rigid joint, revolute joint.
+
+A joint is a named point on a part, with a direction, where another part connects. Connecting a joint on one part to a joint on another moves the second part into place, so nobody has to work out its coordinates. The kind of joint says what movement is left: a rigid joint allows none, a revolute joint allows turning about one axis like a hinge, and a linear joint allows sliding along one line. Other CAD programs call the same idea a mate.
+
+```python
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+base = Box(40, 30, 6, align=low) + Pos(-10, 0, 6) * Cylinder(3, 5, align=low)     # a plate with a pin
+arm = Pos(13, 0, 0) * Box(36, 10, 4, align=low) - Cylinder(3.2, 4, align=low)     # a bar with a hole at its origin
+
+# a joint is a named point on a part: where it connects, and how it may move
+RevoluteJoint("pin", base, axis=Axis((-10, 0, 6), (0, 0, 1)))      # may turn about the pin
+RigidJoint("hole", arm, Location((0, 0, 0)))                       # the underside of the hole
+
+# connecting the two joints moves the arm into place: no coordinates to work out
+base.joints["pin"].connect_to(arm.joints["hole"], angle=0)
+```
+
+Code note: RigidJoint(label, part, Location(...)) marks a fixed point. RevoluteJoint(label, part, axis=Axis(...)) marks a turning axis. a.joints["x"].connect_to(b.joints["y"]) moves part b into place, and a revolute joint also takes angle=.
+
+Good to know: Joints only place parts. They do not stop parts from overlapping, so run an interference check after connecting them.
+
+Not the same as Hinge: A hinge is a physical part with knuckles and a pin. A revolute joint only describes the turning movement in the model.
+
+Not the same as Align: Align places a new shape at a point. A joint places a whole part against another part, and can do it again at any angle.
+
+### Interference check
+
+Also called: collision check, clash, overlap check, clash detection.
+
+Two real parts cannot be in the same place, but two modelled parts can overlap with no warning at all. An interference check finds those overlaps. It intersects each pair of parts and measures the volume they share: zero means they are clear, and anything more is a clash that must be fixed. Run it every time parts are moved or changed.
+
+```python
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+with BuildPart() as case:
+    Box(44, 32, 12, align=low)
+    offset(amount=-2, openings=case.faces().sort_by(Axis.Z)[-1])
+
+board = Pos(3, 0, 4) * Box(38, 24, 1.6, align=low)      # placed 3 mm too far to the right
+
+overlap = case.part & board                             # the volume both parts claim
+print(f"{overlap.volume:.1f} mm³")                      # 76.8 mm³: the board is inside the wall
+
+moved = Pos(0, 0, 4) * Box(38, 24, 1.6, align=low)
+print(f"{(case.part & moved).volume:.1f} mm³")          # 0.0 mm³: the parts are clear
+```
+
+Code note: (a & b).volume is the volume two parts share: 0 means no overlap. Parts that only touch share a face but no volume, so they pass.
+
+Good to know: Passing the check does not mean the parts fit in real life. They also need clearance, because no printer is exact.
+
+Not the same as Clearance: An interference fit is an overlap you design on purpose, for a press fit. An interference check looks for overlaps you did not intend.
+
+Not the same as Boolean operations: The check uses the intersect operation, but only to measure. It does not change the parts.
+
+### Bought part
+
+Also called: off-the-shelf part, COTS, purchased part, vitamin, reference part, stand-in.
+
+A bought part is anything in the design that you do not make: screws, nuts, motors, bearings, batteries, circuit boards, aluminium profile. It goes into the model as reference geometry, so that the printed parts can be shaped around it and checked against it. Its size is fixed by its maker, so it is never changed and never printed. People who 3D print often call these parts vitamins.
+
+```python
+# the bought part: an 18650 battery cell, with the largest sizes its datasheet allows.
+# It is modelled only to check the fit. It is never changed and never printed.
+cell_d, cell_len = 18.4, 65.2
+gap = 0.4                               # room around the cell
+floor = 2
+axis_z = floor + gap + cell_d / 2       # height of the middle of the cell
+
+cell = Pos(0, 0, axis_z) * Cylinder(cell_d / 2, cell_len, rotation=(0, 90, 0))
+cell.label = "18650 cell (bought)"
+
+# the printed part is designed around it
+with BuildPart() as cradle:
+    Box(cell_len + 8, cell_d + 6, axis_z, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    with Locations((0, 0, axis_z)):
+        Cylinder(cell_d / 2 + gap, cell_len + 2 * gap, rotation=(0, 90, 0), mode=Mode.SUBTRACT)
+cradle.part.label = "cradle (printed)"
+```
+
+Code note: Keep each bought part in its own function or file and give it a label. Use import_step() when the maker offers a STEP file. Otherwise a few Box and Cylinder shapes with the right outside sizes and hole positions are enough.
+
+Good to know: Use the largest size the datasheet allows, not the typical one, and measure the part you actually have. Cheap parts often differ from their drawing.
+
+Not the same as Keep-out zone: A bought part is a real object with a fixed shape. A keep-out zone is empty space you reserve, often around a bought part.
+
+Not the same as STEP, STL and 3MF: A STEP file is how the exact shape of a bought part usually reaches you. The bought part is the object itself.
+
+### STEP, STL and 3MF
+
+Also called: STEP file, STL file, 3MF file, export, import, file formats.
+
+A STEP file (.step or .stp) stores the exact shape of a part: true flat faces, cylinders and curves. Any CAD program can open it and keep working on it, so it is the format for sharing designs, and for the models that makers publish of their motors, bearings and connectors. An STL file stores only a skin of small flat triangles, which is all a slicer needs for printing. 3MF is a newer format for the slicer that also stores the units, colours and several parts in one file.
+
+```python
+with BuildPart() as knob:
+    Cylinder(radius=14, height=12, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    fillet(knob.edges().sort_by(Axis.Z)[-1], radius=5)
+
+export_step(knob.part, "knob.step")     # the exact shape: for other CAD programs, and to share
+export_stl(knob.part, "knob.stl")       # triangles only: for the slicer
+
+loaded = import_step("knob.step")       # read one back: also how you load a motor from its maker
+```
+
+Code note: export_step(part, "name.step") and import_step("name.step") keep the exact shape. export_stl(part, "name.stl") makes triangles: a smaller tolerance= gives smoother curves and a larger file. For 3MF, use the Mesher class.
+
+Printing: The slicer needs STL or 3MF. Keep the Python script as the real source of the design, and use STEP for sharing. An STL cannot be turned back into a clean model that you can edit.
+
+Not the same as Bought part: A STEP file is a file. A bought part is the real object, whose shape often comes to you as a STEP file.
+
+Not the same as G-code: STL and 3MF describe a shape. G-code is the list of movements that the slicer writes from that shape, for one particular printer.
+
+### Aluminium extrusion
+
+Also called: aluminum extrusion, 2020 profile, T-slot, V-slot, aluminium frame, aluminium profile.
+
+Aluminium extrusion is a bar with the same cross-section along its whole length, bought by the metre and cut to length. The common 2020 profile is 20 × 20 mm, with a T-shaped slot running down each of its four sides. A T-nut slides into a slot and turns it into a threaded hole anywhere along the bar, so printed parts can be bolted on and moved later. Bars are joined to each other with corner brackets.
+
+```python
+slot = 6.0              # width of the slot opening of a 2020 profile
+screw = 5.5             # clearance hole for an M5 screw
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+with BuildPart() as bracket:
+    Box(20, 30, 4, align=low)                       # lies flat on one face of the profile
+    # a key that drops into the slot, so the part cannot turn
+    Box(slot - 0.3, 30, 1.2, align=(Align.CENTER, Align.CENTER, Align.MAX))
+    with Locations((0, 0, 4)):
+        Hole(radius=screw / 2)                      # for an M5 screw into a T-nut in the slot
+```
+
+Code note: The profile is one sketch extruded to the length of the bar. A simple stand-in with the 20 mm square, the four slots and the centre hole is enough to design against.
+
+Printing: Print a bracket so that the layers run along its arms, not across the bend. M5 screws pull hard: make the plastic under the head at least 4 mm thick, or add a washer.
+
+Good to know: On a 2020 profile the slot opening is about 6 mm wide and about 6 mm deep, and the usual screw is M5. V-slot is the same idea with slanted slot edges for wheels to run on. Larger profiles such as 3030 and 4040 have wider slots and take larger screws: check the seller's drawing.
+
+Not the same as Extrude: Extrude is the CAD operation. An extrusion is a real metal bar, made in a factory by pushing aluminium through a shaped opening: the same idea in real life.
+
+Not the same as Nut trap: A nut trap is a pocket you print for an ordinary nut. A T-nut slides in the slot of the metal bar.
+
+### Motor mount
+
+Also called: NEMA 17 mount, stepper mount, motor bracket, motor plate, servo mount.
+
+A motor mount is the part a motor is screwed to. Its holes must match the pattern on the face of the motor exactly, so the numbers come from the motor's drawing. A stepper motor is named by the size of its square face: a NEMA 17 has a 42.3 mm face, four M3 threaded holes on a 31 mm square, and a raised ring around the shaft called the boss or pilot. A hole for that ring in the mount centres the motor.
+
+```python
+face = 42.3             # NEMA 17: width of the square motor face
+hole_spacing = 31.0     # between the four M3 screw holes, centre to centre
+boss = 22.0             # the raised ring around the shaft
+plate = 4
+
+with BuildPart() as mount:
+    Box(face + 8, face + 8, plate, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    with Locations((0, 0, plate)):
+        Hole(radius=boss / 2 + 0.25)                # 22.5 mm: the boss fits in and centres the motor
+        with GridLocations(hole_spacing, hole_spacing, 2, 2):
+            Hole(radius=3.4 / 2)                    # clearance holes for M3 screws
+```
+
+Stepper motor faces, in mm:
+
+| Motor | Face | Hole spacing | Screws | Boss | Shaft |
+|---|---|---|---|---|---|
+| NEMA 14 | 35.2 | 26 | M3 | 22 | 5 |
+| NEMA 17 | 42.3 | 31 | M3 | 22 | 5 |
+| NEMA 23 | 56.4 | 47.1 | M4 or M5 | 38.1 | 6.35 or 8 |
+
+Hole spacing is centre to centre, along the sides of a square. NEMA 14 and 17 have threaded holes in the motor. NEMA 23 has plain holes through its flange, so the screws need nuts or a thread in your part. Make the hole for the boss about 0.5 mm larger than the boss. The length of the body and of the shaft differ from model to model: take them from the datasheet.
+
+Printing: A working motor gets warm, often 50 to 70 °C, and PLA softens at about 60 °C. Print motor mounts in PETG, ABS or ASA.
+
+Not the same as Boss and standoff: On a motor, the boss is the raised ring around the shaft that centres it. On a printed part, a boss is a raised post around a screw hole.
+
+Not the same as Shaft and hub: The mount holds the body of the motor still. The hub is the part that goes on the turning shaft.
+
+### Shaft and hub
+
+Also called: D-shaft, axle, bore, set screw, grub screw, coupling.
+
+A shaft is the rod that a motor turns. The hub is the centre of whatever goes on the shaft: a wheel, gear, pulley or knob. The hole through the hub is called the bore. A round shaft in a round bore just slips, so something must lock the two together. Many small shafts have one flat side, which makes a D shape, and a D-shaped bore cannot turn on it. A set screw through the side of the hub, pressing on the flat, stops the hub from sliding off.
+
+```python
+shaft = 5.0         # shaft diameter
+across = 4.5        # measured across the flat of the D
+gap = 0.1           # per side: the hub slides on, but does not wobble
+low = (Align.CENTER, Align.CENTER, Align.MIN)
+
+with BuildPart() as hub:
+    Cylinder(radius=9, height=10, align=low)
+    with BuildSketch():                                     # the D-shaped hole
+        Circle(shaft / 2 + gap)
+        with Locations((0, across - shaft / 2 + gap)):      # everything beyond the flat
+            Rectangle(shaft + 2, shaft, align=(Align.CENTER, Align.MIN), mode=Mode.SUBTRACT)
+    extrude(amount=10, mode=Mode.SUBTRACT)
+    with Locations((0, 5.5, 5)):                            # set screw hole, aimed at the flat
+        Cylinder(radius=1.25, height=7, rotation=(90, 0, 0), mode=Mode.SUBTRACT)
+```
+
+Code note: A D-shaped bore is a circle with a rectangle subtracted from it in the same sketch, then cut through the hub.
+
+Printing: Print the hub with the bore pointing up, so the bore is round and the layers are rings around the shaft. Start with 0.1 mm of clearance per side and test: a bore that is too tight splits the hub, and one that is too loose wobbles.
+
+Not the same as Bearing seat: A hub is fixed to the shaft and turns with it. A bearing lets the shaft turn inside a part that stays still.
+
+### Bearing seat
+
+Also called: bearing pocket, bearing housing, bearing bore, 608 bearing.
+
+A ball bearing has an outer ring, an inner ring and balls between them, so the two rings turn against each other with almost no friction. A bearing seat is the round pocket in your part that holds the outer ring. It is as deep as the bearing is wide and very slightly tight, so the bearing presses in and stays. At the bottom is a ledge called a shoulder, which only the outer ring rests on. The inner ring and the shaft must touch nothing, so that they can turn.
+
+```python
+bore, outside, width = 8, 22, 7     # a 608 bearing: bore × outside diameter × width
+fit = 0.1                           # added to the diameter: tune it with a test print
+shoulder = 3                        # width of the ledge the outer ring rests on
+
+with BuildPart() as housing:
+    Cylinder(radius=16, height=11, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    with Locations((0, 0, 11)):
+        CounterBoreHole(
+            radius=outside / 2 - shoulder,              # through hole: clears the inner ring
+            counter_bore_radius=(outside + fit) / 2,    # the seat the bearing presses into
+            counter_bore_depth=width,
+        )
+```
+
+Code note: A bearing seat is a counterbore: CounterBoreHole with the seat as the wide part and the through hole as the narrow part.
+
+Common small ball bearings, in mm:
+
+| Bearing | Bore | Outside diameter | Width |
+|---|---|---|---|
+| 623 | 3 | 10 | 4 |
+| MR105 | 5 | 10 | 4 |
+| 625 | 5 | 16 | 5 |
+| 608 | 8 | 22 | 7 |
+| 6001 | 12 | 28 | 8 |
+
+The bore is the hole for the shaft. Make the seat as wide as the outside diameter plus a small allowance for your printer, usually 0 to 0.2 mm: test it. The 608 is the bearing in skateboard wheels, and the cheapest to buy.
+
+Printing: Print the seat with its opening facing up, so it comes out round. Printed holes come out small, so a seat modelled at exactly the size of the bearing is often a press fit already. Test with a thin ring before you print the whole part.
+
+Not the same as Counterbore: The shape is the same. A counterbore hides a screw head. A bearing seat holds a bearing and must fit it closely.
+
+Not the same as Shaft and hub: A bearing lets a shaft turn freely. A hub is locked to the shaft and turns with it.

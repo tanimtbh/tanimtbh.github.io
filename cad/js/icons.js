@@ -9,6 +9,7 @@ const SHAPES = {
   target: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v5M12 16.5v5M2.5 12h5M16.5 12h5"/>',
   drawing: '<path d="M4 20V5l15 15z"/><path d="M8 16v-3.4l3.4 3.4z"/>',
   layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 12.5 9 5 9-5M3 17l9 5 9-5"/>',
+  parts: '<rect x="3.5" y="12.5" width="8" height="8" rx="1.5"/><rect x="12.5" y="3.5" width="8" height="8" rx="1.5"/><path d="M7.5 9.5v-2a2 2 0 0 1 2-2h0M16.5 14.5v2a2 2 0 0 1-2 2h0"/>',
   grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
 
   // sections of a term page
@@ -18,14 +19,10 @@ const SHAPES = {
   info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.6v.2"/>',
   versus: '<path d="M4 8h14m-3.5-3.5L18 8l-3.5 3.5M20 16H6m3.5-3.5L6 16l3.5 3.5"/>',
 
-  // tools
-  pen: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+  // guide pages
   book: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11M9 8h6"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
-  up: '<path d="m6 14 6-6 6 6"/>',
-  down: '<path d="m6 10 6 6 6-6"/>',
-  remove: '<path d="m6 6 12 12M18 6 6 18"/>',
-  download: '<path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/>',
+  wrench: '<path d="M14.6 6.3a4.2 4.2 0 0 0-5.4 5.4L4 16.9 7.1 20l5.2-5.2a4.2 4.2 0 0 0 5.4-5.4l-2.7 2.7-2.5-.6-.6-2.5z"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
 };
 
 export function icon(name, size = 18) {

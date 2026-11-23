@@ -4,15 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tanim</title>
-  <meta name="description" content="Software for things that have to keep running: devices, gateways, and the AI tools around them.">
+  <meta name="description" content="Tanim architects and builds software for things that have to keep running: devices, gateways, cloud, and the AI harnesses and tools around them.">
   <style>
     :root {
       --bg: #f6f4ef;
       --ink: #1a1a18;
       --muted: #6b6a64;
       --line: #dedbd2;
+      --wire: #bdb9ac;
       --accent: #c2410c;
       --led: #2f9e44;
+      --glow: #f59f00;
+      --name: clamp(2.75rem, 12vw, 4.5rem);
+      --gutter: 1.75rem;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -20,8 +24,10 @@
         --ink: #ecebe6;
         --muted: #8f8d86;
         --line: #2a2a27;
+        --wire: #4b4a44;
         --accent: #fb923c;
         --led: #51cf66;
+        --glow: #ffd43b;
       }
     }
 
@@ -36,9 +42,16 @@
       display: flex;
       justify-content: center;
       padding: clamp(3rem, 14vh, 9rem) 1.25rem 3rem;
+      overflow-x: hidden;
     }
 
-    main { width: 100%; max-width: 34rem; }
+    main {
+      position: relative;
+      width: 100%;
+      max-width: calc(34rem + var(--gutter));
+      align-self: flex-start;
+      padding-right: var(--gutter);
+    }
 
     .mono {
       font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
@@ -48,7 +61,7 @@
     }
 
     h1 {
-      font-size: clamp(2.75rem, 12vw, 4.5rem);
+      font-size: var(--name);
       font-weight: 700;
       letter-spacing: -0.04em;
       line-height: 1;
@@ -62,9 +75,75 @@
       text-wrap: balance;
     }
 
-    h2 { margin: 3.5rem 0 0.5rem; font-weight: 400; }
+    /* Section heading: label, then a wire that runs through a device to the bus. */
+    h2 {
+      display: flex;
+      align-items: center;
+      height: 60px;
+      margin: 2rem 0 -20px;
+      font-weight: 400;
+    }
+    h2 > span { transition: color 0.15s; }
+    .wire, .stub { height: 1px; background: var(--wire); }
+    .wire { flex: 1; margin-left: 0.75rem; }
+    .stub {
+      width: calc(var(--gutter) / 2);
+      margin-right: calc(var(--gutter) / -2);
+      transition: background 0.15s;
+    }
 
-    ul { list-style: none; border-top: 1px solid var(--line); }
+    svg { fill: none; stroke: var(--ink); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+    svg * { vector-effect: non-scaling-stroke; }
+    svg .solid { fill: var(--bg); }
+    .dev { flex: none; width: 36px; height: 60px; }
+    .dev .w { stroke: var(--wire); stroke-width: 1; transition: stroke 0.15s; }
+
+    .glass { transition: fill 0.2s, filter 0.2s; }
+    .cog { transform-origin: 12px 10px; }
+    .teeth { stroke-width: 2.6; stroke-linecap: butt; }
+    .tip { fill: var(--ink); }
+    .arc { opacity: 0; }
+
+    /* A section switches on when the camera sees you near it. */
+    section.on h2 > span { color: var(--ink); }
+    section.on .stub { background: var(--ink); transition-delay: 0.3s; }
+    section.on .dev .w { stroke: var(--ink); transition-delay: 0.3s; }
+    section.on .glass {
+      fill: var(--glow);
+      filter: drop-shadow(0 0 5px var(--glow));
+      transition-delay: 0.35s;
+    }
+    section.on .cog { animation: spin 2.4s linear 0.35s infinite; }
+    section.on .arc { animation: ping 1.3s ease-out 0.35s infinite; }
+    section.on .arc.far { animation-delay: 0.55s; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes ping { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
+
+    /* The rig: camera on top, bus wire down the side, ground at the bottom. */
+    .rig {
+      position: absolute;
+      top: calc(var(--name) / 2);
+      bottom: 0;
+      right: 0;
+      width: var(--gutter);
+      pointer-events: none;
+    }
+    .rig::before, .live {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: calc(50% - 0.5px);
+      width: 1px;
+    }
+    .rig::before { bottom: 11px; background: var(--wire); }
+    .live { height: 0; background: var(--ink); transition: height 0.35s ease; }
+    .cam { position: absolute; top: calc(var(--name) * -1); left: calc(50% - var(--name)); width: calc(var(--name) * 2); height: calc(var(--name) * 2); }
+    .bolt { fill: var(--ink); }
+    .rec { transition: fill 0.15s; }
+    .rig.tx .rec { fill: var(--ink); }
+    .gnd { position: absolute; bottom: 0; left: 0; width: 100%; height: 12px; stroke: var(--muted); }
+
+    ul { list-style: none; }
 
     li a {
       display: grid;
@@ -90,6 +169,27 @@
 
     a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
 
+    .rows > * {
+      display: grid;
+      grid-template-columns: 5.5rem 1fr;
+      column-gap: 1rem;
+      align-items: baseline;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--line);
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+    .rows > * > span:last-child {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 0.6rem;
+      transition: color 0.15s;
+    }
+    .rows a:hover span:last-child { color: var(--accent); }
+    .rows small { color: var(--muted); font-size: 0.85rem; }
+
     footer {
       margin-top: 3rem;
       display: flex;
@@ -97,8 +197,6 @@
       flex-wrap: wrap;
       gap: 0.5rem 1rem;
     }
-    footer a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
-    footer a:hover { color: var(--accent); border-color: var(--accent); }
 
     #up { font-variant-numeric: tabular-nums; }
 
@@ -112,46 +210,139 @@
       animation: pulse 2s ease-in-out infinite;
     }
     @keyframes pulse { 50% { opacity: 0.3; } }
+
     @media (prefers-reduced-motion: reduce) {
-      .led { animation: none; }
-      li strong, li i { transition: none; }
+      *, *::before { transition: none !important; }
+      .led, section.on .cog, section.on .arc { animation: none; }
+      section.on .arc { opacity: 1; }
     }
   </style>
 </head>
 <body>
   <main>
     <h1>Tanim</h1>
-    <p class="lede">I build software for things that have to keep running: devices, gateways, and the AI tools around them.</p>
+    <p class="lede">I architect and build software for things that have to keep running: devices, gateways, cloud, and the AI harnesses and tools around them.</p>
 
-    <h2 class="mono">work</h2>
-    <ul>
-      <li>
-        <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">
-          <strong>Dispenser</strong>
-          <span>Device control that survives its own failures, built on the actor model.</span>
-          <i aria-hidden="true">→</i>
+    <section>
+      <h2 class="mono">
+        <span>skills</span><i class="wire"></i>
+        <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
+          <path class="w" d="M0 20H24"/>
+          <path class="glass" d="M9 13.4A6.2 6.2 0 1 1 15 13.4Z"/>
+          <path d="M10.5 13.4V10l1.5-2 1.5 2v3.4"/>
+          <rect class="solid" x="9.5" y="13.4" width="5" height="4" rx="0.5"/>
+          <path d="M12 17.4V20"/>
+        </svg>
+        <i class="stub"></i>
+      </h2>
+      <div class="rows">
+        <div>
+          <span class="mono">ai</span>
+          <span>Context engineering, AI harnesses, vector DBs, graph DBs</span>
+        </div>
+        <div>
+          <span class="mono">embedded</span>
+          <span>Firmware, IoT, STM32, ESP32, Raspberry Pi <small>deep experience</small></span>
+        </div>
+        <div>
+          <span class="mono">always</span>
+          <span>Solving engineering problems</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="mono">
+        <span>work</span><i class="wire"></i>
+        <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
+          <path class="w" d="M0 20H24"/>
+          <path d="M12 10V20"/>
+          <g class="cog">
+            <path class="teeth" d="M12 5.4V2.8M15.25 6.75l1.84-1.84M16.6 10h2.6M15.25 13.25l1.84 1.84M12 14.6v2.6M8.75 13.25l-1.84 1.84M7.4 10H4.8M8.75 6.75L6.91 4.91"/>
+            <circle class="solid" cx="12" cy="10" r="4.6"/>
+            <circle cx="12" cy="10" r="1.3"/>
+          </g>
+        </svg>
+        <i class="stub"></i>
+      </h2>
+      <ul>
+        <li>
+          <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">
+            <strong>Dispenser</strong>
+            <span>Device control that survives its own failures, built on the actor model.</span>
+            <i aria-hidden="true">→</i>
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/tanimtbh/nimai" target="_blank" rel="noopener">
+            <strong>Nimai</strong>
+            <span>A Telegram bot with an agent for a brain and a graph for a memory.</span>
+            <i aria-hidden="true">→</i>
+          </a>
+        </li>
+        <li>
+          <a href="cad/">
+            <strong>CAD Terms</strong>
+            <span>A visual glossary of CAD and 3D-printing words.</span>
+            <i aria-hidden="true">→</i>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="mono">
+        <span>contact</span><i class="wire"></i>
+        <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
+          <path class="w" d="M0 20H24"/>
+          <path d="M12 20V7M9 20l3-5 3 5"/>
+          <circle class="tip" cx="12" cy="5.5" r="1.5"/>
+          <path class="arc" d="M8 2.5a4.5 4.5 0 0 0 0 6M16 2.5a4.5 4.5 0 0 1 0 6"/>
+          <path class="arc far" d="M5 0.5a8 8 0 0 0 0 10M19 0.5a8 8 0 0 1 0 10"/>
+        </svg>
+        <i class="stub"></i>
+      </h2>
+      <div class="rows">
+        <a href="mailto:tanimtbh@gmail.com">
+          <span class="mono">email</span>
+          <span>tanimtbh@gmail.com</span>
         </a>
-      </li>
-      <li>
-        <a href="https://github.com/tanimtbh/nimai" target="_blank" rel="noopener">
-          <strong>Nimai</strong>
-          <span>A Telegram bot with an agent for a brain and a graph for a memory.</span>
-          <i aria-hidden="true">→</i>
+        <a href="https://wa.me/351920798728" target="_blank" rel="noopener">
+          <span class="mono">whatsapp</span>
+          <span>+351 920 798 728 <small>messages only, no calls</small></span>
         </a>
-      </li>
-      <li>
-        <a href="cad/">
-          <strong>CAD Terms</strong>
-          <span>A visual glossary of CAD and 3D-printing words.</span>
-          <i aria-hidden="true">→</i>
+        <a href="https://www.linkedin.com/in/md-mizanur-rahman-4103311a2" target="_blank" rel="noopener">
+          <span class="mono">linkedin</span>
+          <span>in/md-mizanur-rahman-4103311a2</span>
         </a>
-      </li>
-    </ul>
+        <a href="https://github.com/tanimtbh" target="_blank" rel="noopener">
+          <span class="mono">github</span>
+          <span>tanimtbh</span>
+        </a>
+      </div>
+    </section>
 
     <footer class="mono">
-      <a href="https://github.com/tanimtbh" target="_blank" rel="noopener">github.com/tanimtbh</a>
+      <span>Aveiro, Portugal</span>
       <span><span class="led"></span>up <span id="up">00:00:00</span>, no crashes</span>
     </footer>
+
+    <!-- Decorative rig: a camera that watches the pointer and signals the nearest section. -->
+    <div class="rig" aria-hidden="true">
+      <i class="live"></i>
+      <svg class="cam" viewBox="0 0 96 96">
+        <g class="head" transform="rotate(180 48 48)">
+          <path class="solid" d="M74 43h6l5-3v16l-5-3h-6z"/>
+          <rect class="solid" x="38" y="39" width="36" height="18" rx="4"/>
+          <path d="M80 43v10M56 44.5v7M59.5 44.5v7"/>
+          <circle class="rec" cx="67.5" cy="48" r="1.8"/>
+        </g>
+        <circle class="bolt" cx="48" cy="48" r="1.6"/>
+      </svg>
+      <svg class="gnd" viewBox="0 0 28 12">
+        <path d="M6 1H22M9.5 5.5h9M12.5 10h3"/>
+      </svg>
+    </div>
   </main>
 
   <script>
@@ -163,6 +354,73 @@
       const s = Math.floor((Date.now() - start) / 1000);
       up.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
     }, 1000);
+
+    // The camera turns toward the pointer; the section it sees you near gets a signal.
+    const rig = document.querySelector('.rig');
+    const head = rig.querySelector('.head');
+    const live = rig.querySelector('.live');
+    const sections = [...document.querySelectorAll('section')];
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const touch = matchMedia('(hover: none)').matches;
+    const NEAR = 28; // px above or below a section that still counts as close
+    let point = null, anchor = null, angle = 180, goal = 180, raf = 0;
+
+    function aim() {
+      const d = ((goal - angle + 540) % 360) - 180;
+      angle = calm || Math.abs(d) < 0.2 ? goal : angle + d * 0.15;
+      head.setAttribute('transform', `rotate(${angle.toFixed(1)} 48 48)`);
+      raf = angle === goal ? 0 : requestAnimationFrame(aim);
+    }
+
+    function update() {
+      if (anchor) {
+        const r = anchor.getBoundingClientRect();
+        point = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      } else if (touch) {
+        // No pointer on touch screens: watch the middle of the screen instead.
+        point = { x: innerWidth / 2, y: innerHeight * 0.45 };
+      }
+
+      const box = rig.getBoundingClientRect();
+      const px = box.left + box.width / 2, py = box.top;
+      let hit = null;
+      if (point) {
+        goal = Math.atan2(point.y - py, point.x - px) * 180 / Math.PI;
+        let best = NEAR;
+        for (const s of sections) {
+          const r = s.getBoundingClientRect();
+          if (point.x < r.left - 120 || point.x > r.right + 120) continue;
+          const d = Math.max(r.top - point.y, point.y - r.bottom, 0);
+          if (d < best) { best = d; hit = s; }
+        }
+      } else {
+        goal = 180; // idle: look back at the name
+      }
+
+      for (const s of sections) s.classList.toggle('on', s === hit);
+      rig.classList.toggle('tx', !!hit);
+      if (hit) {
+        const h = hit.querySelector('h2').getBoundingClientRect();
+        live.style.height = `${h.top + h.height / 2 - py}px`;
+      } else {
+        live.style.height = '0';
+      }
+      if (!raf) raf = requestAnimationFrame(aim);
+    }
+
+    addEventListener('pointermove', e => {
+      if (e.pointerType === 'touch') return;
+      anchor = null;
+      point = { x: e.clientX, y: e.clientY };
+      update();
+    });
+    document.documentElement.addEventListener('pointerleave', () => {
+      if (!touch) { anchor = null; point = null; update(); }
+    });
+    addEventListener('focusin', e => { anchor = e.target; update(); });
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
   </script>
 </body>
 </html>

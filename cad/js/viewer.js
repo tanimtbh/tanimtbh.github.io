@@ -19,6 +19,8 @@ const MESH_ROLES = {
   tint: { color: '--m-accent', opacity: 0.32 },
   plane: { color: '--m-accent', opacity: 0.2 },
   support: { color: '--m-support', opacity: 0.5 },
+  clash: { color: '--m-clash' },
+  zone: { color: '--m-clash', opacity: 0.22 },
   x: { color: '--m-x' },
   y: { color: '--m-y' },
   z: { color: '--m-z' },
@@ -39,9 +41,11 @@ export const LEGEND = {
   accent: 'what this term adds or changes',
   mate: 'second part',
   section: 'cut surface',
-  steel: 'screw or nut',
+  steel: 'bought metal part',
   brass: 'brass insert',
   support: 'support material',
+  clash: 'two parts overlap here',
+  zone: 'space that must stay empty',
 };
 
 function cssColor(name) {
