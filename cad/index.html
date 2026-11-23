@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CAD Terms</title>
+  <meta name="description" content="A visual glossary of CAD and 3D-printing terms with build123d examples.">
+  <script>
+    // Apply the saved theme before the page paints, so it never flashes.
+    try {
+      var saved = localStorage.getItem('theme');
+      if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+    } catch (e) {}
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Cpath d='M14 3 24 8.5v11L14 25 4 19.5v-11z' fill='%23f2dfcc' stroke='%23a4501a' stroke-width='1.8' stroke-linejoin='round'/%3E%3Cpath d='M4 8.5 14 14l10-5.5M14 14v11' fill='none' stroke='%23a4501a' stroke-width='1.8'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- Shared hatch pattern for cut material in drawings -->
+  <svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <pattern id="hatch" width="2.6" height="2.6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect class="hatch-bg" width="2.6" height="2.6"/>
+        <line class="hatch-line" x1="0" y1="0" x2="0" y2="2.6"/>
+      </pattern>
+    </defs>
+  </svg>
+
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <button class="icon-btn" id="menu-btn" type="button" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">
+      <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <a class="topbar-title" href="#/">CAD Terms</a>
+  </header>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="#/">
+      <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
+        <path d="M14 3 24 8.5v11L14 25 4 19.5v-11z" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M4 8.5 14 14l10-5.5M14 14v11" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/>
+      </svg>
+      <span>
+        <strong>CAD Terms</strong>
+        <small>A visual glossary</small>
+      </span>
+    </a>
+
+    <div class="search">
+      <svg class="search-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
+             placeholder="Search, e.g. round edge" aria-label="Search terms" aria-controls="nav">
+      <kbd class="search-key" id="search-key" title="Press / to search">/</kbd>
+      <button class="search-clear" id="search-clear" type="button" aria-label="Clear search" hidden>
+        <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <nav id="nav" class="nav" aria-label="Terms"></nav>
+
+    <div class="sidebar-foot">
+      <button class="theme-btn" id="theme-btn" type="button"></button>
+    </div>
+  </aside>
+
+  <main id="main" tabindex="-1">
+    <p class="loading">Loading…</p>
+  </main>
+
+  <noscript><p class="noscript">This glossary needs JavaScript to show the 3D pictures.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,836 @@
+{
+  "categories": [
+    { "id": "solids", "name": "Making solids", "icon": "cube", "blurb": "Ways to turn a flat sketch into a 3D shape, and to combine or copy shapes." },
+    { "id": "edges", "name": "Edges and strength", "icon": "corner", "blurb": "Small features that soften sharp edges and stiffen thin walls." },
+    { "id": "holes", "name": "Holes and slots", "icon": "hole", "blurb": "Openings for screws, pins and cables." },
+    { "id": "joining", "name": "Joining parts", "icon": "join", "blurb": "How two parts hold together: screws, snaps and interlocking shapes." },
+    { "id": "reference", "name": "Position and reference", "icon": "target", "blurb": "Words for saying exactly where something goes." },
+    { "id": "drawing", "name": "Technical drawing", "icon": "drawing", "blurb": "How a 3D part is shown on flat paper." },
+    { "id": "printing", "name": "Fit and printing", "icon": "layers", "blurb": "What decides whether a part prints well and fits together." }
+  ],
+  "agentRules": [
+    "All dimensions are in millimetres.",
+    "Z is up. Front is the side toward −Y, back is +Y, left is −X, right is +X, top is +Z, bottom is −Z.",
+    "Unless told otherwise, a part sits on the XY plane with its bottom at z = 0, centred in X and Y.",
+    "A size given for a hole, pin, tube or cylinder is a diameter unless the person says radius. A fillet size is a radius.",
+    "Clearance is per side unless the person says total. A 0.2 mm clearance on a 10 mm peg means a 10.4 mm hole.",
+    "A hole described only by a screw size, such as an M3 hole, needs one more fact: clearance, thread-in or insert. Ask if it is missing.",
+    "Put every dimension in a named variable at the top of the script and derive positions from those variables.",
+    "If a dimension, a position or a side is not stated, ask. Do not guess silently, and list any assumption you make."
+  ],
+  "terms": [
+    {
+      "id": "extrude",
+      "name": "Extrude",
+      "category": "solids",
+      "aka": ["pad"],
+      "keywords": "push pull thickness depth height 2d to 3d sketch profile straight",
+      "summary": "Push a flat 2D shape straight out to give it thickness.",
+      "definition": "Extrude takes a flat 2D shape, called the profile, and pushes it in a straight line to make a solid. Holes in the profile become holes through the solid. It is the most common way to start a part.",
+      "say": [
+        { "for": "The basic ask", "text": "Draw a {40 × 26 mm} rounded rectangle with a {12 mm} hole in the centre, then extrude it {12 mm} upward." },
+        { "for": "Cut instead of add", "text": "Sketch a {10 mm} circle on the top face and extrude-cut it {5 mm} deep." },
+        { "for": "Both directions", "text": "Extrude the profile {8 mm} to each side of the sketch plane, so the part is symmetric about it." }
+      ],
+      "printTip": "A profile extruded straight up from the print bed gives vertical walls, which print cleanly without support.",
+      "confusedWith": [
+        { "id": "revolve", "diff": "Extrude pushes the profile in a straight line. Revolve spins it around an axis." }
+      ]
+    },
+    {
+      "id": "revolve",
+      "name": "Revolve",
+      "category": "solids",
+      "aka": ["lathe", "revolution"],
+      "keywords": "spin rotate turn around axis round circular knob wheel spool",
+      "summary": "Spin a 2D profile around an axis to make a round part.",
+      "definition": "Revolve spins a flat profile around an axis, like clay on a potter's wheel. A full 360° turn gives a round part such as a knob, spool or wheel. A smaller angle gives only a slice of it.",
+      "say": [
+        { "for": "A full turn", "text": "Sketch the cross-section of the {spool} on the XZ plane and revolve it 360° around the Z axis." },
+        { "for": "Part of a turn", "text": "Revolve the profile only {90°} around the Z axis, to make a quarter of the ring." },
+        { "for": "When it fails", "text": "The profile must stay on one side of the axis. Move the sketch so it does not cross the Z axis, then revolve again." }
+      ],
+      "printTip": "Round parts usually print best standing up, with the axis pointing away from the bed, so every layer is a full circle.",
+      "confusedWith": [
+        { "id": "extrude", "diff": "Revolve spins the profile around an axis. Extrude pushes it in a straight line." }
+      ]
+    },
+    {
+      "id": "loft",
+      "name": "Loft",
+      "category": "solids",
+      "aka": ["blend", "transition"],
+      "keywords": "blend between two shapes profiles sections square to round adapter funnel taper morph",
+      "summary": "Blend from one 2D shape to another, making a solid that changes shape along its length.",
+      "definition": "Loft joins two or more flat profiles, set some distance apart, with a smooth skin. The solid starts as the first shape and gradually turns into the last one. It is how you make adapters, funnels and tapered handles.",
+      "say": [
+        { "for": "Blend two shapes", "text": "Loft from a {32 mm} square at the bottom to an {18 mm} circle {30 mm} above it." },
+        { "for": "A hollow adapter", "text": "Make a hollow adapter that lofts from a {40 mm} round opening to a {20 × 30 mm} rectangular opening over a height of {25 mm}, with {2 mm} walls." },
+        { "for": "Straight sides", "text": "Use a ruled loft, so the sides are straight lines between the two profiles and not a curved blend." }
+      ],
+      "printTip": "A loft that gets narrower toward the top prints without support. One that flares outward is an overhang, so keep the flare gentler than 45°.",
+      "confusedWith": [
+        { "id": "extrude", "diff": "Extrude keeps the same shape all the way. Loft changes from one shape into another." },
+        { "id": "sweep", "diff": "Loft blends between different profiles. Sweep moves one profile along a path." }
+      ]
+    },
+    {
+      "id": "sweep",
+      "name": "Sweep",
+      "category": "solids",
+      "aka": ["pipe", "sweep along a path"],
+      "keywords": "pipe tube path follow curve bend route cable channel handle rail wire",
+      "summary": "Move a 2D profile along a path, making a solid that follows the path.",
+      "definition": "Sweep drags a flat profile along a line or curve, called the path, and fills in everything it passes through. A ring swept along a bent path gives a pipe. It is the tool for tubes, cable channels, handles and rails.",
+      "say": [
+        { "for": "A tube along a path", "text": "Sweep a ring ({10 mm} outside, {7 mm} inside) along a path that goes up {26 mm}, bends with a {12 mm} radius, then runs {24 mm} sideways." },
+        { "for": "A cable channel", "text": "Cut a channel for the cable by sweeping a {4 mm} circle along this path and subtracting it from the body." },
+        { "for": "When it fails", "text": "Keep every bend radius in the path larger than half the width of the profile, so the sweep does not fold over itself." }
+      ],
+      "printTip": "A tube running sideways has a small overhang at the top of its inside. Up to roughly 8 mm inside diameter this usually prints without support.",
+      "confusedWith": [
+        { "id": "extrude", "diff": "Extrude pushes the profile in a straight line. Sweep can follow any path." },
+        { "id": "loft", "diff": "Sweep moves one profile along a path. Loft blends between different profiles." }
+      ]
+    },
+    {
+      "id": "boolean",
+      "name": "Boolean operations",
+      "category": "solids",
+      "aka": ["union", "subtract", "intersect", "cut", "difference", "fuse", "combine"],
+      "keywords": "join merge add remove overlap common two bodies mode",
+      "summary": "Combine two solids: join them, cut one from the other, or keep the overlap.",
+      "definition": "A boolean operation combines two solids into one. Union joins them. Subtract removes one from the other, which is how most holes and pockets are made. Intersect keeps only the volume the two share.",
+      "say": [
+        { "for": "Cut one from the other", "text": "Subtract a {22 mm} diameter cylinder from the {front right corner} of the box." },
+        { "for": "Join into one", "text": "Union the {handle} with the {body}, so they become one solid with no faces left inside." },
+        { "for": "Keep the overlap", "text": "Intersect the two shapes and keep only the volume they share." },
+        { "for": "Avoid a thin skin", "text": "Make the cutting shape {1 mm} longer than the part at both ends, so no thin skin is left behind." }
+      ],
+      "codeNote": "Inside a BuildPart block the same three choices are mode=Mode.ADD, Mode.SUBTRACT and Mode.INTERSECT.",
+      "confusedWith": []
+    },
+    {
+      "id": "shell",
+      "name": "Shell",
+      "category": "solids",
+      "aka": ["hollow"],
+      "keywords": "hollow out empty inside enclosure case box wall thickness thin offset",
+      "summary": "Hollow out a solid, leaving walls of an even thickness.",
+      "definition": "Shell hollows out a solid and leaves a wall of the thickness you choose. Any face you name as an opening is removed completely. It turns a block into a box or case in one step.",
+      "say": [
+        { "for": "An open box", "text": "Shell the box with {2 mm} walls and leave the top face open." },
+        { "for": "Two openings", "text": "Shell the body to {1.6 mm} walls and remove both the {top} face and the {front} face." },
+        { "for": "Keep the outside size", "text": "Keep the outside dimensions as they are and add the wall thickness inward." }
+      ],
+      "codeNote": "build123d has no function called shell. Use offset with a negative amount, and pass the faces to remove as openings.",
+      "printTip": "Keep walls at least 1.2 mm thick, which is three passes of a 0.4 mm nozzle. 2 mm is a safe choice for an enclosure.",
+      "confusedWith": []
+    },
+    {
+      "id": "offset",
+      "name": "Offset",
+      "category": "solids",
+      "aka": ["inset", "outset", "grow", "shrink"],
+      "keywords": "bigger smaller outline parallel copy margin border inset outset grow shrink even distance",
+      "summary": "Make a copy of an outline that is larger or smaller by the same distance all the way round.",
+      "definition": "Offset makes a new outline that stays a fixed distance from the original everywhere. A positive distance grows the shape and a negative one shrinks it. It is how you make a border, a matching lid, or a part that fits around another with an even gap.",
+      "say": [
+        { "for": "Grow an outline", "text": "Offset the outline of the board outward by {3 mm} to get the inside shape of the case." },
+        { "for": "Shrink an outline", "text": "Offset the profile inward by {2 mm} and cut it out, leaving an even {2 mm} rim." },
+        { "for": "Keep the corners sharp", "text": "Offset outward by {3 mm} but keep the corners sharp, not rounded." }
+      ],
+      "codeNote": "An outward offset rounds the outside corners by default. Pass kind=Kind.INTERSECTION to keep them sharp. The same offset function hollows a solid when you give it a 3D part: see Shell.",
+      "confusedWith": [
+        { "id": "shell", "diff": "Offset moves an outline or surface by a distance. Shell uses that to hollow a solid, leaving a wall." },
+        { "name": "Scale", "diff": "Offset adds the same distance everywhere, so a 2 mm rim stays 2 mm. Scale multiplies every size, so thin parts and thick parts change by different amounts." }
+      ]
+    },
+    {
+      "id": "pattern",
+      "name": "Pattern",
+      "category": "solids",
+      "aka": ["array", "linear pattern", "polar pattern", "circular pattern"],
+      "keywords": "repeat copy copies grid rows columns circle evenly spaced bolt circle multiple many",
+      "summary": "Repeat a feature at even spacing, in rows or around a circle.",
+      "definition": "A pattern repeats one feature many times at regular spacing. A grid (or linear) pattern places the copies in rows and columns. A polar pattern places them around a centre point, like the bolt holes on a flange. You give the count and the spacing instead of placing each copy by hand.",
+      "say": [
+        { "for": "Rows and columns", "text": "Make a {4 × 2} grid of {5 mm} holes, spaced {12 mm} apart in X and {14 mm} in Y, centred on the plate." },
+        { "for": "Around a circle", "text": "Place {6} holes evenly on a {30 mm} diameter circle around the centre of the flange." },
+        { "for": "Part of a circle", "text": "Pattern {5} slots over {120°} only, starting at {30°}." },
+        { "for": "Along one line", "text": "Repeat the rib {5} times along X, with {10 mm} between copies." }
+      ],
+      "codeNote": "GridLocations and PolarLocations only choose the places. Whatever you create inside the with block is made once at every place.",
+      "confusedWith": [
+        { "id": "mirror", "diff": "A pattern makes several copies that all face the same way. A mirror makes one flipped copy." }
+      ]
+    },
+    {
+      "id": "mirror",
+      "name": "Mirror",
+      "category": "solids",
+      "aka": ["symmetry", "reflect"],
+      "keywords": "symmetric symmetrical flip reflect half both sides left right copy opposite",
+      "summary": "Make a flipped copy of a shape on the other side of a plane.",
+      "definition": "Mirror reflects a shape across a plane, the way a mirror would show it. You model one half of a symmetric part, mirror it, and the two halves join into the whole part. A change to the first half then appears on both sides.",
+      "say": [
+        { "for": "Mirror a whole part", "text": "Model only the right half, then mirror it about the YZ plane and join the two halves." },
+        { "for": "Mirror one feature", "text": "Mirror the {mounting ear} to the opposite side, about the plane through the middle of the part." },
+        { "for": "Keep it symmetric", "text": "Keep the part symmetric about the YZ plane: whatever you add on one side, add on the other side too." }
+      ],
+      "codeNote": "Plane.YZ mirrors left to right, Plane.XZ front to back and Plane.XY top to bottom. Inside BuildPart the copy is joined to what is already there.",
+      "confusedWith": [
+        { "id": "pattern", "diff": "A mirror makes one flipped copy. A pattern makes several copies that all face the same way." }
+      ]
+    },
+    {
+      "id": "fillet",
+      "name": "Fillet",
+      "category": "edges",
+      "aka": ["round", "rounded edge"],
+      "keywords": "round rounded corner smooth soft curve radius edge",
+      "summary": "Round off a sharp edge with a smooth curve.",
+      "definition": "A fillet replaces a sharp edge with a rounded one. Its size is the radius of the curve. Fillets make a part more comfortable to hold, and make inside corners stronger because the load is spread over the curve.",
+      "say": [
+        { "for": "Name the edges", "text": "Add a {4 mm} fillet to the four top edges of the box." },
+        { "for": "Strengthen an inside corner", "text": "Fillet the inside corner where the wall meets the base with a {2 mm} radius, to make it stronger." },
+        { "for": "Only some edges", "text": "Round only the four vertical corner edges with a {6 mm} radius. Leave the top and bottom edges sharp." },
+        { "for": "When it fails", "text": "The fillet fails because the radius is too large for the shortest edge. Try {1 mm}, or fillet fewer edges." }
+      ],
+      "printTip": "A fillet on an edge that touches the print bed starts as a steep overhang and often prints rough. Use a chamfer there instead.",
+      "confusedWith": [
+        { "id": "chamfer", "diff": "A fillet is curved. A chamfer is a flat cut at an angle." }
+      ]
+    },
+    {
+      "id": "chamfer",
+      "name": "Chamfer",
+      "category": "edges",
+      "aka": ["bevel"],
+      "keywords": "bevel angled slanted sloped flat cut corner edge 45 degree break lead-in",
+      "summary": "Cut a sharp edge off at a flat angle.",
+      "definition": "A chamfer replaces a sharp edge with a flat, angled face, usually at 45°. Its size is the length cut back from the edge. Chamfers remove sharp corners and help two parts slide into each other.",
+      "say": [
+        { "for": "Name the edges", "text": "Add a {4 mm} chamfer to the four top edges of the box." },
+        { "for": "Bottom edges, for printing", "text": "Chamfer the bottom outer edges by {0.6 mm}, so the squashed first layer does not stick out." },
+        { "for": "Help a part slide in", "text": "Add a {1 mm} chamfer around the mouth of the hole, so the pin is easy to insert." },
+        { "for": "Two different lengths", "text": "Chamfer the edge {3 mm} along the top face and {1 mm} down the side." }
+      ],
+      "printTip": "A 45° chamfer prints without support facing up or down, so it is the safe choice for edges that touch the print bed.",
+      "confusedWith": [
+        { "id": "fillet", "diff": "A chamfer is a flat cut at an angle. A fillet is curved." }
+      ]
+    },
+    {
+      "id": "rib",
+      "name": "Rib and gusset",
+      "category": "edges",
+      "aka": ["gusset", "stiffener", "web", "brace"],
+      "keywords": "strength stiff stiffen support brace triangle wall bend flex reinforce strong corner",
+      "summary": "A thin extra wall added to stop another wall from bending.",
+      "definition": "A rib is a thin extra wall that braces a larger one. A gusset is a triangular rib in the corner between two walls. Both add a lot of stiffness for very little plastic, so they work better than making the whole wall thicker.",
+      "say": [
+        { "for": "Stiffen a wall", "text": "Add a triangular rib between the wall and the base, {3 mm} thick, running {24 mm} along the base and {20 mm} up the wall." },
+        { "for": "Several ribs", "text": "Add {3} evenly spaced ribs along the length of the wall." },
+        { "for": "Under a shelf", "text": "Add a 45° gusset under the shelf, so it is braced and also prints without support." }
+      ],
+      "printTip": "Make a rib at least 1.2 mm thick. A gusset with a 45° slope prints without support.",
+      "confusedWith": [
+        { "id": "fillet", "diff": "A fillet rounds the corner itself. A rib adds a brace across the corner, which stiffens a tall wall far more." }
+      ]
+    },
+    {
+      "id": "through-blind-hole",
+      "name": "Through hole and blind hole",
+      "category": "holes",
+      "aka": ["thru hole", "pocket hole"],
+      "keywords": "depth all the way bottom floor stops drill open closed thru",
+      "summary": "A through hole goes all the way. A blind hole stops inside the part.",
+      "definition": "A through hole passes completely through the part and is open at both ends. A blind hole stops at a set depth, so it has a floor. Always say which one you want, and give the depth for a blind hole.",
+      "say": [
+        { "for": "All the way through", "text": "Make a {6 mm} through hole at the centre of the top face." },
+        { "for": "Stopping inside", "text": "Add a {6 mm} blind hole, {7 mm} deep, from the top face." },
+        { "for": "From another side", "text": "Make the hole from the {right} face, along the X axis, {10 mm} deep." },
+        { "for": "Keep a closed floor", "text": "Stop the hole {2 mm} above the bottom face, so the floor stays closed." }
+      ],
+      "codeNote": "Hole with no depth goes right through. Give depth= for a blind hole. The hole starts at the current location and goes down into the part.",
+      "printTip": "A blind hole that opens downward has a flat roof that must print in mid-air. Small ones are fine. For larger ones, turn the part over or make the roof a cone.",
+      "confusedWith": [
+        { "id": "counterbore", "diff": "A blind hole has one diameter. A counterbore has two: a narrow hole with a wider recess on top." }
+      ]
+    },
+    {
+      "id": "counterbore",
+      "name": "Counterbore",
+      "category": "holes",
+      "aka": ["cbore"],
+      "keywords": "screw bolt head recess pocket flush hidden step socket cap cylinder head hole",
+      "summary": "A hole with a wider flat-bottomed recess, so a screw head sits below the surface.",
+      "definition": "A counterbore is a hole with a wider, flat-bottomed recess at the top. The recess hides the head of a socket-head screw, the kind with a cylinder-shaped head, so nothing sticks out above the surface.",
+      "say": [
+        { "for": "By screw size", "text": "Add a counterbored hole for an {M3} socket-head screw in the centre of the top face." },
+        { "for": "By exact numbers", "text": "Through hole {3.4 mm}, counterbore {6.5 mm} wide and {3.4 mm} deep, so the head sits just below the surface." },
+        { "for": "In every corner", "text": "Put a counterbored {M3} hole in each corner, {5 mm} in from the edges." },
+        { "for": "Hide the heads underneath", "text": "Put the counterbores on the bottom face, so the screw heads are hidden underneath." }
+      ],
+      "printTip": "With the opening facing up it prints cleanly. Facing down, the flat step has to print in mid-air, so add support or turn the part over.",
+      "confusedWith": [
+        { "id": "countersink", "diff": "A counterbore has a flat step for cylinder-head screws. A countersink is a cone for flat-head screws." }
+      ]
+    },
+    {
+      "id": "countersink",
+      "name": "Countersink",
+      "category": "holes",
+      "aka": ["csk"],
+      "keywords": "screw head cone conical tapered flat head flush sloped hole",
+      "summary": "A hole with a cone-shaped opening, so a flat-head screw sits flush.",
+      "definition": "A countersink is a hole with a cone-shaped opening at the top. It matches the sloped underside of a flat-head screw, so the top of the screw ends up level with the surface.",
+      "say": [
+        { "for": "By screw size", "text": "Add a countersunk hole for an {M3} flat-head screw in the centre of the top face, with a 90° angle." },
+        { "for": "By exact numbers", "text": "Through hole {3.4 mm}, countersink {6.5 mm} wide at the surface, with a 90° cone." },
+        { "for": "Fix the angle", "text": "Use a 90° countersink, for metric screws, and not the 82° default." }
+      ],
+      "codeNote": "build123d defaults to an 82° cone, which fits US inch screws. Metric countersunk screws use 90°, so set counter_sink_angle=90.",
+      "printTip": "The cone is a 45° slope, so a countersink prints well facing up or down.",
+      "confusedWith": [
+        { "id": "counterbore", "diff": "A countersink is a cone for flat-head screws. A counterbore has a flat step for cylinder-head screws." }
+      ]
+    },
+    {
+      "id": "slot",
+      "name": "Slot",
+      "category": "holes",
+      "aka": ["slotted hole", "obround", "elongated hole"],
+      "keywords": "long hole adjust adjustable sliding oval stadium rounded ends elongated",
+      "summary": "A long hole with round ends, so a screw can sit anywhere along it.",
+      "definition": "A slot is a hole stretched into a line: two straight sides with a half circle at each end. A screw or pin can sit anywhere along its length, which gives you room for adjustment. Its width matches the screw, and its length sets how far things can move.",
+      "say": [
+        { "for": "By size", "text": "Cut a slot through the plate, {24 mm} long overall and {3.4 mm} wide, centred on the top face." },
+        { "for": "For adjustment", "text": "Replace the two mounting holes with {M3} slots that allow {10 mm} of adjustment along X." },
+        { "for": "Centre to centre", "text": "Make the slot {20 mm} between the centres of its round ends, and {4 mm} wide." },
+        { "for": "Change its direction", "text": "Turn the slot so it runs along Y and not along X." }
+      ],
+      "codeNote": "SlotOverall takes the full end-to-end length. SlotCenterToCenter takes the distance between the centres of the two round ends. Say which one you mean.",
+      "printTip": "A slot through a flat plate prints cleanly. Cut sideways through a standing wall, its long flat top becomes a bridge.",
+      "confusedWith": [
+        { "name": "Groove", "diff": "A slot goes right through the material. A groove is a channel cut only part of the way in." }
+      ]
+    },
+    {
+      "id": "teardrop-hole",
+      "name": "Teardrop hole",
+      "category": "holes",
+      "aka": ["teardrop", "printable horizontal hole"],
+      "keywords": "horizontal hole side wall sideways round top sag droop support free pointed roof 45 degree",
+      "summary": "A sideways hole with a pointed top, so it prints without support.",
+      "definition": "A teardrop hole is a round hole with a pointed roof added on top, like an upside-down drop of water. It is used for holes that run sideways through a standing wall. The top of a plain round hole is nearly flat and sags when printed. The two 45° sides of the point print cleanly.",
+      "say": [
+        { "for": "One hole", "text": "Make the horizontal {10 mm} hole a teardrop, with the point facing up, away from the print bed." },
+        { "for": "Every sideways hole", "text": "Turn every hole that runs sideways and is larger than {6 mm} into a teardrop." },
+        { "for": "When a pointed top is not allowed", "text": "Use a flat-topped teardrop: cut the point off {1 mm} above the circle, so the top is a short bridge." }
+      ],
+      "printTip": "Small sideways holes, up to about 6 mm, print acceptably round. Use a teardrop above that size, and always point it away from the bed.",
+      "confusedWith": [
+        { "id": "overhang", "diff": "An overhang is the problem. A teardrop is one fix for it, for holes that run sideways." }
+      ]
+    },
+    {
+      "id": "screw-sizes",
+      "name": "Screw sizes",
+      "category": "joining",
+      "aka": ["metric screws", "M3", "bolt sizes", "fasteners"],
+      "keywords": "m2 m2.5 m3 m4 m5 bolt machine screw thread diameter clearance tap head standard size fastener nut",
+      "summary": "What M3 and the other sizes mean, and which hole each screw needs.",
+      "definition": "Metric screws are named by their thread diameter in millimetres: an M3 screw has a 3 mm thread. The length is measured under the head, so M3 × 10 is 10 mm long. Each screw needs one of three kinds of hole: a clearance hole it slides through, a smaller hole it threads into, or a larger hole for a brass insert.",
+      "say": [
+        { "for": "A hole the screw passes through", "text": "Add a clearance hole for an {M3} screw here: {3.4 mm} diameter, right through." },
+        { "for": "A hole the screw threads into", "text": "Add a {2.5 mm} hole, {8 mm} deep, for an {M3} screw to thread straight into the plastic." },
+        { "for": "Describe the whole screw", "text": "This is for an {M3 × 10 mm} socket-head screw: {3 mm} thread, {10 mm} long under the head, {5.5 mm} wide head." },
+        { "for": "Allow for the printer", "text": "Printed holes come out small. Add {0.2 mm} to the diameter of every screw hole." }
+      ],
+      "table": {
+        "caption": "Hole and hardware sizes, in mm",
+        "columns": ["Screw", "Clearance hole", "Thread-in hole", "Insert hole", "Head width", "Nut width"],
+        "rows": [
+          ["M2", "2.4", "1.6", "3.2", "3.8", "4.0"],
+          ["M2.5", "2.9", "2.1", "4.0", "4.5", "5.0"],
+          ["M3", "3.4", "2.5", "4.0", "5.5", "5.5"],
+          ["M4", "4.5", "3.3", "5.6", "7.0", "7.0"],
+          ["M5", "5.5", "4.2", "6.4", "8.5", "8.0"]
+        ],
+        "note": "Clearance holes are the standard medium fit. Thread-in holes are the standard drill sizes for cutting a thread. Insert holes are typical for common brass inserts and differ by brand, so check the datasheet. Head width is for socket-head screws. Nut width is measured flat to flat."
+      },
+      "printTip": "Printed holes come out a little small. For a clearance hole this rarely matters. For a thread-in hole, start with the table value plus 0.2 mm and test with one screw before you print the whole part.",
+      "note": "M3 is the usual choice for small printed cases. M2.5 fits the mounting holes of a Raspberry Pi. M2 suits very small boards and sensors.",
+      "confusedWith": [
+        { "name": "Self-tapping screw", "diff": "A machine screw, such as M3, has a fine thread made for nuts and inserts. A self-tapping screw has a coarse, sharp thread made for biting into plastic, and its sizes are named differently." }
+      ]
+    },
+    {
+      "id": "boss-standoff",
+      "name": "Boss and standoff",
+      "category": "joining",
+      "aka": ["screw boss", "mounting post", "spacer", "pillar"],
+      "keywords": "pcb board mount post pillar raise screw hole circuit raspberry pi esp32 spacer column",
+      "summary": "A raised post with a hole in it, for a screw or for holding a circuit board up.",
+      "definition": "A boss is a raised cylinder of material around a hole, so a screw has enough plastic to bite into. A standoff is a boss that also holds something, usually a circuit board, at a set height above the floor. The gap leaves room for the solder joints under the board.",
+      "say": [
+        { "for": "Mounts for a circuit board", "text": "Add four standoffs for the board, {5 mm} tall and {6 mm} wide, at the mounting holes: a {36 × 24 mm} rectangle centred in the case." },
+        { "for": "Say which screw", "text": "Give each standoff a {2.1 mm} hole, {5 mm} deep, for an {M2.5} screw to thread into." },
+        { "for": "Describe the board", "text": "The board is {65 × 30 mm} with mounting holes {3.5 mm} in from each corner. Leave {3 mm} of room under it." },
+        { "for": "Make them stronger", "text": "Fillet the foot of each boss with a {1 mm} radius, and join any boss near a wall to that wall with a rib." }
+      ],
+      "printTip": "Make the boss at least twice as wide as its hole, and add a small fillet at the foot. A thin post standing alone snaps off between layers.",
+      "confusedWith": [
+        { "id": "heat-set-insert", "diff": "A boss is the plastic post. A heat-set insert is a metal thread you can melt into that post." }
+      ]
+    },
+    {
+      "id": "heat-set-insert",
+      "name": "Heat-set insert",
+      "category": "joining",
+      "aka": ["threaded insert", "brass insert", "knurled insert"],
+      "keywords": "brass metal thread melt soldering iron reusable strong screw knurled press",
+      "summary": "A brass thread melted into a printed hole, so a screw can go in and out many times.",
+      "definition": "A heat-set insert is a small brass tube with a screw thread inside and ridges outside. You press it into a slightly smaller hole with a hot soldering iron. The plastic melts around the ridges and grips it, leaving a strong metal thread that does not wear out.",
+      "say": [
+        { "for": "One insert", "text": "Add a boss for an {M3} heat-set insert: hole {4.0 mm} wide and {6.7 mm} deep, with at least {2 mm} of plastic around it." },
+        { "for": "Everywhere a screw goes", "text": "Use {M3} heat-set inserts for all {four} lid screws, not screws threaded into the plastic." },
+        { "for": "Help it go in straight", "text": "Add a {0.5 mm} chamfer at the top of each insert hole, to guide the insert in straight." }
+      ],
+      "printTip": "Print the hole at the size on the insert's datasheet and leave at least 2 mm of plastic around it. Make the hole about 1 mm deeper than the insert, so the melted plastic has somewhere to go.",
+      "confusedWith": [
+        { "id": "nut-trap", "diff": "An insert is melted in and stays there. A nut trap is a pocket for an ordinary nut: no heat needed, but the nut can fall out." }
+      ]
+    },
+    {
+      "id": "nut-trap",
+      "name": "Nut trap",
+      "category": "joining",
+      "aka": ["captive nut", "nut pocket", "nut slot"],
+      "keywords": "hex hexagon nut pocket captive hold six sided cannot turn m3 bolt",
+      "summary": "A six-sided pocket that holds a nut so it cannot turn.",
+      "definition": "A nut trap is a hexagonal pocket the same shape as a nut. The nut drops in and the flat sides stop it from turning, so you can tighten the screw from the other side with one tool. It gives a strong metal thread using only an ordinary nut.",
+      "say": [
+        { "for": "A pocket from above", "text": "Add a hex pocket for an {M3} nut on the top face, {5.7 mm} across the flats and {2.8 mm} deep, centred on the screw hole." },
+        { "for": "Loaded from the side", "text": "Make it a side-loading nut slot, open to the {front} face, so the nut slides in from the side." },
+        { "for": "Set how tight it is", "text": "Make the pocket {0.2 mm} wider than the nut, so it drops in but cannot turn." }
+      ],
+      "codeNote": "major_radius=False makes the radius reach the flat sides, so the size you give is the nut's flat-to-flat width.",
+      "printTip": "Make the pocket about 0.2 mm wider than the nut. A pocket that opens downward has a small flat roof, which prints fine at this size.",
+      "confusedWith": [
+        { "id": "heat-set-insert", "diff": "A nut trap holds an ordinary nut and needs no heat. A heat-set insert is melted in and cannot fall out." }
+      ]
+    },
+    {
+      "id": "snap-fit",
+      "name": "Snap fit",
+      "category": "joining",
+      "aka": ["snap hook", "clip", "cantilever snap", "latch"],
+      "keywords": "clip click latch hook catch lid cover no screws tool-free flexible arm spring cantilever",
+      "summary": "A springy hook that clicks into place and holds two parts together without screws.",
+      "definition": "A snap fit is a thin, flexible arm with a hook on its end. As the parts are pushed together, a slope on the hook bends the arm out of the way. The arm then springs back, and the flat face of the hook catches behind an edge. This kind is called a cantilever snap and is the most common one.",
+      "say": [
+        { "for": "Add the hook", "text": "Add a cantilever snap hook under the lid: arm {16 mm} long, {2 mm} thick and {8 mm} wide, with a hook that sticks out {1.5 mm}." },
+        { "for": "Add what it catches", "text": "Cut a {10 × 6.5 mm} window in the wall for the hook to catch in, with {0.4 mm} of play." },
+        { "for": "Make it removable", "text": "Slope the catching face at {45°} as well, so pulling on the lid releases the hook." },
+        { "for": "When the hook breaks", "text": "The hook breaks when it bends. Make the arm longer or thinner, and add a {1 mm} fillet at its root." },
+        { "for": "Print direction", "text": "Orient the part so the printed layers run along the arm, not across it." }
+      ],
+      "printTip": "Print the arm lying along the layers, never standing across them, or it will snap off. A longer, thinner arm bends more safely. PETG flexes better than PLA.",
+      "confusedWith": [
+        { "id": "clearance", "diff": "A snap fit bends and springs back to lock. A press fit (interference fit) has nothing that moves: it holds only by being a tight squeeze." }
+      ]
+    },
+    {
+      "id": "lip-and-groove",
+      "name": "Lip and groove",
+      "category": "joining",
+      "aka": ["lid lip", "rebate", "tongue and groove", "step joint"],
+      "keywords": "lid cover enclosure box case locate register rim edge seal overlap step",
+      "summary": "A raised rim on one part that fits into a recess in the other, so a lid locates itself.",
+      "definition": "A lip is a thin raised rim around the edge of one part. It fits into a matching recess or groove in the other part. Together they stop a lid from sliding sideways, hide the seam and keep dust out. They only locate the lid, so you still need screws or snaps to hold it shut.",
+      "say": [
+        { "for": "Add both halves", "text": "Add a lip around the top of the box, {1 mm} thick and {2 mm} tall, on the inner half of the wall, and a matching recess in the lid." },
+        { "for": "Set the clearance", "text": "Leave {0.2 mm} of clearance between the lip and the lid on every side." },
+        { "for": "Say what holds it shut", "text": "The lip only locates the lid. Hold the lid down with {four M3 screws} in the corners." }
+      ],
+      "printTip": "Leave about 0.2 mm of clearance on each side. Make the lip at least 1 mm thick, or it will not survive being opened and closed.",
+      "confusedWith": [
+        { "id": "snap-fit", "diff": "A lip only keeps the lid in position. A snap fit actually holds it closed." }
+      ]
+    },
+    {
+      "id": "sliding-dovetail",
+      "name": "Sliding dovetail",
+      "category": "joining",
+      "aka": ["dovetail", "dovetail rail", "dovetail slide"],
+      "keywords": "slide rail track wedge trapezoid interlock tool-free mount guide angled",
+      "summary": "A wedge-shaped rail that slides into a matching slot and cannot be pulled straight out.",
+      "definition": "A dovetail is a rail whose cross-section is a trapezoid: narrow where it joins its part and wider at the tip. It slides into a slot of the same shape from one end. Because the tip is wider than the opening, the two parts can slide along the slot but cannot be pulled apart any other way.",
+      "say": [
+        { "for": "Add the joint", "text": "Join the two parts with a sliding dovetail along Y: {8 mm} wide at the top, {12 mm} wide at the bottom and {5 mm} deep." },
+        { "for": "Set the clearance", "text": "Leave {0.2 mm} of clearance on each sloped side, so it slides by hand." },
+        { "for": "Add a stop", "text": "Close the slot {5 mm} before the far end, so the slider stops there." },
+        { "for": "Make it easy to start", "text": "Add a {1 mm} chamfer at the open end of the slot, so the slider is easy to start." }
+      ],
+      "printTip": "The sloped sides are well under 45°, so both parts print without support. Start with 0.2 mm of clearance per side and test with a short piece first.",
+      "confusedWith": [
+        { "id": "tab-and-slot", "diff": "A dovetail slides in from the end and cannot lift out. A tab pushes straight in and pulls straight out." }
+      ]
+    },
+    {
+      "id": "tab-and-slot",
+      "name": "Tab and slot",
+      "category": "joining",
+      "aka": ["mortise and tenon", "finger joint", "box joint", "tongue"],
+      "keywords": "tab tongue plug locate interlock plates panels push in glue rectangular",
+      "summary": "A rectangular tongue on one part that plugs into a matching hole in the other.",
+      "definition": "A tab is a small rectangular tongue sticking out of one part. A slot is the matching hole in the other part. Pushing the tabs into the slots lines the two parts up exactly and stops them from sliding, ready for glue or a screw. Woodworkers call the same idea a mortise and tenon.",
+      "say": [
+        { "for": "Add the joint", "text": "Give the wall {two} tabs, {8 mm} wide and {3 mm} long, and cut matching slots in the base plate." },
+        { "for": "Set the clearance", "text": "Make each slot {0.15 mm} larger than its tab on every side." },
+        { "for": "Only one way round", "text": "Space the tabs unevenly, so the wall can only go in one way round." }
+      ],
+      "printTip": "Make each slot 0.1 to 0.2 mm larger than its tab on every side. A small chamfer on the end of the tab makes it much easier to push in.",
+      "confusedWith": [
+        { "id": "sliding-dovetail", "diff": "A tab pushes straight in and pulls straight out. A dovetail slides in from the end and cannot lift out." }
+      ]
+    },
+    {
+      "id": "miter-joint",
+      "name": "Miter joint",
+      "category": "joining",
+      "aka": ["mitre joint", "45 degree joint"],
+      "keywords": "corner frame 45 degree angle cut bars seam picture frame mitre diagonal",
+      "summary": "Two parts cut at an angle, usually 45°, so they meet in a neat corner.",
+      "definition": "In a miter joint the ends of both parts are cut at an angle, usually 45°, so they meet along a diagonal seam and form a 90° corner. No end face is left showing, which is why picture frames use it. It looks clean but has little strength of its own, so it needs glue, a pin or a screw.",
+      "say": [
+        { "for": "One corner", "text": "Join the two bars at the corner with a 45° miter, so no end face shows." },
+        { "for": "A whole frame", "text": "Make a rectangular frame, {120 × 80 mm} outside, from {10 mm} bars with mitered corners." },
+        { "for": "Keep it lined up", "text": "Add a {3 mm} hole for an alignment pin across each miter, so the corner cannot slide while the glue sets." }
+      ],
+      "printTip": "Printed in one piece, a corner needs no joint at all. Miters are for frames too large for the printer, printed as separate bars and glued.",
+      "confusedWith": [
+        { "id": "lap-joint", "diff": "A miter meets edge to edge along a diagonal. A lap joint overlaps the two parts, which gives far more area for glue or a screw." },
+        { "name": "Butt joint", "diff": "In a butt joint one square end simply meets the side of the other part, so that end stays visible. A miter hides both ends." }
+      ]
+    },
+    {
+      "id": "lap-joint",
+      "name": "Lap joint",
+      "category": "joining",
+      "aka": ["half-lap", "halving joint", "overlap joint"],
+      "keywords": "overlap half thickness notch corner glue strong step bars plates split",
+      "summary": "Two parts each thinned by half where they overlap, so the joint is no thicker than one part.",
+      "definition": "In a lap joint the two parts overlap. In the most common kind, the half-lap, half the thickness is removed from each part over the overlap, so together they are exactly as thick as one part. The large flat contact area makes it strong when glued or screwed.",
+      "say": [
+        { "for": "One corner", "text": "Join the two bars at the corner with a half-lap joint: remove half the thickness from each over a {10 mm} overlap." },
+        { "for": "Add a fastener", "text": "Put one {M3} clearance hole through the middle of the overlap, to screw the two together." },
+        { "for": "Set the clearance", "text": "Leave {0.1 mm} between the two faces that touch, so the joint closes fully." }
+      ],
+      "printTip": "A good way to join a part you had to split to fit the printer. Leave about 0.1 mm between the touching faces and put a screw or pin through the overlap.",
+      "confusedWith": [
+        { "id": "miter-joint", "diff": "A lap joint overlaps the two parts. A miter meets edge to edge along a diagonal, which looks neater but is weaker." }
+      ]
+    },
+    {
+      "id": "face-edge-vertex",
+      "name": "Face, edge, vertex",
+      "category": "reference",
+      "aka": ["topology"],
+      "keywords": "surface side line corner point select selector pick sort_by group_by filter_by",
+      "summary": "The three building blocks of every solid: surfaces, the lines between them, and corner points.",
+      "definition": "Every solid is made of faces (its surfaces), edges (the lines where two faces meet) and vertices (the points where edges meet). Most CAD operations need to be told which faces, edges or vertices to work on.",
+      "say": [
+        { "for": "Pick by position", "text": "Select the four edges around the top face and fillet them." },
+        { "for": "Pick by direction", "text": "Pick the face that points toward +X, the right side, and put the hole there." },
+        { "for": "Pick by kind", "text": "Fillet only the vertical edges. Leave the horizontal ones sharp." },
+        { "for": "Check before changing", "text": "Show me which edges you selected, highlighted in the viewer, before you apply the fillet." }
+      ],
+      "codeNote": "sort_by orders items along a direction so you can take the first or last. group_by collects items that sit at the same position. filter_by keeps items of one kind or direction.",
+      "confusedWith": []
+    },
+    {
+      "id": "plane",
+      "name": "Plane",
+      "category": "reference",
+      "aka": ["workplane", "sketch plane", "datum plane"],
+      "keywords": "xy xz yz flat surface draw on sketch offset orientation normal up front side",
+      "summary": "An invisible flat surface that you draw sketches on.",
+      "definition": "A plane is an endless flat surface used as the drawing board for a sketch. The three standard planes are named after the two axes that lie in them: XY, XZ and YZ. You can also move a plane with offset, or use a face of your part as a plane.",
+      "say": [
+        { "for": "A standard plane, moved", "text": "Sketch a {16 mm} circle on the XY plane, offset {15 mm} up." },
+        { "for": "On the part itself", "text": "Use the {top} face of the part as the sketch plane." },
+        { "for": "Seen from the front", "text": "Draw the profile on the XZ plane, so I see it from the front." },
+        { "for": "A tilted plane", "text": "Make a plane tilted {30°} about the X axis and sketch the hole on it." }
+      ],
+      "printTip": "For most printers the XY plane is the print bed and Z is the direction the layers stack.",
+      "confusedWith": [
+        { "id": "align", "diff": "A plane says where you are working. Align says which point of the new shape lands there." }
+      ]
+    },
+    {
+      "id": "directions",
+      "name": "Directions and axes",
+      "category": "reference",
+      "aka": ["front, back, left, right", "orientation", "X, Y, Z"],
+      "keywords": "front back left right top bottom up down side axis x y z plus minus positive negative orientation which way",
+      "summary": "How everyday words like front and left map onto the X, Y and Z axes.",
+      "definition": "CAD positions use three axes: X runs left to right, Y runs front to back, and Z runs bottom to top. In the usual view, front is the side toward −Y, right is toward +X and top is toward +Z. Saying the axis as well as the word removes any doubt about which side you mean.",
+      "say": [
+        { "for": "Name a side without doubt", "text": "Put the {USB opening} in the front wall, the one facing −Y." },
+        { "for": "Give a position", "text": "Move the hole {8 mm} toward +X (right) and {5 mm} toward +Z (up)." },
+        { "for": "Set the convention once", "text": "Z is up. Front is −Y, back is +Y, left is −X and right is +X. Use these words that way from now on." },
+        { "for": "Check what the agent assumed", "text": "Tell me which face you are treating as the front, with its axis direction, before you continue." }
+      ],
+      "codeNote": "sort_by(Axis.Y)[0] is the face furthest toward −Y, the front. [-1] is the one furthest toward +Y, the back. The same works with Axis.X and Axis.Z.",
+      "printTip": "On most printers the bed is the XY plane and Z is the height, so the bottom of your model is what touches the bed.",
+      "confusedWith": [
+        { "id": "plane", "diff": "A direction is a way to point: up, or toward +X. A plane is a flat surface, named by the two axes that lie in it." }
+      ]
+    },
+    {
+      "id": "align",
+      "name": "Align",
+      "category": "reference",
+      "aka": ["alignment", "anchor point", "centred"],
+      "keywords": "center centre corner origin anchor min max position where placed sit on bed bottom half buried",
+      "summary": "Which point of a shape sits at the origin: its centre, a corner, or its base.",
+      "definition": "Align decides which point of a new shape is placed at the origin, or at the location you gave. Centred puts the middle of the shape there. Min puts its lowest corner there. Mixing them, for example centred in X and Y but min in Z, makes the shape sit on top of the plane and not half buried in it.",
+      "say": [
+        { "for": "Sit on the print bed", "text": "Centre the box in X and Y, with its bottom face on the XY plane (z = 0)." },
+        { "for": "Corner at the origin", "text": "Put the lowest corner of the box at the origin." },
+        { "for": "Line up two parts", "text": "Align the centre of the lid with the centre of the box in X and Y, and rest it on top." },
+        { "for": "Against a face", "text": "Place the bracket so its back face touches the wall and its bottom edge is level with the floor." }
+      ],
+      "codeNote": "Every build123d shape is centred by default, in all three directions. That is why a Box often ends up half below the plane. Pass align=(Align.CENTER, Align.CENTER, Align.MIN) to sit it on top.",
+      "printTip": "Keeping the bottom of your part at z = 0 matches the print bed, so heights in the model are heights above the bed.",
+      "confusedWith": [
+        { "id": "plane", "diff": "Align says which point of the new shape lands at the location. A plane says where that location is and which way is up." }
+      ]
+    },
+    {
+      "id": "concentric",
+      "name": "Concentric",
+      "category": "reference",
+      "aka": ["coaxial", "same centre", "centred on"],
+      "keywords": "same axis center centre shared ring circle inside aligned even wall off-centre eccentric",
+      "summary": "Round features that share the same centre or axis.",
+      "definition": "Two circles are concentric when they share the same centre point, like the rings of a target. For 3D features such as a hole inside a boss, the exact word is coaxial: they share one axis. Saying it tells the agent that the wall between them must be the same thickness all the way round.",
+      "say": [
+        { "for": "A hole in a boss", "text": "Make the hole concentric with the boss." },
+        { "for": "Several features on one axis", "text": "Keep the {shaft hole}, the {bearing seat} and the {outer ring} all on the same axis." },
+        { "for": "Fix an off-centre hole", "text": "The hole is off-centre. Move it so its axis matches the axis of the cylinder." }
+      ],
+      "codeNote": "Features created at the same Locations are concentric automatically. Problems start when one of them is placed by hand with its own coordinates.",
+      "confusedWith": [
+        { "name": "Tangent", "diff": "Concentric circles share a centre and never touch. Tangent circles touch at exactly one point." }
+      ]
+    },
+    {
+      "id": "flush-proud-recessed",
+      "name": "Flush, proud, recessed",
+      "category": "reference",
+      "aka": ["level", "sticks out", "sunken", "inset"],
+      "keywords": "level even surface sticks out raised protrude below sunk sunken inset height button screw head step",
+      "summary": "Three words for how one surface sits against another: level, sticking out, or set below.",
+      "definition": "Flush means two surfaces are exactly level, so a finger sliding across feels no step. Proud means one sticks out above the other. Recessed means it sits below. Follow proud or recessed with a distance, such as proud by 2 mm, and the agent knows exactly what to build.",
+      "say": [
+        { "for": "Level", "text": "Make the top of the button flush with the panel surface." },
+        { "for": "Sticking out", "text": "Let the button sit proud of the panel by {2 mm}." },
+        { "for": "Set below", "text": "Recess the label area {0.6 mm} below the surface." },
+        { "for": "A rule for the whole part", "text": "All screw heads must sit flush or below the surface. Nothing may stick out of the bottom face." }
+      ],
+      "printTip": "Two separate parts are never perfectly flush after printing. If a step must not show, recess one part by 0.2 mm on purpose: a small even step looks neater than an uneven one.",
+      "confusedWith": [
+        { "id": "counterbore", "diff": "Recessed describes the result: something sits below the surface. A counterbore is one feature that gets a screw head there." }
+      ]
+    },
+    {
+      "id": "diameter-radius",
+      "name": "Diameter and radius",
+      "category": "reference",
+      "aka": ["Ø", "OD", "ID", "inside diameter", "outside diameter"],
+      "keywords": "circle hole size across half width round od id inner outer bore twice double wrong size",
+      "summary": "Diameter is the width right across a circle. Radius is half of that.",
+      "definition": "The diameter of a circle is its full width, measured through the centre. The radius is the distance from the centre to the edge, which is half the diameter. People, drawings and screw tables almost always give the diameter, but CAD code often asks for the radius. Mixing them up makes a hole twice or half the size you wanted.",
+      "say": [
+        { "for": "Always say which one", "text": "Make a hole {10 mm} in diameter, not radius." },
+        { "for": "A tube or ring", "text": "Make a tube with a {20 mm} outside diameter and a {16 mm} inside diameter, so the wall is {2 mm}." },
+        { "for": "Set the convention once", "text": "Every size I give for a hole, pin or cylinder is a diameter, unless I say radius." },
+        { "for": "Check the result", "text": "Tell me the diameter of each hole you made, so I can check them against my numbers." }
+      ],
+      "codeNote": "Circle, Cylinder, Hole and fillet in build123d all take a radius. Keep the diameter in a named variable and divide by two where it is used.",
+      "confusedWith": [
+        { "id": "fillet", "diff": "A fillet is the one feature normally given as a radius: a 4 mm fillet means a 4 mm radius." }
+      ]
+    },
+    {
+      "id": "parameter",
+      "name": "Parameter",
+      "category": "reference",
+      "aka": ["variable", "parametric design", "named dimension"],
+      "keywords": "variable named number change resize adjust parametric dimension follow update top of script magic number",
+      "summary": "A named number that controls the model, so one change updates everything that depends on it.",
+      "definition": "A parameter is a dimension stored under a name, such as length or wall, in place of a bare number written into the shape. Other sizes and positions are worked out from it. Change the one number and the whole model follows, with holes and walls still in the right place. A model built this way is called parametric.",
+      "say": [
+        { "for": "Ask for it from the start", "text": "Put every dimension in a named variable at the top of the script, and work out all positions from those variables." },
+        { "for": "Tie one size to another", "text": "Keep the holes {6 mm} from each edge, whatever the length and width are." },
+        { "for": "Change one thing", "text": "Change only the {length} to {40 mm}. Everything else should follow without other edits." },
+        { "for": "Clean up an existing script", "text": "Replace the bare numbers in this script with named variables, and tell me which ones I am likely to change." }
+      ],
+      "printTip": "Make the clearance a parameter too. After one test print you can then tune the fit of every joint by changing a single number.",
+      "confusedWith": [
+        { "id": "tolerance", "diff": "A parameter is a number you choose and can change. A tolerance is how far the real part may differ from that number." }
+      ]
+    },
+    {
+      "id": "orthographic-views",
+      "name": "Orthographic views",
+      "category": "drawing",
+      "aka": ["front, top and side views", "multiview drawing", "projection"],
+      "keywords": "front top right side view 2d flat drawing projection hidden line dashed third angle first angle",
+      "summary": "Flat, straight-on views of a part from the front, top and side.",
+      "definition": "Orthographic views each show the part straight-on from one direction, with no perspective, so sizes can be measured from the drawing. A standard drawing lines up front, top and right views. Edges hidden behind material are drawn dashed.",
+      "say": [
+        { "for": "Ask for the views", "text": "Show me the front, top and right views of the bracket, with hidden lines dashed." },
+        { "for": "Describe a position with a view", "text": "In the front view, the hole is {10 mm} from the left edge and {8 mm} up from the bottom." },
+        { "for": "Say which side is the front", "text": "Treat the face with the {USB connector} as the front." }
+      ],
+      "note": "Putting the top view above the front view is called third-angle projection, the US standard. European (ISO) drawings use first-angle projection, where the top view goes below the front view.",
+      "confusedWith": [
+        { "id": "section-view", "diff": "An orthographic view shows the outside and marks hidden edges with dashes. A section view cuts the part open to show the inside directly." }
+      ]
+    },
+    {
+      "id": "section-view",
+      "name": "Section view",
+      "category": "drawing",
+      "aka": ["cross-section", "cutaway"],
+      "keywords": "cut slice open inside interior hatch hatching a-a cutting plane",
+      "summary": "A view of the part sliced open to show what is inside.",
+      "definition": "A section view shows the part as if it were sliced through and the front piece taken away. The cut material is filled with diagonal lines, called hatching. A cutting line with letters (A–A) on another view shows where the slice was made.",
+      "say": [
+        { "for": "Cut through the middle", "text": "Show a section view through the centre of the {hub}, cut along the XZ plane." },
+        { "for": "Check the walls", "text": "Cut the model through the screw holes and tell me the thinnest wall you find." },
+        { "for": "Move the cut", "text": "Move the cutting plane {5 mm} toward the back and show the section again." }
+      ],
+      "printTip": "Slicing your model open is the quickest way to check wall thickness and find hidden hollows before you print.",
+      "confusedWith": [
+        { "id": "orthographic-views", "diff": "A section view cuts the part open. An orthographic view shows the uncut outside and marks hidden edges with dashes." }
+      ]
+    },
+    {
+      "id": "clearance",
+      "name": "Clearance",
+      "category": "printing",
+      "aka": ["gap", "play", "fit", "press fit"],
+      "keywords": "gap fit tight loose snug press fit interference friction tolerance slide peg hole",
+      "summary": "The gap you leave on purpose between two parts that fit together.",
+      "definition": "Clearance is the gap you design between two parts that fit together. A positive gap gives a clearance fit, which slides. A negative gap, where the peg is larger than the hole, gives an interference fit that has to be pressed in and holds by friction.",
+      "say": [
+        { "for": "A sliding fit", "text": "Make the hole for a {10 mm} peg with {0.2 mm} clearance on each side." },
+        { "for": "A press fit", "text": "Make it a press fit: the hole {0.1 mm} smaller than the {5 mm} pin." },
+        { "for": "A rule for the whole design", "text": "Use {0.2 mm} of clearance per side wherever two printed parts slide together." },
+        { "for": "Avoid a misunderstanding", "text": "When I say {0.2 mm} clearance I mean on each side, so the hole diameter grows by {0.4 mm}." }
+      ],
+      "printTip": "Printed holes come out slightly small. On an FDM printer start with 0.2 mm per side for a sliding fit and 0.1 mm for a snug fit, then test-print and adjust.",
+      "confusedWith": [
+        { "id": "tolerance", "diff": "Clearance is a gap you choose. Tolerance is how far the real size may differ from the size you asked for, because no printer is exact." }
+      ]
+    },
+    {
+      "id": "tolerance",
+      "name": "Tolerance",
+      "category": "printing",
+      "aka": ["accuracy", "plus or minus", "±"],
+      "keywords": "accuracy exact error plus minus deviation precise real size measured printer shrink test calibration",
+      "summary": "How far the real size of a part may differ from the size you asked for.",
+      "definition": "No machine makes a part at exactly the size in the model. Tolerance is the amount of error you accept, written with a plus-or-minus sign: 10 ± 0.2 mm means anything from 9.8 to 10.2 is fine. A home 3D printer is typically accurate to about ± 0.1 to 0.2 mm, and holes usually come out small.",
+      "say": [
+        { "for": "Say how exact you need it", "text": "This {10 mm} dimension matters: it must be within ± {0.1 mm}. The others are not critical." },
+        { "for": "Make a test piece first", "text": "Make a small test strip with holes from {5.0} to {5.4 mm} in {0.1 mm} steps, so I can find which one fits my {5 mm} pin." },
+        { "for": "Feed the result back", "text": "My printer makes holes about {0.15 mm} too small. Add that to every hole diameter." }
+      ],
+      "printTip": "Print a small test strip before a large part. Ten minutes of printing tells you the exact hole size your printer needs.",
+      "confusedWith": [
+        { "id": "clearance", "diff": "Tolerance is error you cannot avoid. Clearance is a gap you add on purpose, and it must be larger than the tolerance or the parts will not fit." }
+      ]
+    },
+    {
+      "id": "wall-thickness",
+      "name": "Wall thickness",
+      "category": "printing",
+      "aka": ["wall", "minimum wall", "shell thickness"],
+      "keywords": "thin thick wall minimum nozzle width perimeter line fragile strong floor skin 0.4 1.2",
+      "summary": "How thick the solid material of a part is, which decides if it prints and how strong it is.",
+      "definition": "Wall thickness is the distance through the solid material, from one surface to the other. A printer builds walls from side-by-side lines of plastic, each about as wide as the nozzle. A wall thinner than one line cannot be printed at all, and very thin walls are fragile.",
+      "say": [
+        { "for": "Set a minimum", "text": "No wall anywhere may be thinner than {1.2 mm}." },
+        { "for": "One number for the whole case", "text": "Use {2 mm} for every outer wall and for the floor." },
+        { "for": "Ask for a check", "text": "Find the thinnest wall in the model and tell me where it is and how thick." },
+        { "for": "Match the nozzle", "text": "Make thin walls a whole number of {0.4 mm} lines: {0.8}, {1.2} or {1.6 mm}." }
+      ],
+      "printTip": "With a 0.4 mm nozzle, 0.8 mm is the practical minimum, 1.2 mm is sturdy for small parts and 2 mm suits an enclosure. A thickness between whole lines, such as 1.0 mm, can leave a gap inside the wall.",
+      "confusedWith": [
+        { "id": "shell", "diff": "Wall thickness is a measurement. Shell is the operation that hollows a solid and leaves walls of that thickness." }
+      ]
+    },
+    {
+      "id": "overhang",
+      "name": "Overhang",
+      "category": "printing",
+      "aka": [],
+      "keywords": "support unsupported mid-air 45 degree angle droop sag steep underside",
+      "summary": "Any part of a print that sticks out with nothing underneath it.",
+      "definition": "An overhang is a part of the model that sticks out sideways with nothing below it. Each printed layer has to rest on the layer beneath, so a steep overhang sags or fails unless the slicer adds support material under it.",
+      "say": [
+        { "for": "Remove an overhang", "text": "Replace the flat overhang under the arm with a 45° slope, so it prints without support." },
+        { "for": "Check the whole model", "text": "Check the model for overhangs steeper than {45°}, assuming it prints with the {bottom} face on the bed." },
+        { "for": "Holes in a side wall", "text": "Make the horizontal holes teardrop-shaped, so the top of each hole prints without support." }
+      ],
+      "printTip": "The 45° rule: a slope up to about 45° from vertical prints without support. If it is flatter than that, add support, turn the part, or reshape the overhang as a chamfer.",
+      "confusedWith": [
+        { "id": "bridge", "diff": "An overhang is held on one side only. A bridge is held at both ends, so it can cross a short gap without support." }
+      ]
+    },
+    {
+      "id": "bridge",
+      "name": "Bridge",
+      "category": "printing",
+      "aka": ["bridging"],
+      "keywords": "span gap flat roof both ends unsupported mid-air sag window opening top",
+      "summary": "A flat stretch of plastic printed across a gap, held at both ends.",
+      "definition": "A bridge is a flat section printed straight across an open gap with nothing under it, resting on a support at each end. The printer stretches the hot plastic across like a rope. Short bridges come out clean, and long ones sag in the middle.",
+      "say": [
+        { "for": "Set a limit", "text": "Keep every bridge shorter than {30 mm}." },
+        { "for": "Turn an overhang into a bridge", "text": "Add a pillar at the free end of the overhang, so it becomes a bridge." },
+        { "for": "The top of an opening", "text": "Make the top of the window flat, so it prints as a bridge between the two sides." }
+      ],
+      "printTip": "Most printers bridge 20 to 30 mm cleanly, and more with good cooling. If a bridge is too long, add a pillar in the middle or replace it with two 45° slopes.",
+      "confusedWith": [
+        { "id": "overhang", "diff": "A bridge is held at both ends, so it can cross a gap. An overhang is held on one side only and droops much sooner." }
+      ]
+    },
+    {
+      "id": "layer-direction",
+      "name": "Layer direction",
+      "category": "printing",
+      "aka": ["print orientation", "layer lines", "grain"],
+      "keywords": "orientation strength weak strong layers split break snap delaminate grain which way up bed",
+      "summary": "Which way the printed layers run through a part, which decides where it is strong.",
+      "definition": "A printed part is a stack of thin layers. The plastic within one layer is strong, but the bond between two layers is much weaker, a bit like the grain in wood. A thin feature that stands up across the layers snaps off easily. The same feature printed lying down, with the layers running along it, is far stronger.",
+      "say": [
+        { "for": "Say how it will be printed", "text": "This part prints with the {large flat face} on the bed. Design it so the snap arms lie along the layers." },
+        { "for": "Split off a weak feature", "text": "Split the part so the {clip} can be printed lying down and attached afterwards." },
+        { "for": "Ask for advice", "text": "Which print orientation makes the {hook} strongest? Tell me which face goes on the bed." }
+      ],
+      "printTip": "Decide which face goes on the bed before you design clips, hooks and thin posts, and tell your agent. Lay them along the layers, or thicken them and add a fillet at the root.",
+      "confusedWith": [
+        { "id": "overhang", "diff": "Overhang is about whether a shape can be printed at all. Layer direction is about how strong it is once printed." }
+      ]
+    }
+  ]
+}
