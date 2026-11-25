@@ -139,6 +139,9 @@
     .live { height: 0; background: var(--ink); transition: height 0.35s ease; }
     .cam { position: absolute; top: calc(var(--name) * -1); left: calc(50% - var(--name)); width: calc(var(--name) * 2); height: calc(var(--name) * 2); }
     .bolt { fill: var(--ink); }
+    /* The camera's mount: a tilt gear on the camera, its small drive gear, and a pan gear seen from the side. */
+    .gear-teeth { stroke-width: 2.2; stroke-linecap: butt; }
+    .pan-teeth { stroke-width: 1; stroke-linecap: butt; }
     .rec { transition: fill 0.15s; }
     .rig.tx .rec { fill: var(--ink); }
     .gnd { position: absolute; bottom: 0; left: 0; width: 100%; height: 12px; stroke: var(--muted); }
@@ -281,6 +284,13 @@
           </a>
         </li>
         <li>
+          <a href="https://knitnox.github.io/knitnox/" target="_blank" rel="noopener">
+            <strong>Knitnox</strong>
+            <span>A self-hosted AI harness for a small group, in one Go binary.</span>
+            <i aria-hidden="true">→</i>
+          </a>
+        </li>
+        <li>
           <a href="cad/">
             <strong>CAD Terms</strong>
             <span>A visual glossary of CAD and 3D-printing words.</span>
@@ -334,15 +344,39 @@
       <span><span class="led"></span>up <span id="up">00:00:00</span>, no crashes</span>
     </footer>
 
-    <!-- Decorative rig: a camera that watches the pointer and signals the nearest section. -->
+    <!-- Decorative rig: a camera on a two-axis motor mount. It watches the pointer and signals the nearest section. -->
     <div class="rig" aria-hidden="true">
       <i class="live"></i>
       <svg class="cam" viewBox="0 0 96 96">
+        <defs>
+          <clipPath id="pan-clip"><rect x="37.4" y="66" width="21.2" height="4.6"/></clipPath>
+        </defs>
+        <!-- pan axis: a motor, with its gear seen from the side -->
+        <rect class="solid" x="40" y="70.6" width="16" height="13" rx="2"/>
+        <path d="M40 74.6H56M45 78v3M48 78v3M51 78v3"/>
+        <rect class="solid" x="37" y="66" width="22" height="4.6" rx="1"/>
+        <g clip-path="url(#pan-clip)">
+          <path class="pan-teeth" d="M34 66v4.6M37 66v4.6M40 66v4.6M43 66v4.6M46 66v4.6M49 66v4.6M52 66v4.6M55 66v4.6M58 66v4.6M61 66v4.6"/>
+        </g>
+        <!-- the camera -->
         <g class="head" transform="rotate(180 48 48)">
           <path class="solid" d="M74 43h6l5-3v16l-5-3h-6z"/>
           <rect class="solid" x="38" y="39" width="36" height="18" rx="4"/>
-          <path d="M80 43v10M56 44.5v7M59.5 44.5v7"/>
+          <path d="M80 43v10M59 44.5v7M62 44.5v7"/>
           <circle class="rec" cx="67.5" cy="48" r="1.8"/>
+        </g>
+        <!-- tilt axis: a small motor on the arm drives the gear fixed to the camera -->
+        <rect class="solid" x="51" y="56" width="8.5" height="7.2" rx="1.6"/>
+        <path class="solid" d="M43.5 66 45.2 50a2.9 2.9 0 0 1 5.6 0L52.5 66z"/>
+        <g class="tilt" transform="rotate(0 48 48)">
+          <path class="gear-teeth" d="M54.2 48h2M52.38 52.38l1.42 1.42M48 54.2v2M43.62 52.38l-1.42 1.42M41.8 48h-2M43.62 43.62l-1.42-1.42M48 41.8v-2M52.38 43.62l1.42-1.42"/>
+          <circle class="solid" cx="48" cy="48" r="6.2"/>
+          <path d="M48 44.4v1.8M48 49.8v1.8M44.4 48h1.8M49.8 48h1.8"/>
+        </g>
+        <g class="pinion" transform="rotate(0 48 59.6)">
+          <path class="gear-teeth" d="M49.76 57.17l.94-1.29M50.85 60.53l1.52.49M48 62.6v1.6M45.15 60.53l-1.52.49M46.24 57.17l-.94-1.29"/>
+          <circle class="solid" cx="48" cy="59.6" r="3"/>
+          <circle class="bolt" cx="48" cy="59.6" r="0.9"/>
         </g>
         <circle class="bolt" cx="48" cy="48" r="1.6"/>
       </svg>
@@ -365,17 +399,29 @@
     // The camera turns toward the pointer; the section it sees you near gets a signal.
     const rig = document.querySelector('.rig');
     const head = rig.querySelector('.head');
+    const tilt = rig.querySelector('.tilt');
+    const pinion = rig.querySelector('.pinion');
+    const panTeeth = rig.querySelector('.pan-teeth');
     const live = rig.querySelector('.live');
     const sections = [...document.querySelectorAll('section')];
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const touch = matchMedia('(hover: none)').matches;
     const NEAR = 28; // px above or below a section that still counts as close
     let point = null, anchor = null, angle = 180, goal = 180, raf = 0;
+    let turned = 0; // how far the camera has turned in total, in degrees: it drives the gears
+    let finger = false; // a finger is on the screen right now
 
     function aim() {
       const d = ((goal - angle + 540) % 360) - 180;
-      angle = calm || Math.abs(d) < 0.2 ? goal : angle + d * 0.15;
+      const step = calm || Math.abs(d) < 0.2 ? d : d * 0.15;
+      angle = step === d ? goal : angle + step;
+      turned += step;
       head.setAttribute('transform', `rotate(${angle.toFixed(1)} 48 48)`);
+      // the big gear is fixed to the camera, the small one turns the other way and faster (8 teeth drive 5)
+      tilt.setAttribute('transform', `rotate(${turned.toFixed(1)} 48 48)`);
+      pinion.setAttribute('transform', `rotate(${(-turned * 1.6).toFixed(1)} 48 59.6)`);
+      // the pan gear is seen from the side, so its teeth slide past: one tooth every 3 units
+      panTeeth.setAttribute('transform', `translate(${((((turned * 0.1) % 3) + 3) % 3).toFixed(2)} 0)`);
       raf = angle === goal ? 0 : requestAnimationFrame(aim);
     }
 
@@ -383,8 +429,8 @@
       if (anchor) {
         const r = anchor.getBoundingClientRect();
         point = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-      } else if (touch) {
-        // No pointer on touch screens: watch the middle of the screen instead.
+      } else if (touch && !finger) {
+        // No finger on a touch screen: watch the middle of the screen instead.
         point = { x: innerWidth / 2, y: innerHeight * 0.45 };
       }
 
@@ -424,6 +470,27 @@
     document.documentElement.addEventListener('pointerleave', () => {
       if (!touch) { anchor = null; point = null; update(); }
     });
+
+    // A finger is followed the same way as the mouse. Touch events are used for
+    // this, not pointer events, because they keep coming while the page scrolls.
+    function follow(e) {
+      const t = e.touches[0];
+      if (!t) return;
+      finger = true;
+      anchor = null;
+      point = { x: t.clientX, y: t.clientY };
+      update();
+    }
+    function release(e) {
+      if (e.touches.length) return;
+      finger = false;
+      point = null;
+      update();
+    }
+    addEventListener('touchstart', follow, { passive: true });
+    addEventListener('touchmove', follow, { passive: true });
+    addEventListener('touchend', release, { passive: true });
+    addEventListener('touchcancel', release, { passive: true });
     addEventListener('focusin', e => { anchor = e.target; update(); });
     addEventListener('scroll', update, { passive: true });
     addEventListener('resize', update);
