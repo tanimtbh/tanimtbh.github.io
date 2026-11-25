@@ -33,6 +33,12 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* The dish's drawing box is wider than the gutter it sits in, so on a phone it pokes
+       past the right edge. Cut it off at the edge of the page so the page cannot scroll
+       sideways. It has to be set on both: on body alone a phone still scrolls.
+       "hidden" is for older browsers that do not know "clip". */
+    html, body { overflow-x: hidden; overflow-x: clip; }
+
     body {
       background: var(--bg);
       color: var(--ink);
@@ -42,7 +48,6 @@
       display: flex;
       justify-content: center;
       padding: clamp(3rem, 14vh, 9rem) 1.25rem 3rem;
-      overflow-x: hidden;
     }
 
     main {
@@ -424,7 +429,8 @@
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const touch = matchMedia('(hover: none)').matches;
     const NEAR = 28; // px above or below a section that still counts as close
-    let point = null, anchor = null, angle = 180, goal = 180, raf = 0;
+    const PARK = 135; // on a touch screen the dish does not track: it stays 45 degrees down, toward the page
+    let point = null, anchor = null, angle = touch ? PARK : 180, goal = angle, raf = 0;
     let turned = 0; // how far the dish has turned in total, in degrees: it drives the gears
     let finger = false; // a finger is on the screen right now
 
@@ -455,7 +461,7 @@
       const px = box.left + box.width / 2, py = box.top;
       let hit = null;
       if (point) {
-        goal = Math.atan2(point.y - py, point.x - px) * 180 / Math.PI;
+        goal = touch ? PARK : Math.atan2(point.y - py, point.x - px) * 180 / Math.PI;
         let best = NEAR;
         for (const s of sections) {
           const r = s.getBoundingClientRect();
@@ -464,7 +470,7 @@
           if (d < best) { best = d; hit = s; }
         }
       } else {
-        goal = 180; // idle: look back at the name
+        goal = touch ? PARK : 180; // idle: look back at the name
       }
 
       for (const s of sections) s.classList.toggle('on', s === hit);
