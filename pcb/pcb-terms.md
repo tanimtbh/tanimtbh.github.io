@@ -1,0 +1,2400 @@
+# PCB terms for tscircuit
+
+A shared vocabulary between a person and an AI agent that writes tscircuit code for printed circuit boards. When the person uses one of these terms, it has the meaning given here.
+
+## Working rules
+
+- All dimensions are in millimetres. In tscircuit a bare number is millimetres too: pcbX={5} means 5 mm.
+- The origin (0, 0) is the centre of the board. Seen from the top side, +X is right and +Y is up. Left, right, top edge and bottom edge always mean the board seen from its top side.
+- A rotation is in degrees, counter-clockwise, seen from the top side.
+- A part is on the top side unless the person says bottom. The bottom side is seen mirrored left to right.
+- Trace width, clearance and annular ring are measured edge to edge. Pitch and the distance between holes or parts are measured centre to centre.
+- A hole size is the finished diameter. A via written as 0.6 / 0.3 mm means 0.6 mm of copper around a 0.3 mm hole.
+- Give every part a reference designator (R1, C1, U1, J1) and every important net a name (GND, V3_3, SDA). Refer to a pin as U1.VCC, by its label, not by a guessed number.
+- Never guess a pinout or a footprint. If the part number or its datasheet is missing, ask for it.
+- Place first, then route. Do not start routing until the person has agreed to the placement.
+- After every change, build the circuit and report every error and warning it prints, such as unrouted traces, overlaps and clearance problems. Never hide or silence one.
+- If a size, a position, a side or a net is not stated, ask. Do not guess silently, and list any assumption you make.
+- Use the rules of the factory that will make the board. If none are given, stay at or above 0.2 mm trace width, 0.2 mm clearance, and 0.6 / 0.3 mm vias.
+
+## tscircuit notes to remember
+
+- **Board outline:** width and height make a rectangle around the centre of the board, and borderRadius rounds its corners. For any other shape, leave them out and give outline={[{ x: -15, y: -10 }, { x: 15, y: -10 }, ...]}: the corner points in order, in mm from the centre.
+- **Layers:** layers on <board> is the number of copper layers: 1, 2, 4, 6, 8 or 10. Without it the board has 2. The layers are named "top", "inner1", "inner2" and "bottom". In the tscircuit viewer the top layer is drawn red and the bottom layer blue.
+- **Stackup:** thickness and material on <board> are passed on to the factory files. Without them the board is 1.6 mm of FR-4. material can be "fr4", "fr1" or "flex". tscircuit does not set the thickness of each inner sheet: that comes from the stackup of the factory.
+- **Solder mask:** Every pad gets its mask opening by itself. solderMaskColor on <board> can be "green", "red", "blue", "purple", "black", "white" or "yellow". On a pad, solderMaskMargin makes its opening larger on every side, and coveredWithSolderMask closes it. <pcbsoldermaskopening> removes the mask from an area that has no pad. Its shape is "rect", "circle" or "polygon".
+- **Silkscreen:** Every footprint brings its own outline, and tscircuit prints the name of the part beside it. <silkscreentext> adds your own words: fontSize is the height of the letters, and layer="bottom" prints on the other side. Part names are only 0.4 mm tall unless you ask for more: pcbStyle={{ silkscreenFontSize: "1mm" }} on <board> sets their height.
+- **Origin and coordinates:** pcbX and pcbY place the centre of a part, in mm from the centre of the board. To measure from an edge of the board instead, use calc(): "calc(board.minX + 2mm)" is 2 mm inside the left edge. board.minX, board.maxX, board.minY and board.maxY are the four edges. pcbLeftEdgeX, pcbRightEdgeX, pcbTopEdgeY and pcbBottomEdgeY place an edge of the part, not its centre.
+- **Top side and bottom side:** layer="bottom" puts a part on the bottom side. tscircuit mirrors its footprint for you: in the picture, pin 1 of U2 is on the right. pcbX and pcbY stay in the top view.
+- **Mounting hole:** <hole> is a plain drilled hole with no copper. diameter is the finished size of the hole. A hole with a copper ring around it is a <platedhole>, with holeDiameter and outerDiameter.
+- **Cutout and slot:** A <cutout> has shape "rect" with width and height, "circle" with radius, or "polygon" with a list of points. The build reports an error when copper is closer than 0.2 mm to a cutout. Read the errors after routing: the autorouter can still lead a trace too close around one.
+- **Footprint:** A standard footprint is one short string: "0402", "soic8", "qfn32", "sot23". Options follow the name after an underscore, such as "tssop16_p0.65mm" for the pitch. A string that tscircuit does not know is reported as an error that starts with "Invalid footprint prop". For a part with no standard footprint, give a <footprint> with one <smtpad> or <platedhole> for each pin. portHints says which pin a pad belongs to, and positions are measured from the centre of the part.
+- **Pad:** You rarely write <smtpad> yourself: a footprint string such as "0603" makes the pads. When you do, width is the size along X and height the size along Y, before the part is rotated. tscircuit adds the opening in the solder mask and the solder paste for each pad by itself.
+- **Plated through hole:** A <platedhole> needs holeDiameter and outerDiameter, the hole and the copper around it. Through-hole parts make their own holes: <pinheader>, or a footprint string such as "dip8". A <hole> is different: it has no copper and connects to nothing.
+- **Annular ring:** tscircuit has no prop called annular ring. You set it through two numbers: holeDiameter and outerDiameter, on <via> and on <platedhole>. Here the via has a ring of (0.6 − 0.3) / 2 = 0.15 mm, and the plated hole has (1.8 − 1.0) / 2 = 0.4 mm.
+- **Pitch:** pitch is a prop of <pinheader>. In a footprint string the pitch is the p option: "tssop16_p0.65mm". Be careful with defaults: in the version this page was built with, "tssop16" alone gives a pitch of 0.5 mm, not the usual 0.65 mm.
+- **Passive sizes:** The footprint string of a resistor, capacitor or LED is its imperial size code: footprint="0603".
+- **Chip packages:** A footprint string is the package name and the pin count, in lower case and without a dash: "soic8", "qfn32". Options follow after underscores: "tssop16_p0.65mm" sets the pitch, "qfn16_thermalpad" adds the large centre pad.
+- **Pin 1 and polarity:** With no rotation, pin 1 of a chip footprint is at the top left, and the numbers run down the left side and back up the right. On <led> and <diode>, pin1 is the anode, on the left, and pin2 is the cathode. Write D1.anode and D1.cathode, not the numbers, so the direction cannot be mixed up.
+- **Reference designator:** The reference designator is the name prop. Every part needs one of its own, and every selector uses it: "U1.pin1", "R1.pin2". tscircuit prints it in silkscreen beside the part by itself.
+- **Courtyard:** Every standard footprint brings its own courtyard: for an 0805 it is a box of 3.36 × 1.9 mm. If two parts are too close, the build reports pcb_footprint_overlap_error, with a message such as "R1 overlaps R2: 1 footprint overlap, 1 pad clearance violation, 1 courtyard conflict. Move the components apart." To see the courtyards, add --show-courtyards to tsci snapshot or to tsci export -f pcb-svg. A footprint you draw yourself has no courtyard, and the build warns about it.
+- **Exposed pad and thermal vias:** Adding _thermalpad to a QFN footprint string adds the centre pad. It becomes one more pin, after the last numbered one, and it also answers to the name thermalpad. A via inside a pad is a placement error unless <board> has isViaInPadAllowed.
+- **Castellated holes:** Castellated holes are points of the board outline. Give a point isCastellatedHole, a holeDiameter, a padDiameter and the net it connectsTo, and a plated hole is centred on that point of the edge. The board then needs an outline, a list of corner points, in place of width and height.
+- **Net:** Write "net.GND" as one end of a <trace>, and that pin joins the net GND. A net exists as soon as its name is used. A <net name="GND" /> element is needed only to give the net its own rules, such as a trace width. A net name is made of letters, digits and _, and it cannot start with a digit: "3V3" stops the build, "V3_3" works.
+- **Pin names and selectors:** pinLabels gives the pins of a chip their names. After that "U1.SDA" and "U1.pin7" mean the same pin, and so does the older form ".U1 > .pin7". A name that the chip does not have stops the build, with an error that lists the names it does have. connections on a part joins its pins to nets or to other pins without separate <trace> lines. noConnect lists the pins that are left open on purpose. A resistor or capacitor has pin1 and pin2. An LED or diode has anode and cathode.
+- **Power and ground nets:** tscircuit reads the name. A net whose name starts with GND, AGND, DGND, PGND or VSS is treated as ground, and one whose name starts with V, such as V3_3, VBUS or VCC, as power. For any other name, say it with isGroundNet or isPowerNet on <net>. nominalTraceWidth on the <net> makes every trace of that net wide: here the VBAT trace is 0.5 mm and the GND trace is still 0.15 mm.
+- **Schematic and layout:** Each part is written once and appears in both drawings. schX and schY place its symbol in the schematic. pcbX and pcbY place the real part on the board, in mm. The two positions have nothing to do with each other: moving a symbol never moves the part.
+- **Ratsnest:** routingDisabled on <board> skips the autorouter. The build is then fast and shows only the placed parts, with the connections as a ratsnest. Use it while you place parts, and remove it when the placement is agreed.
+- **Trace:** A <trace> only says which two pins must be joined. The autorouter chooses the path. Without a width, a trace is 0.15 mm wide.
+- **Trace width:** On a <trace>, thickness is the width seen from above, and width means the same. To set it for a whole net use <net name="VIN" nominalTraceWidth="0.5mm" />. To set it for the whole board use nominalTraceWidth on <board>.
+- **Via:** These two traces cross, so the autorouter sends one of them under the other through two vias. It adds vias by itself. pcbStyle on <board> sets their size: without it they are only 0.3 / 0.2 mm. To place a via yourself, add <via pcbX={0} pcbY={3} fromLayer="top" toLayer="bottom" holeDiameter="0.3mm" outerDiameter="0.6mm" connectsTo="net.GND" />. To cap how many a trace may use, set maxViaCount on the <trace>.
+- **Through, blind and buried vias:** The copper layers of a four-layer board are named top, inner1, inner2 and bottom. The autorouter makes only through vias unless <board> has allowBlindAndBuriedVias.
+- **Tented via:** tented on a <via> covers it on both sides. It also accepts "top_tented", "bottom_tented" and "exposed". To choose once for the whole board, set defaultViaTenting on <board>.
+- **Clearance:** minTraceClearance on a <net> is the gap that net keeps from every other net. For a gap that applies to every trace, give the autorouter a setting: autorouter={{ traceClearance: "0.2mm" }} on <board>.
+- **Autorouter:** autorouter="auto_local" routes on your own computer and "auto_cloud" uses the tscircuit servers. With no autorouter prop, the default router is used. autorouterEffortLevel, from "1x" to "100x", lets it search longer. routingDisabled on <board> skips routing, which is useful while you are still placing parts.
+- **Fixed route:** The points of pcbPath are not measured from the centre of the board. They are measured from the part the trace starts at: here { x: 4, y: 0 } is 4 mm to the right of the centre of R1. For one straight line between the two pins, use pcbStraightLine on the <trace>.
+- **Differential pair:** <differentialpair> names the two traces and states the rules for them: pcbTraceGap is the gap between the two, maxLengthSkew is how much their lengths may differ. The two sides can also be nets, such as "net.USB_DP". Always look at what was drawn: the rules say what you want, and the picture shows what the router did.
+- **Length matching:** maxLength on a <trace> is a limit, not a wish. If the two pins are further apart than the limit, the build stops with an error that says so. For a pair, maxLengthSkew on <differentialpair> limits the difference between its two traces.
+- **Copper pour:** A <copperpour> needs a layer and connectsTo. A pour is drawn only when something on its layer belongs to its net: here the through-hole pin J1.pin2 reaches the bottom layer, and the autorouter drops a via to the pour for the LED. With only surface-mount parts on top and no via, a bottom pour is left out. padMargin, traceMargin and boardEdgeMargin set the gaps. crosshatch draws a mesh in place of solid copper.
+- **Ground plane:** A ground plane is a <copperpour> on an inner layer. The layers of a four-layer board are top, inner1, inner2 and bottom. A via from top to bottom passes through all four, and it joins the plane because both are on the GND net. Without a via or a through-hole pin on that net, the inner pour is not drawn.
+- **Thermal relief:** useThermalReliefs on a <copperpour> joins every pad of its net with spokes. Without it, pads join the pour solidly.
+- **Via stitching:** enableViaStitching on <board> adds vias wherever pours of the same net lie over each other. viaStitchPitch is the distance between them, centre to centre. Set it: without it the vias come about 1 mm apart, and this small board gets over 300 of them.
+- **Decoupling capacitor:** decouplingFor and decouplingTo on a <capacitor> connect it between a power pin and ground, with no <trace> needed. tscircuit also checks the distance. A capacitor between a power pin and ground may be at most 1 mm from the pins it connects to, measured from pad centre to pad centre. If it is further, the build stops with an error. maxDecouplingTraceLength changes that limit: next to a SOIC pin even an 0402 part is about 1.9 mm away, so this example allows 2 mm.
+- **Placement:** pcbX and pcbY give the centre of a part in millimetres, measured from the centre of the board. +X is right and +Y is up. A part with no pcbX and pcbY is placed for you: tscircuit puts it next to the pin it is connected to.
+- **Rotation:** pcbRotation is in degrees and turns the part counter-clockwise. A two-pin part such as a resistor lies flat at 0, with pin 1 on the left. On a <group>, pcbRotation turns all the parts of the group together, around the centre of the group.
+- **Group and subcircuit:** Inside a <group>, pcbX and pcbY are measured from the centre of the group, not from the centre of the board. Here R1 is at 0, 2 in a group at −8, 2, so it lands at −8, 4 on the board. In a <subcircuit> the names are local: two copies can each have their own R1.
+- **Automatic layout:** The layout props go on a <group>, and the group itself is placed with pcbX and pcbY. A grid fills row by row, starting at the top left. Packing is also what happens to any part that has no position: it is put beside the pin it connects to. Parts with no connections are packed in a column, which can run off a small board, so read the errors after building.
+- **Keep-out:** A <keepout> is a rect with width and height, or a circle with radius. The trace goes around it, the pour leaves a hole for it, and a part placed inside it is an error. It applies to the top layer only unless you add layers={["top", "bottom"]}: with the top layer alone, the autorouter is free to pass underneath on the bottom. allowTraces and allowPlacements each let one kind of thing back in.
+- **Design rule check:** This board is wrong on purpose. Building it prints: "SMT pad R1.pin1 violates copper-to-board-edge clearance (measured 0.000mm, required 0.200mm)", "Component R1 extends outside board boundaries by 0.88mm. Try moving it 0.88mm right to fit within the board edge." and "R2 overlaps R3: 1 footprint overlap, 1 pad clearance violation, 1 courtyard conflict. Move the components apart." Then it says that autorouting was skipped: tscircuit does not route a board that has placement errors, so the trace is reported as missing too.
+- **Design rules:** minTraceWidth on <board> is the width the autorouter gives a trace that has no width of its own: here 0.2 mm, where it would be 0.15 mm. minBoardEdgeClearance is checked: a pad nearer to the edge is reported as an error. With no rules given, tscircuit checks against its own: 0.2 mm from copper to the board edge and 0.1 mm between pads. Be careful: a thickness you write on a <trace> is used as it is, even when it is thinner than minTraceWidth, and no error is reported. <board> also takes fabricatorPreset, such as "jlcpcb_standard". In the version this page was built with, it adds the layer stackup of that service to the circuit JSON and leaves the checks as they are.
+- **Short circuit and open circuit:** These two traces are forced to be straight lines, so they cross on the same layer. The build reports the short as pcb_trace_error: "PCB trace R1.pin2 to R2.pin1 overlaps with R3.pin2 to R4.pin1 (accidental contact)". An open is reported as pcb_trace_missing_error: "Trace [R1.pin2 to R2.pin1] is not connected (it has no PCB trace)". The autorouter does not make shorts by itself. They come from routes fixed by hand, and from parts placed on top of each other.
+- **Bill of materials:** supplierPartNumbers names the part at one supplier. manufacturerPartNumber names it at its maker. doNotPlace keeps the pads on the board and takes the part out of bom.csv and pick_and_place.csv. When a part has no number at all, tscircuit can look for a matching part by itself, so read the numbers in the BOM before you order.
+- **Solder paste and stencil:** Every <smtpad> gets a paste opening by itself. solderPasteMargin changes its size on each side: a negative number makes the opening smaller than the pad. noSolderPaste leaves the pad without paste. defaultSolderPasteMargin on <board> sets the margin for all pads at once.
+- **Panel:** A <panel> holds several <board> elements. layoutMode="grid" with row and col arranges them: without it every board needs its own position. boardGap is the space between boards and edgePadding is the width of the rails. panelizationMethod="tab-routing" cuts the slots and leaves the tabs, and mouseBites adds the row of holes. Without panelizationMethod the boards are only placed side by side.
+- **Fiducial:** padDiameter is the size of the copper dot. soldermaskPullback is how far the solder mask stays back from it on every side: 0.5 mm if you leave it out. A fiducial gets no solder paste.
+- **Test point:** A <testpoint> has one pin, pin1. footprintVariant="pad" gives a flat pad: round with padDiameter, or padShape="rect" with width and height. footprintVariant="through_hole" gives a plated hole with holeDiameter. A test point is not a part to buy, so it does not appear in the bill of materials.
+
+## The board
+
+What a bare board is made of: its outline, layers, coatings and holes.
+
+### Board outline
+
+Also called: board edge, edge cuts, board shape, board size.
+
+The outline is the outer edge of the board. The factory cuts along it. Most boards are a rectangle, given by a width and a height, often with rounded corners. An outline can also be any closed shape, given as a list of corner points. Everything else on the board must stay inside it, with a small gap to the edge.
+
+How the person may say it:
+- The board is 40 × 25 mm, with 3 mm rounded corners.
+- Make the board as small as the parts allow, and tell me the size you ended with.
+- The board must fit a case that is 42 × 27 mm inside. Leave 0.5 mm of room on every side.
+- The outline is an L shape. Its corner points, in order, are (-15, -10), (15, -10), (15, 2), (3, 2), (3, 10), (-15, 10).
+
+```tsx
+export default () => (
+  <board width="40mm" height="25mm" borderRadius="3mm">
+    <chip name="U1" footprint="soic8" pcbX={0} pcbY={0} />
+  </board>
+)
+```
+
+Code note: width and height make a rectangle around the centre of the board, and borderRadius rounds its corners. For any other shape, leave them out and give outline={[{ x: -15, y: -10 }, { x: 15, y: -10 }, ...]}: the corner points in order, in mm from the centre.
+
+At the factory: A board up to 100 × 100 mm is the cheapest size at most factories. The outline is cut with a round tool, so an inside corner always comes out rounded, with a radius of about 1 mm.
+
+Not the same as Cutout and slot: The outline is the outer edge of the board. A cutout is a hole inside it.
+
+Not the same as Panel: The outline is the edge of one board. A panel is a larger sheet that holds several boards while they are made.
+
+### Layers
+
+Also called: copper layers, layer count, two-layer board, four-layer board, multilayer.
+
+A layer is one sheet of copper in the board. A simple board has two: one on the top and one on the bottom. A four-layer board has two more inside it. Each layer is a separate drawing of traces, and insulating board material lies between them. A trace on one layer can cross a trace on another layer without touching it. Only a via joins layers.
+
+How the person may say it:
+- This is a 2-layer board. Keep all parts on the top layer.
+- Use 4 layers: signals on the top and bottom, a solid ground plane on inner layer 1, and power on inner layer 2.
+- Route the long traces on the bottom layer, and keep the top layer for the short ones around the chips.
+- Tell me which layer each trace is on, and how many vias there are.
+
+```tsx
+export default () => (
+  <board width="20mm" height="12mm" layers={4}>
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-6} pcbY={0} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={6} pcbY={0} layer="bottom" />
+    <trace from="R1.pin2" to="R2.pin1" />
+  </board>
+)
+```
+
+Code note: layers on <board> is the number of copper layers: 1, 2, 4, 6, 8 or 10. Without it the board has 2. The layers are named "top", "inner1", "inner2" and "bottom". In the tscircuit viewer the top layer is drawn red and the bottom layer blue.
+
+At the factory: Two layers are the cheapest and are enough for most small boards. Four layers cost more, but they give you a whole layer for ground, which makes radio and fast signals work and makes a crowded board much easier to route.
+
+Not the same as Stackup: Layers are the sheets of copper. The stackup is the full recipe: every sheet of copper and of insulation, with its thickness.
+
+Not the same as Top side and bottom side: A layer is a sheet of copper for traces. A side is where parts are soldered on. Parts can only sit on the two outer sides.
+
+### Stackup
+
+Also called: layer stack, layer stackup, board thickness, build-up.
+
+The stackup is the board seen from the side: every sheet of copper and of insulation, in order, with its thickness. The insulation is glass fibre and resin, called FR-4. A stiff sheet of it is a core, and a thinner sheet that glues the layers together is prepreg. On the outside come solder mask and silkscreen. The usual total thickness is 1.6 mm. The stackup matters when a trace needs an exact impedance, because that depends on the distance to the next copper layer.
+
+How the person may say it:
+- Use the standard 1.6 mm, 4-layer stackup of JLCPCB. Tell me the distance from the top layer to inner layer 1.
+- The board must be 0.8 mm thick, because it slides into a slot in the case.
+- Work out the width of a 50 Ω trace for this stackup: 0.2 mm of prepreg between the top layer and the ground plane.
+
+```tsx
+export default () => (
+  <board width="20mm" height="12mm" layers={4} thickness="1.6mm" material="fr4">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={0} pcbY={0} />
+  </board>
+)
+```
+
+Code note: thickness and material on <board> are passed on to the factory files. Without them the board is 1.6 mm of FR-4. material can be "fr4", "fr1" or "flex". tscircuit does not set the thickness of each inner sheet: that comes from the stackup of the factory.
+
+Typical stackups for a 1.6 mm board, in mm:
+
+| Sheet | 2 layers | 4 layers |
+|---|---|---|
+| Top copper | 0.035 | 0.035 |
+| Insulation | core, 1.5 | prepreg, 0.2 |
+| Inner copper 1 | none | 0.0175 |
+| Insulation | none | core, 1.1 |
+| Inner copper 2 | none | 0.0175 |
+| Insulation | none | prepreg, 0.2 |
+| Bottom copper | 0.035 | 0.035 |
+
+Solder mask adds about 0.02 mm on each side. Every factory publishes its own stackups. Use theirs when a number matters.
+
+At the factory: Stay with the standard stackup of your factory. A custom one costs more and takes longer. Other common thicknesses are 0.8, 1.0 and 1.2 mm.
+
+Not the same as Layers: Layers counts only the copper sheets. The stackup also lists the insulation between them and every thickness.
+
+Not the same as Copper weight: Copper weight is the thickness of one copper sheet. The stackup is the whole board.
+
+### Copper weight
+
+Also called: copper thickness, 1 oz copper, 2 oz copper, ounce.
+
+Copper weight says how thick the copper on a layer is. It is given in ounces (oz): the weight of copper spread over one square foot. 1 oz copper is 0.035 mm thick, and it is the usual choice. 2 oz copper is twice as thick, so a trace of the same width carries about 1.6 times the current. Inner layers often have 0.5 oz copper. The copper weight is the same for a whole layer. You choose it when you order the board.
+
+How the person may say it:
+- Use 1 oz copper on the outer layers.
+- The motor traces carry 6 A. Would 2 oz copper let me keep them 2 mm wide? Show the calculation.
+- This board will be made with 2 oz copper, so use at least 0.2 mm trace width and 0.2 mm clearance.
+
+Copper weight and thickness:
+
+| Weight | Thickness | Where it is used |
+|---|---|---|
+| 0.5 oz | 0.0175 mm | Inner layers |
+| 1 oz | 0.035 mm | Outer layers: the usual choice |
+| 2 oz | 0.070 mm | Power boards and motor drivers |
+
+At the factory: Thick copper cannot be etched as finely as thin copper. With 2 oz, the smallest trace width and gap are about twice those of 1 oz, and the board costs more. Check the limits of your factory.
+
+Not the same as Trace width: Copper weight is how thick the copper is, the same for a whole layer. Trace width is how wide one trace is, and you choose it for each trace.
+
+Not the same as Stackup: Copper weight is one line of the stackup. The stackup lists every sheet in the board.
+
+### Solder mask
+
+Also called: solder resist, soldermask, mask, mask opening, mask expansion.
+
+Solder mask is the thin coating that gives a board its colour, usually green. It covers the traces, so they do not corrode, and so solder does not stick to them or join them by mistake. Where a part is soldered, the mask has an opening, a little larger than the pad. The thin strip of mask left between two pads that are close together is called a mask dam. It keeps the solder of one pad away from the next.
+
+How the person may say it:
+- Use black solder mask with white silkscreen.
+- Leave the solder mask off a 4 × 2 mm area of the GND trace near the edge, so I can clip a probe to it.
+- Cover the unused pads under U1 with solder mask, so nothing can short against them.
+- Keep at least 0.1 mm of mask between two pads that are next to each other.
+
+```tsx
+export default () => (
+  <board width="20mm" height="12mm" solderMaskColor="blue">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-5} pcbY={0} />
+    <pcbsoldermaskopening shape="rect" layer="top" width="4mm" height="2mm" pcbX={5} pcbY={0} />
+  </board>
+)
+```
+
+Code note: Every pad gets its mask opening by itself. solderMaskColor on <board> can be "green", "red", "blue", "purple", "black", "white" or "yellow". On a pad, solderMaskMargin makes its opening larger on every side, and coveredWithSolderMask closes it. <pcbsoldermaskopening> removes the mask from an area that has no pad. Its shape is "rect", "circle" or "polygon".
+
+At the factory: Green is the cheapest colour and the easiest for the factory to print finely. A mask dam needs to be about 0.1 mm wide. Between pads that are closer than that, the factory removes the mask, and solder bridges become more likely.
+
+Not the same as Silkscreen: Solder mask is the coloured coating that protects the copper. Silkscreen is the ink printed on top of it, for text and outlines.
+
+Not the same as Solder paste and stencil: Solder mask keeps solder away. Solder paste is the solder itself, printed onto the pads.
+
+Not the same as Tented via: Solder mask covers the whole board. Tenting means it is allowed to cover a via as well.
+
+### Silkscreen
+
+Also called: silk, legend, overlay, printed text.
+
+Silkscreen is the ink printed on top of the solder mask, usually white. It is for people, not for the circuit. It shows the name of each part, an outline of where the part sits, a mark at pin 1, and a mark for the plus side of parts that have one. You can add your own text, such as the name and version of the board, or a label beside each pin of a connector.
+
+How the person may say it:
+- Print "SENSOR v1.2" on the top side, 1.5 mm tall, near the bottom edge.
+- Label every pin of J1 on the silkscreen: GND, 3V3, SDA, SCL.
+- Make sure no silkscreen text lies on a pad or under a part, and that every part name can still be read after the parts are soldered on.
+- Mark pin 1 of every chip, and the plus side of every part that has one.
+
+```tsx
+export default () => (
+  <board width="24mm" height="14mm">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-6} pcbY={0} />
+    <led name="LED1" color="red" footprint="0603" pcbX={6} pcbY={0} />
+    <silkscreentext text="BLINK v1.0" pcbX={0} pcbY={5} fontSize="1.2mm" />
+    <silkscreentext text="made by me" pcbX={0} pcbY={-5} fontSize="1mm" layer="bottom" />
+    <trace from="R1.pin2" to="LED1.anode" />
+  </board>
+)
+```
+
+Code note: Every footprint brings its own outline, and tscircuit prints the name of the part beside it. <silkscreentext> adds your own words: fontSize is the height of the letters, and layer="bottom" prints on the other side. Part names are only 0.4 mm tall unless you ask for more: pcbStyle={{ silkscreenFontSize: "1mm" }} on <board> sets their height.
+
+At the factory: Text lower than about 1 mm, or with lines thinner than 0.15 mm, may not print clearly. The factory removes any ink that would land on a pad, so text placed over a pad comes out with pieces missing.
+
+Not the same as Solder mask: Silkscreen is ink for text and outlines. Solder mask is the coloured coating underneath it.
+
+Not the same as Reference designator: A reference designator is the name of a part, such as R1. Silkscreen is the ink that prints that name on the board.
+
+### Origin and coordinates
+
+Also called: origin, pcbX and pcbY, position, X and Y.
+
+Every position on the board is two numbers, X and Y, in millimetres. They are measured from the origin, the point (0, 0). In tscircuit the origin is the centre of the board. X grows to the right and Y grows upward, with the board seen from its top side. The position of a part is the position of its centre. On a 40 × 25 mm board, the right edge is at X = 20 and the top edge is at Y = 12.5.
+
+How the person may say it:
+- All positions I give are in mm from the centre of the board. +X is right and +Y is up, seen from the top.
+- Put J1 at X = -17, Y = 0.
+- Place the USB connector with its left edge 1 mm inside the left edge of the board, centred in Y.
+- Give me a table of every part with its X, Y, rotation and side.
+
+```tsx
+export default () => (
+  <board width="40mm" height="25mm">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={10} pcbY={5} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={-10} pcbY={-5} />
+    <chip name="U1" footprint="soic8" pcbLeftEdgeX="calc(board.minX + 2mm)" pcbY={0} />
+  </board>
+)
+```
+
+Code note: pcbX and pcbY place the centre of a part, in mm from the centre of the board. To measure from an edge of the board instead, use calc(): "calc(board.minX + 2mm)" is 2 mm inside the left edge. board.minX, board.maxX, board.minY and board.maxY are the four edges. pcbLeftEdgeX, pcbRightEdgeX, pcbTopEdgeY and pcbBottomEdgeY place an edge of the part, not its centre.
+
+Good to know: Many other PCB programs put the origin in a corner and let Y grow downward. When you copy positions from a drawing or from another program, say where its origin is and which way its Y points.
+
+Not the same as Placement: Coordinates are how a position is written. Placement is the work of deciding where each part should go.
+
+Not the same as Rotation: X and Y say where the centre of a part is. Rotation says which way the part is turned around that centre.
+
+### Top side and bottom side
+
+Also called: component side, solder side, front and back, double-sided.
+
+A board has two sides where parts can be soldered: the top and the bottom. Most parts go on the top. A PCB is always drawn as seen from the top, as if the board were made of glass. So a part on the bottom is seen through the board, and when you turn the real board over, left and right are swapped. Positions are still given in the top view, also for parts on the bottom.
+
+How the person may say it:
+- All parts go on the top side. Nothing on the bottom, so the board can lie flat in its case.
+- Put the battery holder on the bottom side, under U1.
+- Positions I give are always in the top view, also for parts on the bottom side.
+- List the parts that are on the bottom side.
+
+```tsx
+export default () => (
+  <board width="24mm" height="14mm">
+    <chip name="U1" footprint="soic8" pcbX={-5} pcbY={0} />
+    <chip name="U2" footprint="soic8" pcbX={5} pcbY={0} layer="bottom" />
+  </board>
+)
+```
+
+Code note: layer="bottom" puts a part on the bottom side. tscircuit mirrors its footprint for you: in the picture, pin 1 of U2 is on the right. pcbX and pcbY stay in the top view.
+
+At the factory: Assembly on one side is cheaper, because parts on both sides mean two passes through the machines. If the bottom is needed, keep the large and heavy parts on the top.
+
+Not the same as Layers: A side is where parts sit. A layer is a sheet of copper. A four-layer board still has only two sides.
+
+Not the same as Rotation: Moving a part to the bottom mirrors it. Rotating a part turns it but keeps it on the same side.
+
+### Mounting hole
+
+Also called: screw hole, fixing hole, NPTH, non-plated hole.
+
+A mounting hole is a hole for a screw or a standoff that fixes the board to a case. It is a little larger than the screw, so the screw passes through freely. The head of the screw covers a circle around the hole, and no trace or part may be inside that circle. Most boards have one mounting hole near each corner. Their positions must match the case exactly, so give them as numbers.
+
+How the person may say it:
+- Add four mounting holes for M3 screws, 3.2 mm in diameter, 3 mm in from each corner.
+- Keep all copper and all parts at least 3.5 mm away from the centre of each mounting hole.
+- The hole centres must match the case: (-17, 9.5), (17, 9.5), (-17, -9.5) and (17, -9.5) mm.
+- Tell me the distance between the hole centres, in X and in Y.
+
+```tsx
+export default () => (
+  <board width="40mm" height="30mm">
+    <hole diameter="3.2mm" pcbX={-16} pcbY={11} />
+    <hole diameter="3.2mm" pcbX={16} pcbY={11} />
+    <hole diameter="3.2mm" pcbX={-16} pcbY={-11} />
+    <hole diameter="3.2mm" pcbX={16} pcbY={-11} />
+  </board>
+)
+```
+
+Code note: <hole> is a plain drilled hole with no copper. diameter is the finished size of the hole. A hole with a copper ring around it is a <platedhole>, with holeDiameter and outerDiameter.
+
+Holes for common screws, in mm:
+
+| Screw | Hole | Head | Keep clear |
+|---|---|---|---|
+| M2 | 2.2 | 3.8 | 4.8 |
+| M2.5 | 2.7 | 4.5 | 5.5 |
+| M3 | 3.2 | 5.5 | 6.5 |
+| M4 | 4.3 | 7.0 | 8.0 |
+
+Head is the diameter of a socket-head screw. Keep clear is the diameter of the circle to leave free: the head plus 1 mm. A washer needs more. M2.5 fits the holes of a Raspberry Pi.
+
+At the factory: Leave about 1 mm or more of board between the hole and the edge, or the corner can break off. A hole without copper is called NPTH in the factory files.
+
+Not the same as Via: A mounting hole is large and holds a screw. A via is tiny, plated with copper, and carries a signal between layers.
+
+Not the same as Plated through hole: A mounting hole holds a screw and usually has no copper. A plated through hole holds the leg of a part and is soldered.
+
+Not the same as Cutout and slot: A mounting hole is round and drilled. A cutout is milled and can have any shape.
+
+### Cutout and slot
+
+Also called: board cutout, milled slot, routed slot, isolation slot, internal cutout.
+
+A cutout is an opening milled right through the board. It can have any shape, where a drilled hole is always round. A cutout makes room for a part that drops through the board, or for a tab of the case. A slot is a long narrow cutout. A slot between a high-voltage part and the rest of the circuit keeps the two apart, because a spark cannot creep across air as easily as across the surface of a board.
+
+How the person may say it:
+- Cut a 12 × 6 mm opening through the board for the connector J3, centred at X = 10, Y = 0.
+- Add a 1.5 mm wide slot, 20 mm long, between the mains side and the low-voltage side.
+- Keep all copper at least 0.5 mm away from every cutout.
+- Remove the board under the antenna of U1: a cutout 18 × 6 mm at the top edge.
+
+```tsx
+export default () => (
+  <board width="30mm" height="20mm">
+    <cutout shape="rect" width="8mm" height="4mm" pcbX={6} pcbY={0} />
+    <cutout shape="circle" radius="2mm" pcbX={-8} pcbY={0} />
+  </board>
+)
+```
+
+Code note: A <cutout> has shape "rect" with width and height, "circle" with radius, or "polygon" with a list of points. The build reports an error when copper is closer than 0.2 mm to a cutout. Read the errors after routing: the autorouter can still lead a trace too close around one.
+
+At the factory: A cutout is milled with a round tool, so its inside corners come out rounded, and a slot cannot be narrower than the tool. About 1 mm is a safe smallest width. Check the limit of your factory.
+
+Not the same as Board outline: A cutout is an opening inside the board. The outline is its outer edge.
+
+Not the same as Mounting hole: A cutout is milled and can have any shape. A mounting hole is drilled and round.
+
+Not the same as Keep-out: A cutout removes the board itself. A keep-out leaves the board there and only forbids copper or parts in an area.
+
+## Pads and footprints
+
+Where parts are soldered on, and the pattern of copper each part needs.
+
+### Footprint
+
+Also called: land pattern, pad layout, package outline.
+
+A footprint is everything a part needs on the board: one pad for each of its pins, in exactly the right places, plus an outline and a pin 1 mark printed in silkscreen. The part must match its footprint, or it cannot be soldered. Every part has a footprint, and many parts share one: all 0603 resistors use the same two pads. The datasheet of a part shows its recommended footprint.
+
+How the person may say it:
+- Use the SOIC-8 footprint for U1 and 0603 for every resistor and capacitor.
+- There is no standard footprint for SW1. Draw it from the datasheet: two pads, 1.6 × 1.0 mm, 4 mm apart, centre to centre.
+- Compare the footprint of U2 with its datasheet: number of pads, pitch, pad size and the distance between the two rows. Tell me every difference.
+- If you do not know the package of the regulator, ask me for the part number. Do not pick a footprint that only looks similar.
+
+```tsx
+export default () => (
+  <board width="20mm" height="12mm">
+    <resistor name="R1" resistance="10k" footprint="0402" pcbX={-6} pcbY={0} />
+    <chip
+      name="U1"
+      pcbX={4}
+      pcbY={0}
+      footprint={
+        <footprint>
+          <smtpad portHints={["pin1"]} shape="rect" width="1.2mm" height="0.8mm" pcbX={-1.5} pcbY={0} />
+          <smtpad portHints={["pin2"]} shape="rect" width="1.2mm" height="0.8mm" pcbX={1.5} pcbY={0} />
+          <silkscreenpath route={[{ x: -2.4, y: 0.8 }, { x: 2.4, y: 0.8 }]} />
+        </footprint>
+      }
+    />
+    <trace from="R1.pin2" to="U1.pin1" />
+  </board>
+)
+```
+
+Code note: A standard footprint is one short string: "0402", "soic8", "qfn32", "sot23". Options follow the name after an underscore, such as "tssop16_p0.65mm" for the pitch. A string that tscircuit does not know is reported as an error that starts with "Invalid footprint prop". For a part with no standard footprint, give a <footprint> with one <smtpad> or <platedhole> for each pin. portHints says which pin a pad belongs to, and positions are measured from the centre of the part.
+
+At the factory: A footprint that is slightly wrong is the most common reason a new board cannot be assembled. Print the board on paper at full size and lay the real parts on it before you order.
+
+Not the same as Pad: A pad is one piece of bare copper. A footprint is the whole set of pads for one part, with its outline.
+
+Not the same as Chip packages: The package is the body of the part itself. The footprint is the copper pattern on the board that the package sits on.
+
+Not the same as Courtyard: The footprint is where the part is soldered. The courtyard is the extra room around it that other parts must stay out of.
+
+### Pad
+
+Also called: SMD pad, SMT pad, land, surface-mount pad.
+
+A pad is a small area of copper with no solder mask on it, so that solder can stick. One pin of a part is soldered to one pad. A pad for a surface-mount part lies on one side of the board and has no hole. Traces connect to pads, and the solder joint on a pad both holds the part and carries the current.
+
+How the person may say it:
+- Make the pads of SW1 1.6 mm wide and 1.0 mm tall, 4 mm apart, centre to centre.
+- I will solder this board by hand. Make the pads of the 0603 parts a little longer than the standard ones.
+- Bring each trace into the middle of its pad, not across a corner.
+
+```tsx
+export default () => (
+  <board width="12mm" height="8mm">
+    <chip
+      name="SW1"
+      footprint={
+        <footprint>
+          <smtpad portHints={["pin1"]} shape="rect" width="1.6mm" height="1mm" pcbX={-2} pcbY={0} />
+          <smtpad portHints={["pin2"]} shape="rect" width="1.6mm" height="1mm" pcbX={2} pcbY={0} />
+        </footprint>
+      }
+    />
+  </board>
+)
+```
+
+Code note: You rarely write <smtpad> yourself: a footprint string such as "0603" makes the pads. When you do, width is the size along X and height the size along Y, before the part is rotated. tscircuit adds the opening in the solder mask and the solder paste for each pad by itself.
+
+At the factory: Two pads of one small part should have the same size and the same amount of copper joined to them. If one heats up faster than the other in the oven, the part can lift on one end.
+
+Not the same as Plated through hole: A pad lies on the surface and has no hole. A plated through hole goes through the board and takes a leg.
+
+Not the same as Footprint: A pad is for one pin. A footprint is all the pads of one part.
+
+Not the same as Test point: A pad holds a part. A test point is a pad that holds nothing: it is there to be touched with a probe.
+
+### Plated through hole
+
+Also called: PTH, through-hole pad, THT, plated hole.
+
+A plated through hole is a drilled hole with copper plated on its wall and a ring of copper around it on both sides. The leg of a part goes through the hole and is soldered in. This joint is much stronger than a surface-mount joint, so it is used for parts that are pushed and pulled: connectors, pin headers, switches and large capacitors. It takes space on every layer of the board, and it is slower to assemble.
+
+How the person may say it:
+- The legs of J1 are 0.64 mm square. Use plated holes of 1.0 mm with 1.8 mm of copper around them.
+- Use a through-hole part for the power connector, so it does not tear off the board. Everything else is surface mount.
+- Give pin 1 of every header a square pad, and the other pins round ones.
+
+```tsx
+export default () => (
+  <board width="16mm" height="10mm">
+    <chip
+      name="J1"
+      footprint={
+        <footprint>
+          <platedhole portHints={["pin1"]} shape="circle" holeDiameter="1mm" outerDiameter="1.8mm" pcbX={-2.54} pcbY={0} />
+          <platedhole portHints={["pin2"]} shape="circle" holeDiameter="1mm" outerDiameter="1.8mm" pcbX={0} pcbY={0} />
+          <platedhole portHints={["pin3"]} shape="circle" holeDiameter="1mm" outerDiameter="1.8mm" pcbX={2.54} pcbY={0} />
+        </footprint>
+      }
+    />
+  </board>
+)
+```
+
+Code note: A <platedhole> needs holeDiameter and outerDiameter, the hole and the copper around it. Through-hole parts make their own holes: <pinheader>, or a footprint string such as "dip8". A <hole> is different: it has no copper and connects to nothing.
+
+At the factory: Make the hole 0.2 to 0.3 mm wider than the leg, or the leg will not go in. A square leg is measured across its corners. Holes are drilled before they are plated, so the size you give is the finished one.
+
+Not the same as Via: A through hole holds the leg of a part. A via is smaller, holds nothing, and only joins layers.
+
+Not the same as Pad: A through hole goes through the board and is seen on both sides. A surface-mount pad lies on one side only.
+
+Not the same as Mounting hole: A plated through hole is part of the circuit. A mounting hole is for a screw and usually has no copper.
+
+### Annular ring
+
+Also called: ring, pad ring, breakout.
+
+The annular ring is the copper that remains around a hole after it is drilled. Its width is half the difference between the copper diameter and the hole diameter: a 0.6 mm via with a 0.3 mm hole has a ring of 0.15 mm. The drill never lands exactly in the centre, so the ring must be wide enough to stay whole when the hole is a little off. If the hole breaks out of the copper, the connection can fail.
+
+How the person may say it:
+- Keep an annular ring of at least 0.15 mm on every via and 0.25 mm on every through-hole pad.
+- For a 1.0 mm hole, what copper diameter gives a ring of 0.4 mm? Use that for J1.
+- List every via and plated hole with its hole size, copper size and ring width, smallest ring first.
+
+```tsx
+export default () => (
+  <board width="12mm" height="8mm">
+    <via pcbX={-2} pcbY={0} fromLayer="top" toLayer="bottom" holeDiameter="0.3mm" outerDiameter="0.6mm" />
+    <platedhole pcbX={2} pcbY={0} shape="circle" holeDiameter="1mm" outerDiameter="1.8mm" />
+  </board>
+)
+```
+
+Code note: tscircuit has no prop called annular ring. You set it through two numbers: holeDiameter and outerDiameter, on <via> and on <platedhole>. Here the via has a ring of (0.6 − 0.3) / 2 = 0.15 mm, and the plated hole has (1.8 − 1.0) / 2 = 0.4 mm.
+
+At the factory: Low-cost factories ask for a ring of about 0.13 mm or more. Through-hole pads that are soldered by hand are easier to work with when the ring is 0.3 mm or wider.
+
+Not the same as Clearance: The annular ring is copper around a hole. Clearance is the empty gap between two pieces of copper.
+
+Not the same as Via: A via is the whole thing: hole, plating and copper. The annular ring is only the width of the copper around the hole.
+
+### Pitch
+
+Also called: pin pitch, lead pitch, pin spacing, fine pitch.
+
+Pitch is the distance between two neighbouring pins of a part, measured from centre to centre. It is not the gap between the pads. Pitch tells you how hard a part is to solder and to route: a 2.54 mm header is easy, and a 0.5 mm chip needs a steady hand and thin traces. A chip with a pitch of 0.5 mm or less is called fine pitch.
+
+How the person may say it:
+- Add a 6-pin header with 2.54 mm pitch on the left edge.
+- I solder by hand. For U1, pick a package with a pitch of 0.65 mm or more.
+- The pitch of U3 is 0.65 mm, not 0.5 mm. Check the footprint against that number.
+
+```tsx
+export default () => (
+  <board width="20mm" height="8mm">
+    <pinheader name="J1" pinCount={6} pitch="2.54mm" />
+  </board>
+)
+```
+
+Code note: pitch is a prop of <pinheader>. In a footprint string the pitch is the p option: "tssop16_p0.65mm". Be careful with defaults: in the version this page was built with, "tssop16" alone gives a pitch of 0.5 mm, not the usual 0.65 mm.
+
+Common pitches:
+
+| Pitch | Where you find it | By hand |
+|---|---|---|
+| 2.54 mm | Pin headers, DIP chips, breadboards (0.1 inch) | Easy |
+| 1.27 mm | SOIC chips, small headers | Easy |
+| 1.0 mm | Small cable connectors | Fine |
+| 0.8 mm | Large QFP chips, larger BGA | With care |
+| 0.65 mm | TSSOP chips | With care |
+| 0.5 mm | QFN and small QFP chips, USB-C | Hard |
+| 0.4 mm | Very small QFN and BGA, phone parts | Not by hand |
+
+The inch sizes come from 0.1 inch = 2.54 mm. A footprint drawn at 2.5 mm when the part is 2.54 mm will not fit a long connector.
+
+At the factory: Below 0.5 mm pitch, the strip of solder mask between two pads becomes too thin for many factories to make, and solder bridges are more likely.
+
+Not the same as Clearance: Pitch is measured from centre to centre. Clearance is measured from edge to edge.
+
+Not the same as Passive sizes: Pitch is the spacing of the pins of one part. A size such as 0603 is the length and width of the whole part.
+
+### Passive sizes
+
+Also called: 0402, 0603, 0805, 1206, chip size, case size, imperial code, metric code.
+
+Small resistors, capacitors and LEDs come in a few standard sizes, each named by a four-digit code. The code is the length and the width in hundredths of an inch: 0603 is 0.06 by 0.03 inch, which is 1.6 by 0.8 mm. A smaller part saves space but is harder to solder by hand, and it can handle less power and less voltage. There is also a metric code for every size, and the two look alike: metric 0603 is a much smaller part than imperial 0603.
+
+How the person may say it:
+- Use 0603 for every resistor and capacitor unless I say otherwise.
+- All size codes I give are imperial: 0603 means 1.6 × 0.8 mm.
+- C5 is 22 µF. Use 0805 or 1206 for it, and tell me which you chose.
+- The board is crowded near U1. Change the decoupling capacitors there from 0603 to 0402.
+
+```tsx
+export default () => (
+  <board width="24mm" height="8mm">
+    <resistor name="R1" resistance="1k" footprint="0402" pcbX={-9} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={-5} />
+    <resistor name="R3" resistance="1k" footprint="0805" pcbX={0} />
+    <resistor name="R4" resistance="1k" footprint="1206" pcbX={6} />
+  </board>
+)
+```
+
+Code note: The footprint string of a resistor, capacitor or LED is its imperial size code: footprint="0603".
+
+Common sizes:
+
+| Code (imperial) | Metric code | Length × width | By hand |
+|---|---|---|---|
+| 0201 | 0603 | 0.6 × 0.3 mm | Machine only |
+| 0402 | 1005 | 1.0 × 0.5 mm | Hard |
+| 0603 | 1608 | 1.6 × 0.8 mm | Fine, with practice |
+| 0805 | 2012 | 2.0 × 1.25 mm | Easy |
+| 1206 | 3216 | 3.2 × 1.6 mm | Easy |
+| 1210 | 3225 | 3.2 × 2.5 mm | Easy |
+
+Shops and tscircuit use the imperial code. The metric code appears in some datasheets, so check the millimetres when a part looks far too small or too big.
+
+At the factory: 0603 and 0402 are the cheapest sizes to have assembled, because factories keep them loaded in their machines. A large capacitor value may not exist in a small size: 10 µF is common in 0805 and rare in 0402.
+
+Not the same as Chip packages: A size code describes a small part with two ends. A package name such as SOIC-8 describes a chip with many pins.
+
+Not the same as Pitch: A size code is the outside of the part. Pitch is the distance between its pins.
+
+### Chip packages
+
+Also called: IC package, SOT-23, SOIC, TSSOP, QFP, QFN, BGA, DIP.
+
+A package is the plastic body of a chip, with its pins. The same chip is often sold in several packages. Some have legs that stick out at the sides, which are easy to solder and easy to inspect: SOT-23, SOIC, TSSOP and QFP. A QFN has no legs, only flat pads under its edges. A BGA has a grid of solder balls under the whole body, and nothing can be seen once it is soldered. The package decides the footprint, so the full part number matters, not only the name of the chip.
+
+How the person may say it:
+- U1 is an ATtiny85 in SOIC-8, part number ATTINY85-20SU. Use the footprint for that package.
+- I solder by hand with an iron. Pick packages with legs for every chip: no QFN and no BGA.
+- For each chip, tell me its package, its pitch, and the footprint string you used.
+
+```tsx
+export default () => (
+  <board width="50mm" height="16mm">
+    <chip name="U1" footprint="sot23" pcbX={-21} />
+    <chip name="U2" footprint="soic8" pcbX={-14} />
+    <chip name="U3" footprint="tssop16_p0.65mm" pcbX={-5} />
+    <chip name="U4" footprint="tqfp32" pcbX={6} />
+    <chip name="U5" footprint="qfn16" pcbX={16} />
+    <chip name="U6" footprint="bga16" pcbX={21.5} />
+  </board>
+)
+```
+
+Code note: A footprint string is the package name and the pin count, in lower case and without a dash: "soic8", "qfn32". Options follow after underscores: "tssop16_p0.65mm" sets the pitch, "qfn16_thermalpad" adds the large centre pad.
+
+Common packages:
+
+| Package | Pins | Usual pitch | By hand | tscircuit footprint |
+|---|---|---|---|---|
+| SOT-23 | 3 to 6 legs, on two sides | 0.95 mm | Easy | "sot23", "sot23_5" |
+| SOIC | Legs on two sides | 1.27 mm | Easy | "soic8" |
+| TSSOP | Legs on two sides | 0.65 mm | With care | "tssop16_p0.65mm" |
+| QFP (TQFP, LQFP) | Legs on four sides | 0.8 or 0.5 mm | With care | "tqfp32", "lqfp48" |
+| QFN | Pads under four edges, no legs | 0.5 mm | Hard: hot air | "qfn16", "qfn32" |
+| BGA | Balls under the whole body | 0.8 mm or less | No: needs an oven | "bga64" |
+| DIP | Legs through the board | 2.54 mm | Very easy | "dip8" |
+
+The number in a footprint string is the pin count. Every string here was built with tscircuit before it was listed. The pitch of a package can differ between chips, so compare the footprint with the datasheet.
+
+At the factory: A QFN or BGA cannot be checked by eye after soldering. If the board is assembled by a factory this is not a problem. If you assemble it yourself, a package with legs saves hours.
+
+Not the same as Footprint: The package is the part you buy. The footprint is the copper pattern on the board that fits it.
+
+Not the same as Passive sizes: Packages are for chips with many pins. Size codes such as 0603 are for small parts with two ends.
+
+### Pin 1 and polarity
+
+Also called: pin one, pin 1 mark, orientation, polarity mark, cathode mark, anode.
+
+Most parts work only one way round. A chip has a dot or a notch next to pin 1, and its pins are numbered counter-clockwise from there, seen from above. A diode or an LED has a bar at its cathode, the side the current leaves by. A polarised capacitor has a mark at its plus or its minus side. The board repeats these marks in silkscreen, so the person or machine placing the part can match them.
+
+How the person may say it:
+- Print a dot in silkscreen next to pin 1 of every chip, outside the body so it stays visible after soldering.
+- Mark the cathode of every diode and LED with a bar in silkscreen.
+- Place D1 with its cathode toward the top edge of the board.
+- For each chip, tell me where pin 1 is: which corner, seen from the top side.
+
+```tsx
+export default () => (
+  <board width="20mm" height="12mm">
+    <chip
+      name="U1"
+      footprint="soic8"
+      pcbX={-4}
+      pinLabels={{ pin1: "VCC", pin4: "GND", pin8: "OUT" }}
+    />
+    <led name="D1" color="red" footprint="0603" pcbX={6} pcbY={0} />
+    <trace from="U1.OUT" to="D1.anode" />
+    <trace from="D1.cathode" to="U1.GND" />
+  </board>
+)
+```
+
+Code note: With no rotation, pin 1 of a chip footprint is at the top left, and the numbers run down the left side and back up the right. On <led> and <diode>, pin1 is the anode, on the left, and pin2 is the cathode. Write D1.anode and D1.cathode, not the numbers, so the direction cannot be mixed up.
+
+At the factory: A reel of LEDs can be loaded either way, and makers do not agree on which end is pin 1. If a factory assembles the board, check the rotation of every polarised part in its preview before you approve it.
+
+Not the same as Rotation: The pin 1 mark shows how the part is turned. Rotation is the number you give to turn it.
+
+Not the same as Reference designator: The pin 1 mark says which way round the part goes. The reference designator says which part it is.
+
+### Reference designator
+
+Also called: refdes, designator, part name, R1, C1, U1.
+
+A reference designator is the name of one part on the board. It is a letter for the kind of part and a number that makes it unique: R1 is the first resistor, C4 the fourth capacitor, U2 the second chip. The same name is used in the schematic, in the layout, in the bill of materials and printed on the board. It is how you, the agent and the factory point at the same part.
+
+How the person may say it:
+- Give every part a reference designator with the usual letter: R for resistors, C for capacitors, U for chips, J for connectors.
+- Move C3 next to pin 8 of U1.
+- Do not renumber parts that already exist. Give new parts the next free number.
+- Print the designator of every part in silkscreen, next to the part and not under it.
+
+```tsx
+export default () => (
+  <board width="22mm" height="12mm">
+    <chip name="U1" footprint="soic8" pcbX={0} pcbY={0} />
+    <resistor name="R1" resistance="10k" footprint="0603" pcbX={-7} pcbY={3} />
+    <capacitor name="C1" capacitance="100nF" footprint="0603" pcbX={-7} pcbY={-3} />
+    <led name="D1" color="red" footprint="0603" pcbX={7} pcbY={3} />
+    <pinheader name="J1" pinCount={2} pitch="2.54mm" pcbX={7} pcbY={-3} />
+  </board>
+)
+```
+
+Code note: The reference designator is the name prop. Every part needs one of its own, and every selector uses it: "U1.pin1", "R1.pin2". tscircuit prints it in silkscreen beside the part by itself.
+
+The usual letters:
+
+| Letter | Kind of part |
+|---|---|
+| R | Resistor |
+| C | Capacitor |
+| L | Inductor |
+| D | Diode, LED |
+| Q | Transistor, MOSFET |
+| U | Chip (integrated circuit) |
+| J | Connector, pin header |
+| SW | Switch, push button |
+| Y | Crystal, oscillator |
+| F | Fuse |
+| TP | Test point |
+| FID | Fiducial |
+
+These are habits, not laws. Some people write IC for chips, X for crystals, LED for LEDs and P or CN for connectors.
+
+Not the same as Net: A reference designator names a part. A net name, such as GND, names a connection.
+
+Not the same as Silkscreen: The designator is the name. Silkscreen is the ink that prints it on the board.
+
+Not the same as Pin names and selectors: R1 is the part. R1.pin1 is one pin of it.
+
+### Courtyard
+
+Also called: component courtyard, placement boundary, component clearance.
+
+A courtyard is a box drawn around a part, a little larger than the part and its pads. It marks the room the part needs: for its body, for the solder, and for the tool that places it. The rule is simple: the courtyards of two parts must not overlap. It is a quick way to know that parts are not too close, without measuring every pair of pads. The courtyard is not printed on the board. It exists only in the design.
+
+How the person may say it:
+- No two courtyards may overlap. Tell me every pair that does.
+- I will solder by hand. Leave at least 1 mm between the courtyards of neighbouring parts.
+- Place C1 to C4 as close to U1 as their courtyards allow.
+- Show me the board with the courtyards drawn.
+
+```tsx
+export default () => (
+  <board width="16mm" height="10mm">
+    <resistor name="R1" resistance="1k" footprint="0805" pcbX={-3} pcbY={0} />
+    <resistor name="R2" resistance="1k" footprint="0805" pcbX={3} pcbY={0} />
+  </board>
+)
+```
+
+Code note: Every standard footprint brings its own courtyard: for an 0805 it is a box of 3.36 × 1.9 mm. If two parts are too close, the build reports pcb_footprint_overlap_error, with a message such as "R1 overlaps R2: 1 footprint overlap, 1 pad clearance violation, 1 courtyard conflict. Move the components apart." To see the courtyards, add --show-courtyards to tsci snapshot or to tsci export -f pcb-svg. A footprint you draw yourself has no courtyard, and the build warns about it.
+
+At the factory: Courtyards keep parts apart on the board, but they know nothing about height. A tall capacitor beside a connector can still block the plug. Check tall parts yourself.
+
+Not the same as Clearance: A courtyard keeps whole parts apart. Clearance keeps pieces of copper apart.
+
+Not the same as Keep-out: A courtyard belongs to a part and moves with it. A keep-out is an area of the board that you close off.
+
+Not the same as Footprint: The footprint is the pads the part is soldered to. The courtyard is the empty room around them.
+
+### Exposed pad and thermal vias
+
+Also called: thermal pad, EP, centre pad, die pad, heat slug, thermal via.
+
+Many chips that get warm have a large metal pad on their underside, called the exposed pad. It is soldered to a matching pad on the board, and heat flows out of the chip through it. Thermal vias are a group of vias inside that pad. They carry the heat to a large copper area on the other side of the board, which spreads it. The exposed pad is usually also the ground pin of the chip, so it must be connected, not only soldered.
+
+How the person may say it:
+- U1 has an exposed pad. Add the centre pad to its footprint and connect it to GND.
+- Put a 3 × 3 grid of vias in the exposed pad of U1, 0.3 mm holes, 1 mm apart, down to a ground pour on the bottom layer.
+- Keep the bottom layer under U1 as solid copper. Do not route traces through it.
+- Read the datasheet of U1 and tell me what its exposed pad must be connected to.
+
+```tsx
+export default () => (
+  <board width="14mm" height="14mm" isViaInPadAllowed>
+    <chip name="U1" footprint="qfn16_thermalpad" />
+    <via pcbX={-0.5} pcbY={0.5} fromLayer="top" toLayer="bottom" holeDiameter="0.3mm" outerDiameter="0.6mm" connectsTo="net.GND" />
+    <via pcbX={0.5} pcbY={0.5} fromLayer="top" toLayer="bottom" holeDiameter="0.3mm" outerDiameter="0.6mm" connectsTo="net.GND" />
+    <via pcbX={-0.5} pcbY={-0.5} fromLayer="top" toLayer="bottom" holeDiameter="0.3mm" outerDiameter="0.6mm" connectsTo="net.GND" />
+    <via pcbX={0.5} pcbY={-0.5} fromLayer="top" toLayer="bottom" holeDiameter="0.3mm" outerDiameter="0.6mm" connectsTo="net.GND" />
+    <trace from="U1.thermalpad" to="net.GND" />
+    <copperpour layer="bottom" connectsTo="net.GND" />
+  </board>
+)
+```
+
+Code note: Adding _thermalpad to a QFN footprint string adds the centre pad. It becomes one more pin, after the last numbered one, and it also answers to the name thermalpad. A via inside a pad is a placement error unless <board> has isViaInPadAllowed.
+
+At the factory: Solder can run down an open via and leave the pad with too little. Keep thermal vias small, about 0.3 mm, or ask the factory to fill them. Too much solder paste on a big pad makes the chip float, so the paste there is often printed as a few small squares.
+
+Not the same as Thermal relief: Thermal vias help heat leave a chip. A thermal relief does the opposite job: it keeps heat in a pad while you solder it.
+
+Not the same as Via stitching: Thermal vias sit under one chip to move heat. Stitching vias are spread over the board to tie copper areas together.
+
+Not the same as Tented via: A via in a pad cannot be tented: it is open to the solder. That is why via-in-pad needs care.
+
+### Castellated holes
+
+Also called: castellation, half hole, plated half-hole, edge plating, module pads.
+
+A castellated hole is a plated hole that the edge of the board cuts in half. A row of them along the edge turns a small board into a part: it can be laid flat on a larger board and soldered down, edge to pad. Radio modules such as the ESP32 are made this way. On the larger board, each half hole needs a pad that reaches out from under the module, so the solder can be seen and touched with an iron.
+
+How the person may say it:
+- This board is a module. Put castellated holes along the left and right edges, 2.54 mm apart, one for each signal: GND, 3V3, SDA, SCL.
+- U1 is an ESP32-WROOM module with castellated edges. Use the footprint from its datasheet, with pads that reach 1 mm out from under it.
+- Keep parts and other copper at least 1 mm away from the castellated edge.
+
+```tsx
+export default () => (
+  <board
+    outline={[
+      { x: -6, y: -5 },
+      { x: 6, y: -5 },
+      { x: 6, y: -2.54, isCastellatedHole: true, holeDiameter: "0.8mm", padDiameter: "1.4mm", connectsTo: "net.GND" },
+      { x: 6, y: 0, isCastellatedHole: true, holeDiameter: "0.8mm", padDiameter: "1.4mm", connectsTo: "net.V3_3" },
+      { x: 6, y: 2.54, isCastellatedHole: true, holeDiameter: "0.8mm", padDiameter: "1.4mm", connectsTo: "net.SDA" },
+      { x: 6, y: 5 },
+      { x: -6, y: 5 },
+    ]}
+  >
+    <resistor name="R1" resistance="10k" footprint="0603" pcbX={-1} pcbY={2} />
+    <capacitor name="C1" capacitance="100nF" footprint="0603" pcbX={-1} pcbY={-2} />
+    <trace from="R1.pin1" to="net.V3_3" />
+    <trace from="R1.pin2" to="net.SDA" />
+    <trace from="C1.pin1" to="net.V3_3" />
+    <trace from="C1.pin2" to="net.GND" />
+  </board>
+)
+```
+
+Code note: Castellated holes are points of the board outline. Give a point isCastellatedHole, a holeDiameter, a padDiameter and the net it connectsTo, and a plated hole is centred on that point of the edge. The board then needs an outline, a list of corner points, in place of width and height.
+
+At the factory: Castellated holes are a special order at most factories and cost extra. Many ask for holes of 0.5 or 0.6 mm at least. Check before you design the module around them.
+
+Not the same as Plated through hole: A through hole is whole and takes a leg. A castellated hole is half a hole on the edge, and takes only solder.
+
+Not the same as Board outline: The outline is the edge of the board. Castellated holes are plated holes that the edge runs through.
+
+## Nets and connections
+
+What is connected to what, before any copper is drawn.
+
+### Net
+
+Also called: connection, node, signal, net name.
+
+A net is a group of pins that must all be connected to each other. Every net has a name, such as GND or SDA. A net says only that the pins belong together. It does not say where the copper goes: that is the job of the traces. Two pins on the same net are connected. Two pins on different nets must never touch.
+
+How the person may say it:
+- Connect pin 4 of U1, pin 2 of C1 and pin 3 of J1 to the net GND.
+- Name the net between U1.SDA and pin 2 of J1 SDA.
+- List every net, with all the pins that are on it.
+- Which net is pin 6 of U1 on? It should be SCL.
+
+```tsx
+export default () => (
+  <board width="24mm" height="14mm">
+    <chip name="U1" footprint="soic8" pcbX={0} pcbY={0} pinLabels={{ pin1: "VCC", pin4: "GND" }} />
+    <capacitor name="C1" capacitance="100nF" footprint="0603" pcbX={-8} pcbY={0} pcbRotation={90} />
+    <resistor name="R1" resistance="10k" footprint="0603" pcbX={8} pcbY={-4} />
+    <trace from="U1.GND" to="net.GND" />
+    <trace from="C1.pin2" to="net.GND" />
+    <trace from="R1.pin2" to="net.GND" />
+    <trace from="U1.VCC" to="net.V3_3" />
+    <trace from="C1.pin1" to="net.V3_3" />
+  </board>
+)
+```
+
+Code note: Write "net.GND" as one end of a <trace>, and that pin joins the net GND. A net exists as soon as its name is used. A <net name="GND" /> element is needed only to give the net its own rules, such as a trace width. A net name is made of letters, digits and _, and it cannot start with a digit: "3V3" stops the build, "V3_3" works.
+
+Good to know: The list of all nets and their pins is called the netlist. It is the best thing to check before any routing starts: if the netlist is wrong, a perfectly routed board is wrong too.
+
+Not the same as Trace: A net is the idea that pins are connected. A trace is the copper that connects them. One net often needs several traces.
+
+Not the same as Ratsnest: A net is a list of pins. The ratsnest is a picture of the nets that still have no copper.
+
+Not the same as Power and ground nets: Every connection is a net. A power net is a net that carries the supply to many parts.
+
+### Pin names and selectors
+
+Also called: pin label, pin number, port, port selector, U1.VCC.
+
+To connect something, you must say exactly which pin you mean. A pin is written as the name of the part, a dot, and the name of the pin: U1.SDA. Every pin has a number, and a chip can also give its pins names from the datasheet. A name is safer than a number, because it says what the pin does. In tscircuit this way of pointing at a pin is called a selector.
+
+How the person may say it:
+- U1 is the temperature sensor, in a SOIC-8 package. Its pins, from the datasheet, are: 1 ADDR, 2 NC1, 3 NC2, 4 GND, 5 INT, 6 SCL, 7 SDA, 8 VDD. Use these names as pin labels.
+- Connect U1.SDA to pin 3 of J1 and U1.SCL to pin 4 of J1.
+- Pins NC1 and NC2 of U1 stay open on purpose. Mark them as no-connect.
+- Before you connect anything, show me the pin table of U1 and tell me where you got it.
+
+```tsx
+export default () => (
+  <board width="26mm" height="16mm">
+    <chip
+      name="U1"
+      footprint="soic8"
+      pcbX={3}
+      pcbY={0}
+      pinLabels={{
+        pin1: "ADDR", pin2: "NC1", pin3: "NC2", pin4: "GND",
+        pin5: "INT", pin6: "SCL", pin7: "SDA", pin8: "VDD",
+      }}
+      connections={{ VDD: "net.V3_3", GND: "net.GND", ADDR: "net.GND" }}
+      noConnect={["NC1", "NC2", "INT"]}
+    />
+    <resistor name="R1" resistance="4.7k" footprint="0603" pcbX={-8} pcbY={5} />
+    <resistor name="R2" resistance="4.7k" footprint="0603" pcbX={-8} pcbY={-5} />
+    <trace from="R1.pin2" to="U1.SDA" />
+    <trace from=".R2 > .pin2" to=".U1 > .pin6" />
+    <trace from="R1.pin1" to="net.V3_3" />
+    <trace from="R2.pin1" to="net.V3_3" />
+  </board>
+)
+```
+
+Code note: pinLabels gives the pins of a chip their names. After that "U1.SDA" and "U1.pin7" mean the same pin, and so does the older form ".U1 > .pin7". A name that the chip does not have stops the build, with an error that lists the names it does have. connections on a part joins its pins to nets or to other pins without separate <trace> lines. noConnect lists the pins that are left open on purpose. A resistor or capacitor has pin1 and pin2. An LED or diode has anode and cathode.
+
+Good to know: Wrong pin names are the most common reason a board does not work, and no check can find them. An agent that does not have the datasheet will guess. Give it the pin table, or the part number and the datasheet.
+
+Not the same as Pin 1 and polarity: A selector is how you name a pin in the code. Pin 1 is the mark on the real part that shows where counting starts.
+
+Not the same as Reference designator: U1 is the name of the whole part. U1.SDA is one pin of it.
+
+Not the same as Net: U1.SDA is one pin. The net SDA is every pin that is joined to it.
+
+### Power and ground nets
+
+Also called: power rail, supply rail, GND, VCC, VDD, ground.
+
+A power net carries the supply voltage to the parts that need it. The ground net, GND, is the way back for all that current, and it is the zero point that every voltage is measured from. These nets are different from signals. They go to almost every chip, they carry much more current, and their traces must be wide. A board often has several power nets: one from the connector, and one after each regulator.
+
+How the person may say it:
+- The power nets are VBUS (5 V, up to 1 A) and V3_3 (3.3 V, up to 300 mA). Everything else is a signal.
+- Use 0.5 mm traces for every power and ground net.
+- Every chip gets its own trace to V3_3 and to GND. Do not pass power on from the pin of one chip to the next.
+- Name the nets V3_3 and V5, not 3V3 and 5V: a net name cannot start with a digit.
+
+```tsx
+export default () => (
+  <board width="24mm" height="14mm">
+    <net name="VBAT" isPowerNet nominalTraceWidth="0.5mm" />
+    <net name="GND" isGroundNet />
+    <capacitor name="C1" capacitance="10uF" footprint="0805" pcbX={-6} pcbY={0} />
+    <resistor name="R1" resistance="10k" footprint="0603" pcbX={6} pcbY={0} />
+    <trace from="C1.pin1" to="net.VBAT" />
+    <trace from="R1.pin1" to="net.VBAT" />
+    <trace from="C1.pin2" to="net.GND" />
+    <trace from="R1.pin2" to="net.GND" />
+  </board>
+)
+```
+
+Code note: tscircuit reads the name. A net whose name starts with GND, AGND, DGND, PGND or VSS is treated as ground, and one whose name starts with V, such as V3_3, VBUS or VCC, as power. For any other name, say it with isGroundNet or isPowerNet on <net>. nominalTraceWidth on the <net> makes every trace of that net wide: here the VBAT trace is 0.5 mm and the GND trace is still 0.15 mm.
+
+Common names:
+
+| Name | What it usually means |
+|---|---|
+| GND | Ground: 0 V, the way back for all current |
+| VCC, VDD | The supply of the chips |
+| V3_3, V5 | A supply named after its voltage: 3.3 V, 5 V |
+| VBUS | 5 V from a USB connector |
+| VBAT | Straight from the battery |
+| VIN | The input, before any regulator |
+| AGND | A separate ground for sensitive analog parts |
+
+At the factory: On a two-layer board, fill the bottom layer with a ground pour instead of drawing ground as thin traces. On a four-layer board, give ground a whole inner layer.
+
+Not the same as Net: A power net is one kind of net. It carries the supply, where a signal net carries information.
+
+Not the same as Ground plane: GND is the net: a list of pins. A ground plane is copper: a whole layer that connects those pins.
+
+Not the same as Trace width: A power net is why a trace must be wide. Trace width is how wide you make it.
+
+### Schematic and layout
+
+Also called: schematic, circuit diagram, PCB layout, board layout.
+
+A circuit is drawn in two ways. The schematic shows what is connected to what, with a symbol for each part and a line for each connection. It is made to be easy to read, and positions in it mean nothing. The layout shows the real board: where each part sits and where the copper runs. Both drawings must describe the same nets. In tscircuit one file makes both, so they cannot disagree.
+
+How the person may say it:
+- First show me the schematic only. Do not place parts on the board until I agree with the connections.
+- In the schematic, put the power parts on the left and the connectors on the right. This must not change the board.
+- The schematic is right. Now do the layout: place the parts and show me before routing.
+- Check that every connection in the schematic has copper on the board, and that nothing else is joined.
+
+```tsx
+export default () => (
+  <board width="24mm" height="12mm">
+    <resistor name="R1" resistance="330" footprint="0603" pcbX={-6} pcbY={0} schX={-2} schY={0} />
+    <led name="LED1" color="red" footprint="0603" pcbX={6} pcbY={0} schX={2} schY={0} />
+    <trace from="R1.pin2" to="LED1.anode" />
+  </board>
+)
+```
+
+Code note: Each part is written once and appears in both drawings. schX and schY place its symbol in the schematic. pcbX and pcbY place the real part on the board, in mm. The two positions have nothing to do with each other: moving a symbol never moves the part.
+
+Not the same as Net: The schematic and the layout are two drawings. The nets are what both of them must agree on.
+
+Not the same as Placement: Placing a symbol in the schematic is only for reading. Placement on the board decides how the real thing is built.
+
+Not the same as Footprint: A symbol is how a part looks in the schematic. A footprint is the copper it needs on the board.
+
+### Ratsnest
+
+Also called: airwires, rats nest, unrouted connections, air wires.
+
+The ratsnest is a set of thin straight lines drawn between pins that belong to the same net but have no copper between them yet. Each line is a connection still to be made. It is the best guide for placing parts. Long lines and lines that cross each other mean the board will be hard to route. Move and turn the parts until the lines are short and few of them cross, and only then route.
+
+How the person may say it:
+- Do not route yet. Show me the placement with the ratsnest.
+- Turn J1 around so that its ratsnest lines to U1 do not cross.
+- Move the parts until the ratsnest lines are short and few of them cross. Then stop and show me.
+- How many connections are still unrouted? List them.
+
+```tsx
+export default () => (
+  <board width="24mm" height="16mm" routingDisabled>
+    <chip name="U1" footprint="soic8" pcbX={0} pcbY={0} />
+    <resistor name="R1" resistance="10k" footprint="0603" pcbX={-8} pcbY={4} />
+    <capacitor name="C1" capacitance="100nF" footprint="0603" pcbX={-8} pcbY={-4} />
+    <led name="LED1" color="green" footprint="0603" pcbX={8} pcbY={0} />
+    <trace from="R1.pin2" to="U1.pin1" />
+    <trace from="C1.pin2" to="U1.pin4" />
+    <trace from="R1.pin1" to="C1.pin1" />
+    <trace from="U1.pin7" to="LED1.anode" />
+  </board>
+)
+```
+
+Code note: routingDisabled on <board> skips the autorouter. The build is then fast and shows only the placed parts, with the connections as a ratsnest. Use it while you place parts, and remove it when the placement is agreed.
+
+Not the same as Trace: A ratsnest line is a reminder of a connection. A trace is the real copper. When the trace is drawn, the line goes away.
+
+Not the same as Net: A net is the list of pins that belong together. The ratsnest draws the parts of the nets that are not routed yet.
+
+Not the same as Autorouter: The ratsnest shows what is left to do. The autorouter does it.
+
+## Routing
+
+Drawing the copper that makes the connections: traces, vias and the rules they follow.
+
+### Trace
+
+Also called: track, copper track, route.
+
+A trace is a flat strip of copper on the board. It does the job of a wire: it carries current from one pad to another. A trace is drawn as straight pieces joined by 45° bends. It has a width, it lies on one layer, and it belongs to one net.
+
+How the person may say it:
+- Connect R1 pin 2 to the anode of LED1 with a trace on the top layer.
+- Keep the trace from C1 to U1.VDD shorter than 3 mm.
+- Route SDA and SCL on the top layer only, with no vias.
+- List every trace with its net, its layer, its width and its length.
+
+```tsx
+export default () => (
+  <board width="24mm" height="12mm">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-7} pcbY={2} />
+    <led name="LED1" color="red" footprint="0603" pcbX={7} pcbY={-2} />
+    <trace from="R1.pin2" to="LED1.anode" />
+  </board>
+)
+```
+
+Code note: A <trace> only says which two pins must be joined. The autorouter chooses the path. Without a width, a trace is 0.15 mm wide.
+
+At the factory: Most factories can make traces down to about 0.1 mm, but thin traces cost more and break more easily. Use 0.2 mm or wider wherever there is room.
+
+Not the same as Net: A net is the idea that some pins are connected. A trace is the copper that makes it true. One net is often made of several traces.
+
+Not the same as Copper pour: A trace is a narrow path between two points. A pour is a wide area of copper that fills the free space.
+
+### Trace width
+
+Also called: track width, trace thickness, neck-down.
+
+Trace width is the width of the copper strip, seen from above. A wider trace has less resistance, so it carries more current and heats up less. Signals need only a thin trace. Power needs a wide one. A neck-down is a short narrow piece of a wide trace, used only where it must squeeze into a small pin.
+
+How the person may say it:
+- Make the trace from J1.VBUS to U1.VIN 0.8 mm wide.
+- The 5 V net carries up to 2 A. Choose a trace width for that and tell me the number.
+- Use 0.25 mm traces for signals and 0.5 mm for every power and ground trace.
+- Keep the VIN trace 1 mm wide, and narrow it only for the last 2 mm into the pin of U1.
+
+```tsx
+export default () => (
+  <board width="24mm" height="14mm">
+    <resistor name="R1" resistance="1k" footprint="0805" pcbX={-7} pcbY={3} />
+    <resistor name="R2" resistance="1k" footprint="0805" pcbX={7} pcbY={3} />
+    <resistor name="R3" resistance="1k" footprint="0805" pcbX={-7} pcbY={-3} />
+    <resistor name="R4" resistance="1k" footprint="0805" pcbX={7} pcbY={-3} />
+    <trace from="R1.pin2" to="R2.pin1" />
+    <trace from="R3.pin2" to="R4.pin1" thickness="0.8mm" />
+  </board>
+)
+```
+
+Code note: On a <trace>, thickness is the width seen from above, and width means the same. To set it for a whole net use <net name="VIN" nominalTraceWidth="0.5mm" />. To set it for the whole board use nominalTraceWidth on <board>.
+
+Width and current, for outer layers:
+
+| Width | Current, about | Typical use |
+|---|---|---|
+| 0.15 mm | 0.6 A | Signals on a crowded board |
+| 0.25 mm | 0.9 A | Signals, the comfortable default |
+| 0.5 mm | 1.4 A | Power to one chip |
+| 1.0 mm | 2.4 A | Power input, motors, LEDs |
+| 2.0 mm | 4.0 A | Battery and motor current |
+
+For ordinary copper (1 oz, 0.035 mm thick) and a 10 °C rise in temperature, from the IPC-2221 formula. Traces on inner layers carry about half as much.
+
+At the factory: If a wide trace does not fit, use a short neck-down, a copper pour, or thicker copper (2 oz). Do not make a long trace thinner than the current needs.
+
+Not the same as Clearance: Width is the size of the copper. Clearance is the size of the gap beside it.
+
+Not the same as Copper weight: Width is measured across the board, and you choose it for each trace. Copper weight is how thick the copper layer is, and it is the same for the whole board.
+
+### Via
+
+Also called: plated via, through via, layer change.
+
+A via is a small hole through the board with copper plated on its wall. It joins a trace on one layer to a trace on another layer. A via is how one trace crosses another: it dives to the other side, passes underneath, and comes back up. A via is given as two numbers, the copper diameter and the hole diameter, such as 0.6 / 0.3 mm.
+
+How the person may say it:
+- Take the SCK trace to the bottom layer with a via next to U1, and bring it back up beside J2.
+- Use 0.6 mm vias with a 0.3 mm hole everywhere on this board.
+- Put a via to the ground plane right next to the ground pad of C3.
+- Route USB_DP and USB_DM with no vias at all.
+
+```tsx
+export default () => (
+  <board
+    width="24mm"
+    height="14mm"
+    pcbStyle={{ viaPadDiameter: "0.6mm", viaHoleDiameter: "0.3mm" }}
+  >
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-8} pcbY={3} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={8} pcbY={3} />
+    <resistor name="R3" resistance="1k" footprint="0603" pcbX={-8} pcbY={-3} />
+    <resistor name="R4" resistance="1k" footprint="0603" pcbX={8} pcbY={-3} />
+    <trace from="R1.pin2" to="R4.pin1" />
+    <trace from="R3.pin2" to="R2.pin1" />
+  </board>
+)
+```
+
+Code note: These two traces cross, so the autorouter sends one of them under the other through two vias. It adds vias by itself. pcbStyle on <board> sets their size: without it they are only 0.3 / 0.2 mm. To place a via yourself, add <via pcbX={0} pcbY={3} fromLayer="top" toLayer="bottom" holeDiameter="0.3mm" outerDiameter="0.6mm" connectsTo="net.GND" />. To cap how many a trace may use, set maxViaCount on the <trace>.
+
+At the factory: A 0.6 / 0.3 mm via is cheap at every factory. Smaller than 0.45 / 0.2 mm usually costs extra. Each via adds a little resistance and a possible point of failure, so use the ones you need and no more.
+
+Not the same as Plated through hole: A via only joins layers, and nothing is soldered into it. A plated through hole is bigger and holds the leg of a part.
+
+Not the same as Mounting hole: A via is tiny and plated, and it is part of a net. A mounting hole is large, usually without copper, and holds a screw.
+
+### Through, blind and buried vias
+
+Also called: blind via, buried via, microvia, HDI.
+
+A through via goes through the whole board and can join any of its layers. A blind via starts on an outer layer and stops at an inner layer. A buried via joins inner layers only and cannot be seen from outside. A microvia is a very small blind via made with a laser, usually one layer deep. Blind, buried and micro vias save space on crowded boards, but they cost much more.
+
+How the person may say it:
+- Use through vias only. No blind or buried vias.
+- This is a 6-layer board and the factory can make blind vias from the top layer to inner layer 1. You may use them under U1.
+- If the board cannot be routed with through vias only, stop and tell me. Do not add blind vias by yourself.
+
+```tsx
+export default () => (
+  <board width="20mm" height="12mm" layers={4} allowBlindAndBuriedVias>
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-7} pcbY={0} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={7} pcbY={0} />
+    <via pcbX={0} pcbY={3} fromLayer="top" toLayer="inner1" holeDiameter="0.2mm" outerDiameter="0.45mm" />
+    <trace from="R1.pin2" to="R2.pin1" />
+  </board>
+)
+```
+
+Code note: The copper layers of a four-layer board are named top, inner1, inner2 and bottom. The autorouter makes only through vias unless <board> has allowBlindAndBuriedVias.
+
+The four kinds of via:
+
+| Kind | Joins | Cost |
+|---|---|---|
+| Through | Any layers, top to bottom | Standard |
+| Blind | An outer layer to an inner layer | High |
+| Buried | Inner layers only | High |
+| Micro | Two layers next to each other | Highest |
+
+At the factory: Ask the factory before you use anything but through vias. Many low-cost services do not offer blind or buried vias at all.
+
+Not the same as Tented via: Through, blind and buried say which layers a via joins. Tented and exposed say whether solder mask covers it.
+
+### Tented via
+
+Also called: via tenting, covered via, exposed via, via-in-pad.
+
+A tented via is covered by solder mask, like a tent over the hole. Solder cannot stick to it, and it cannot touch a metal part that sits on top of it. An exposed via has a bare copper ring. Most vias should be tented. A via is left exposed only when it is used as a test point, or to let heat out.
+
+How the person may say it:
+- Tent every via on both sides.
+- Tent all vias, but leave the vias under U3 exposed so heat can leave through them.
+- Keep every via at least 0.3 mm away from any pad, and tent it, so solder is not pulled into the hole.
+
+```tsx
+export default () => (
+  <board width="20mm" height="12mm">
+    <via pcbX={-4} pcbY={0} fromLayer="top" toLayer="bottom" holeDiameter="0.3mm" outerDiameter="0.6mm" tented />
+    <via pcbX={4} pcbY={0} fromLayer="top" toLayer="bottom" holeDiameter="0.3mm" outerDiameter="0.6mm" tented={false} />
+  </board>
+)
+```
+
+Code note: tented on a <via> covers it on both sides. It also accepts "top_tented", "bottom_tented" and "exposed". To choose once for the whole board, set defaultViaTenting on <board>.
+
+At the factory: A via placed inside a pad (via-in-pad) pulls the solder down its hole unless the factory fills and caps it, which costs extra. Put the via beside the pad and tent it.
+
+Not the same as Solder mask: Solder mask is the coating over the whole board. Tenting is the choice to let it cover a via as well.
+
+### Clearance
+
+Also called: spacing, gap, trace spacing, isolation.
+
+Clearance is the smallest gap allowed between two pieces of copper that belong to different nets. It is measured from edge to edge. There is one number for each pair of things: trace to trace, trace to pad, trace to via, and copper to the edge of the board. If the gap is too small, the factory may leave a sliver of copper that joins the two, or a high voltage may jump across.
+
+How the person may say it:
+- Keep at least 0.2 mm between any two pieces of copper on different nets.
+- The VIN net carries 24 V. Keep 0.6 mm between it and everything else.
+- Keep all copper at least 0.3 mm from the edge of the board.
+- Run the checks and list every place where the clearance is smaller than the rule.
+
+```tsx
+export default () => (
+  <board width="24mm" height="14mm">
+    <net name="VIN" minTraceClearance="0.6mm" nominalTraceWidth="0.5mm" />
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-8} pcbY={1} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={8} pcbY={1} />
+    <resistor name="R3" resistance="1k" footprint="0603" pcbX={-8} pcbY={-1} />
+    <resistor name="R4" resistance="1k" footprint="0603" pcbX={8} pcbY={-1} />
+    <trace from="R1.pin2" to="net.VIN" />
+    <trace from="R2.pin1" to="net.VIN" />
+    <trace from="R3.pin2" to="R4.pin1" />
+  </board>
+)
+```
+
+Code note: minTraceClearance on a <net> is the gap that net keeps from every other net. For a gap that applies to every trace, give the autorouter a setting: autorouter={{ traceClearance: "0.2mm" }} on <board>.
+
+At the factory: A common low-cost limit is about 0.13 mm (5 mil). Design with 0.2 mm, and keep the smaller number for the few places that need it.
+
+Not the same as Trace width: Clearance is the gap. Width is the copper.
+
+Not the same as Pitch: Clearance is measured from edge to edge. Pitch is measured from centre to centre.
+
+Not the same as Keep-out: Clearance is a small gap around every piece of copper. A keep-out is a whole area that you close off.
+
+### Trace corners
+
+Also called: 45° routing, mitred corner, acute angle, acid trap.
+
+A trace normally turns a corner in two 45° bends. A right-angle corner works for ordinary signals, but it wastes space and is not the usual style. A corner sharper than 90° is a real fault: etching liquid gets caught in the narrow pocket and can eat the copper away. That pocket is called an acid trap.
+
+How the person may say it:
+- Route with 45° bends only. No right angles and no angles sharper than 90°.
+- Let each trace leave its pad straight, from the middle of the pad edge, before the first bend.
+- Look for any place where two traces meet at less than 90° and fix it.
+
+At the factory: Modern factories etch right angles without trouble. The reason to avoid sharp angles is the acid trap, and the reason to use 45° is that traces pack together more tightly.
+
+Not the same as Teardrop: A corner is where a trace changes direction. A teardrop is extra copper where a trace meets a pad or via.
+
+### Autorouter
+
+Also called: auto-routing, automatic routing.
+
+An autorouter is a program that draws the traces. You give it the placed parts, the list of what must be connected, and the rules. It gives back traces and vias that obey the rules. In tscircuit the autorouter runs every time the board is built, so you never draw a trace by hand unless you want to. Its result depends very much on placement: parts that are placed well are easy to route.
+
+How the person may say it:
+- Route the board with the autorouter and tell me how many traces it could not finish.
+- The autorouter left 2 traces unrouted. Do not change the rules. Move C4 and R7 to give it more room and try again.
+- Keep the route I fixed for USB_DP and USB_DM, and let the autorouter do the rest.
+- Run the autorouter again with a higher effort level and compare the number of vias.
+
+```tsx
+export default () => (
+  <board width="24mm" height="16mm" autorouter="auto_local" autorouterEffortLevel="2x">
+    <chip name="U1" footprint="soic8" pcbX={0} pcbY={0} />
+    <resistor name="R1" resistance="10k" footprint="0603" pcbX={-8} pcbY={4} />
+    <capacitor name="C1" capacitance="100nF" footprint="0603" pcbX={-8} pcbY={-4} />
+    <led name="LED1" color="green" footprint="0603" pcbX={8} pcbY={0} />
+    <trace from="R1.pin2" to="U1.pin1" />
+    <trace from="C1.pin2" to="U1.pin4" />
+    <trace from="R1.pin1" to="C1.pin1" />
+    <trace from="U1.pin7" to="LED1.anode" />
+  </board>
+)
+```
+
+Code note: autorouter="auto_local" routes on your own computer and "auto_cloud" uses the tscircuit servers. With no autorouter prop, the default router is used. autorouterEffortLevel, from "1x" to "100x", lets it search longer. routingDisabled on <board> skips routing, which is useful while you are still placing parts.
+
+Good to know: An autorouter can only work with what it is told. It does not know that a crystal must sit next to its chip, or that a capacitor belongs beside a power pin. Say those things as placement, before you route.
+
+Not the same as Fixed route: The autorouter chooses the path of a trace. A fixed route is a path that you chose, which the autorouter leaves alone.
+
+Not the same as Ratsnest: The ratsnest shows what still has to be connected. The autorouter is what connects it.
+
+### Fixed route
+
+Also called: manual route, pcbPath, route by hand, waypoints.
+
+A fixed route is a trace that follows a path you chose. You give the corner points, in order, and the trace goes through them. The autorouter does not move it, and it routes every other trace around it. Use a fixed route for the few traces that matter most, such as an antenna feed, a USB pair or a high-current path.
+
+How the person may say it:
+- Route VBUS from J1 to U1 by hand: go 3 mm right, then 4 mm up at 45°, then straight into the pin.
+- Draw the trace from ANT1 to U2.RF as one straight line.
+- Keep the route of the 5 V trace exactly as it is now. Route everything else around it.
+
+```tsx
+export default () => (
+  <board width="24mm" height="14mm">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-8} pcbY={-3} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={8} pcbY={3} />
+    <trace
+      from="R1.pin2"
+      to="R2.pin1"
+      thickness="0.3mm"
+      pcbPath={[{ x: 4, y: 0 }, { x: 10, y: 6 }]}
+    />
+  </board>
+)
+```
+
+Code note: The points of pcbPath are not measured from the centre of the board. They are measured from the part the trace starts at: here { x: 4, y: 0 } is 4 mm to the right of the centre of R1. For one straight line between the two pins, use pcbStraightLine on the <trace>.
+
+Good to know: A fixed route is not checked while you write it. Build the board afterwards and read the errors: a hand-made path can run over a pad or too close to the edge.
+
+Not the same as Autorouter: You draw a fixed route. The autorouter draws all the others.
+
+### Fanout
+
+Also called: escape routing, breakout, dog bone.
+
+Fanout is the first step of routing a chip with many pins close together. Each pin gets a short trace that leads away from the chip, often to a via. After that, every signal has a starting point in open space, and the long traces can be routed from there. Without fanout, the first few traces block the pins behind them.
+
+How the person may say it:
+- Before routing anything else, fan out every pin of U1: a short trace to a via, all pointing away from the chip.
+- Give each power and ground pin of U1 its own via, as close to the pin as the rules allow.
+- Keep the area 2 mm around U1 free of other parts, so its pins can fan out.
+
+Good to know: On a two-layer board, fanout vias lead to the bottom layer. On a four-layer board, power and ground pins drop straight to the inner planes, which leaves the outer layers free for signals.
+
+Not the same as Via: A via is one hole. Fanout is the pattern of short traces and vias around a whole chip.
+
+### Differential pair
+
+Also called: diff pair, paired traces, D+ and D−.
+
+A differential pair is two traces that carry one signal as a pair: when one goes up, the other goes down. The receiver looks only at the difference between them, so noise that hits both is cancelled. For this to work, the two traces must stay side by side with a constant gap, have the same length, and change layer together. USB, Ethernet, CAN and HDMI all use differential pairs.
+
+How the person may say it:
+- USB_DP and USB_DM are a differential pair. Route them side by side with a 0.2 mm gap, on the top layer, with no vias.
+- Keep the two traces of the pair within 0.5 mm of each other in length.
+- Keep every other trace at least 0.5 mm away from the pair.
+- Place the USB connector so the pair to U1 is shorter than 20 mm.
+
+```tsx
+export default () => (
+  <board width="30mm" height="16mm">
+    <pinheader name="J1" pinCount={2} pitch="2.54mm" pcbX={-11} pcbY={0} pcbRotation={90} />
+    <pinheader name="J2" pinCount={2} pitch="2.54mm" pcbX={11} pcbY={3} pcbRotation={90} />
+    <trace name="DP" from="J1.pin1" to="J2.pin1" />
+    <trace name="DM" from="J1.pin2" to="J2.pin2" />
+    <differentialpair
+      positiveConnection="DP"
+      negativeConnection="DM"
+      pcbTraceGap="0.2mm"
+      maxLengthSkew="0.5mm"
+    />
+  </board>
+)
+```
+
+Code note: <differentialpair> names the two traces and states the rules for them: pcbTraceGap is the gap between the two, maxLengthSkew is how much their lengths may differ. The two sides can also be nets, such as "net.USB_DP". Always look at what was drawn: the rules say what you want, and the picture shows what the router did.
+
+At the factory: A USB 2.0 pair on a normal two-layer board works well when it is short, even without exact impedance. Faster signals need a four-layer board and a width and gap worked out for its stackup.
+
+Not the same as Length matching: A differential pair is two traces carrying one signal. Length matching makes any group of traces the same length, pair or not.
+
+Not the same as Controlled impedance: A pair is a way to route two traces. Impedance is a number that the width and gap of those traces must produce.
+
+### Length matching
+
+Also called: serpentine, meander, length tuning, skew.
+
+Length matching makes a group of traces the same length, so that signals sent together also arrive together. The shorter trace is made longer on purpose with a serpentine: a few zigzag bends that add length without going anywhere. It is needed only for fast signals, such as the two halves of a differential pair or a memory bus. Slow signals such as I2C, UART and buttons do not need it.
+
+How the person may say it:
+- Match the lengths of CLK, D0, D1, D2 and D3 to within 1 mm. Add a serpentine to the short ones.
+- The trace from Y1 to U1.XIN must be shorter than 5 mm.
+- Give me a table of these traces with their lengths, and the difference from the longest.
+- Do not length-match the I2C lines. They are slow and do not need it.
+
+```tsx
+export default () => (
+  <board width="24mm" height="12mm">
+    <resistor name="R1" resistance="22" footprint="0603" pcbX={-7} pcbY={0} />
+    <resistor name="R2" resistance="22" footprint="0603" pcbX={7} pcbY={0} />
+    <trace from="R1.pin2" to="R2.pin1" maxLength="16mm" />
+  </board>
+)
+```
+
+Code note: maxLength on a <trace> is a limit, not a wish. If the two pins are further apart than the limit, the build stops with an error that says so. For a pair, maxLengthSkew on <differentialpair> limits the difference between its two traces.
+
+Not the same as Differential pair: Length matching is about equal length. A differential pair also needs a constant gap between its two traces.
+
+### Teardrop
+
+Also called: tear drop, fillet on a pad.
+
+A teardrop is a small wedge of copper that widens a trace where it joins a pad or a via. The joint is the weakest point of a thin trace: it can crack when the board bends, and it can be cut if the drill lands a little off-centre. A teardrop makes the joint wider and stronger. It matters most for thin traces, small vias and flexible boards.
+
+How the person may say it:
+- Add teardrops where traces meet vias and through-hole pads.
+- Add teardrops only to traces thinner than 0.2 mm.
+
+Good to know: tscircuit has a pcbTeardrops prop on <trace>. Look at the result after you set it: a teardrop is drawn only where the trace is clearly thinner than the pad it enters.
+
+Not the same as Thermal relief: A teardrop adds copper to make a joint stronger. A thermal relief removes copper to make a pad easier to solder.
+
+### Controlled impedance
+
+Also called: characteristic impedance, 50 ohm trace, microstrip, transmission line.
+
+A fast signal treats a trace as a transmission line. The line has a characteristic impedance, in ohms, set by three things: the width of the trace, its height above the ground plane, and the board material. If the impedance does not match the chip and the connector, part of the signal bounces back. A controlled-impedance trace has its width worked out to give the right number: often 50 Ω for an antenna, and 90 Ω for a USB pair.
+
+How the person may say it:
+- The trace from U1.RF to the antenna must be 50 Ω. Work out its width for this stackup and show me the numbers you used.
+- Route USB_DP and USB_DM as a 90 Ω differential pair. Tell me the width and the gap.
+- Keep a solid ground plane under the whole length of the RF trace. No gaps and no other traces below it.
+- Do not control impedance for I2C, UART or the LEDs. Those are slow signals.
+
+Width of a 50 Ω trace, about:
+
+| Board | Height above the plane | Width |
+|---|---|---|
+| 2 layers, 1.6 mm thick | 1.5 mm | 2.9 mm |
+| 4 layers, 1.6 mm thick | 0.2 mm | 0.35 mm |
+
+For a single trace on an outer layer of ordinary FR-4. The exact width depends on the factory and its materials. Use the impedance calculator of your factory for the real number.
+
+At the factory: On a two-layer board a 50 Ω trace is almost 3 mm wide, which is why boards with radio or fast signals use four layers. Many factories offer a controlled-impedance stackup and a calculator for it.
+
+Not the same as Trace width: Trace width for current is about heat. Trace width for impedance is about signal quality. The two give different numbers.
+
+Not the same as Return path: Impedance needs a ground plane under the trace. The return path is the current that flows in that plane.
+
+## Copper pours and power
+
+Large copper areas, ground, and getting clean power to every chip.
+
+### Copper pour
+
+Also called: pour, copper fill, polygon pour, zone, ground fill.
+
+A copper pour fills all the free space of a layer with copper and ties it to one net. That net is almost always ground. The pour flows around every trace and pad of other nets and leaves a gap around them. Pads of its own net join it directly. A pour gives every part a short way to ground, carries heat away, and shields signals from noise.
+
+How the person may say it:
+- Fill the bottom layer with a copper pour connected to GND.
+- Pour GND on the top and the bottom layer, and join the two with vias.
+- Keep the pour 0.3 mm away from other nets and 0.5 mm from the edge of the board.
+- Show me the pour. Tell me if any piece of it is an island that is not connected to GND.
+
+```tsx
+export default () => (
+  <board width="24mm" height="16mm">
+    <pinheader name="J1" pinCount={2} pitch="2.54mm" pcbX={-8} pcbY={0} pcbRotation={90} />
+    <resistor name="R1" resistance="1k" footprint="0805" pcbX={2} pcbY={3} />
+    <led name="LED1" color="red" footprint="0805" pcbX={2} pcbY={-3} />
+    <trace from="J1.pin1" to="R1.pin1" />
+    <trace from="R1.pin2" to="LED1.anode" />
+    <trace from="LED1.cathode" to="net.GND" />
+    <trace from="J1.pin2" to="net.GND" />
+    <copperpour layer="bottom" connectsTo="net.GND" />
+  </board>
+)
+```
+
+Code note: A <copperpour> needs a layer and connectsTo. A pour is drawn only when something on its layer belongs to its net: here the through-hole pin J1.pin2 reaches the bottom layer, and the autorouter drops a via to the pour for the LED. With only surface-mount parts on top and no via, a bottom pour is left out. padMargin, traceMargin and boardEdgeMargin set the gaps. crosshatch draws a mesh in place of solid copper.
+
+At the factory: A solid pour on both sides keeps the copper balanced, so the board stays flat when it is heated. A piece of pour that is connected to nothing is called an island. Remove islands, or tie them to ground with a via.
+
+Not the same as Ground plane: A pour fills the space that is left over on a layer. A ground plane is a whole layer kept for ground, with nothing else on it.
+
+Not the same as Trace: A trace is a narrow path between two pins. A pour is a wide area that every pin of the net can join.
+
+Not the same as Keep-out: A pour puts copper everywhere it can. A keep-out is an area where no copper may go, and the pour stays out of it.
+
+### Ground plane
+
+Also called: GND plane, reference plane, power plane.
+
+A ground plane is a whole layer of the board that is solid copper connected to ground. Any part reaches ground with one short via straight down. Every signal trace on the layer next to it has ground right underneath, which keeps signals clean and quiet. On a four-layer board, one inner layer is the ground plane and the other often carries power. A ground plane works only while it stays whole: do not cut it up with traces.
+
+How the person may say it:
+- Use a 4-layer board. Make inner layer 1 a solid ground plane and inner layer 2 the 3.3 V plane.
+- Keep the bottom layer as a ground plane. Route everything on top, and use the bottom only for short jumps.
+- Connect every ground pad to the ground plane with its own via, right next to the pad.
+- Do not route any trace on the ground plane layer. Tell me if you cannot avoid it.
+
+```tsx
+export default () => (
+  <board width="24mm" height="16mm" layers={4}>
+    <chip name="U1" footprint="soic8" pcbX={0} pcbY={0} pinLabels={{ pin4: "GND", pin8: "VCC" }} />
+    <resistor name="R1" resistance="10k" footprint="0603" pcbX={-7} pcbY={3} />
+    <via
+      pcbX={-3.5} pcbY={-4}
+      fromLayer="top" toLayer="bottom"
+      holeDiameter="0.3mm" outerDiameter="0.6mm"
+      connectsTo="net.GND"
+    />
+    <trace from="U1.pin1" to="R1.pin2" />
+    <trace from="R1.pin1" to="net.GND" />
+    <trace from="U1.GND" to="net.GND" />
+    <copperpour layer="inner1" connectsTo="net.GND" />
+  </board>
+)
+```
+
+Code note: A ground plane is a <copperpour> on an inner layer. The layers of a four-layer board are top, inner1, inner2 and bottom. A via from top to bottom passes through all four, and it joins the plane because both are on the GND net. Without a via or a through-hole pin on that net, the inner pour is not drawn.
+
+At the factory: Four layers cost only a little more than two at most factories, and a ground plane removes most noise problems before they start. For a board with radio, USB or a fast processor, four layers are the normal choice.
+
+Not the same as Copper pour: A ground plane is a full layer that you plan for and protect. A pour is copper that fills whatever space the traces leave.
+
+Not the same as Return path: The ground plane is the copper. The return path is the current that flows in it, under each signal trace.
+
+### Thermal relief
+
+Also called: thermal spokes, thermal pad connection, spoke connection.
+
+A thermal relief joins a pad to a copper pour through a few thin spokes, with gaps between them. A pad that is joined solidly loses its heat into the big copper area, so the solder will not melt properly. With spokes, the heat stays in the pad long enough to make a good joint. The spokes still carry the current. Thermal reliefs matter most for through-hole pins and for anything you solder by hand.
+
+How the person may say it:
+- Use thermal reliefs where pads join the GND pour.
+- Use thermal reliefs everywhere, but join the pads of Q1 solidly: it carries 5 A and needs the copper for cooling.
+- Is J1 pin 2 joined to the pour solidly or with spokes?
+
+```tsx
+export default () => (
+  <board width="24mm" height="16mm">
+    <resistor name="R1" resistance="1k" footprint="1206" pcbX={-6} pcbY={0} />
+    <pinheader name="J1" pinCount={2} pitch="2.54mm" pcbX={6} pcbY={0} />
+    <trace from="R1.pin1" to="net.GND" />
+    <trace from="J1.pin1" to="net.GND" />
+    <copperpour layer="top" connectsTo="net.GND" useThermalReliefs />
+  </board>
+)
+```
+
+Code note: useThermalReliefs on a <copperpour> joins every pad of its net with spokes. Without it, pads join the pour solidly.
+
+At the factory: Small parts with one pad on a pour and one pad on a thin trace heat up unevenly in the oven, and one end can lift. Thermal reliefs on both pads keep the two ends alike.
+
+Not the same as Exposed pad and thermal vias: A thermal relief keeps heat in a pad, to make soldering easy. An exposed pad with thermal vias moves heat out of a chip, to keep it cool.
+
+Not the same as Teardrop: A thermal relief removes copper around a pad. A teardrop adds copper where a trace meets a pad.
+
+### Via stitching
+
+Also called: stitching vias, ground stitching, via fence.
+
+Via stitching is a pattern of many vias that join the ground copper on one layer to the ground copper on another. A pour that is joined in only one place is a poor ground: current has a long way to go. Stitching every few millimetres makes the two layers act as one. A row of stitching vias along the edge of the board, or around a noisy area, also works as a shield.
+
+How the person may say it:
+- Stitch the top and bottom GND pours together with vias about every 5 mm.
+- Add a row of ground vias along the edge of the board, 3 mm apart.
+- Put ground vias on both sides of the antenna trace, 2 mm apart, along its whole length.
+
+```tsx
+export default () => (
+  <board width="24mm" height="16mm" enableViaStitching viaStitchPitch="4mm">
+    <resistor name="R1" resistance="1k" footprint="0805" pcbX={0} pcbY={0} />
+    <trace from="R1.pin1" to="net.GND" />
+    <copperpour layer="top" connectsTo="net.GND" />
+    <copperpour layer="bottom" connectsTo="net.GND" />
+  </board>
+)
+```
+
+Code note: enableViaStitching on <board> adds vias wherever pours of the same net lie over each other. viaStitchPitch is the distance between them, centre to centre. Set it: without it the vias come about 1 mm apart, and this small board gets over 300 of them.
+
+At the factory: Vias cost almost nothing, but each one is a drilled hole. A stitch every 3 to 5 mm is plenty for most boards.
+
+Not the same as Via: One via joins one trace to another layer. Stitching is a whole pattern of vias that joins two areas of copper.
+
+Not the same as Exposed pad and thermal vias: Stitching vias spread ground across the board. Thermal vias sit under one chip and carry its heat away.
+
+### Decoupling capacitor
+
+Also called: bypass capacitor, decap, 100 nF capacitor, bulk capacitor.
+
+A decoupling capacitor is a small capacitor, usually 100 nF, connected between a power pin of a chip and ground. A chip takes current in short, sharp bursts. The capacitor is a tiny store of charge right at the pin, so the burst does not have to travel down a long trace. It only works when it is close: every millimetre of trace between capacitor and pin makes it slower. The rule is one capacitor for each power pin, as close to that pin as it will go.
+
+How the person may say it:
+- Give every power pin of U1 its own 100 nF capacitor, on the same side of the board, as close to the pin as the rules allow.
+- Route power so it reaches the capacitor first and the pin after it.
+- Give the ground pad of each decoupling capacitor its own via to the ground plane, right at the pad.
+- List every decoupling capacitor with the pin it serves and the length of the trace between them.
+
+```tsx
+export default () => (
+  <board width="20mm" height="14mm">
+    <chip
+      name="U1" footprint="soic8" pcbX={3} pcbY={0}
+      pinLabels={{ pin1: "VDD", pin2: "GND" }}
+    />
+    <capacitor
+      name="C1" capacitance="100nF" footprint="0402"
+      pcbX={-1} pcbY={1.27} pcbRotation={270}
+      decouplingFor="U1.VDD" decouplingTo="U1.GND"
+      maxDecouplingTraceLength="2mm"
+    />
+  </board>
+)
+```
+
+Code note: decouplingFor and decouplingTo on a <capacitor> connect it between a power pin and ground, with no <trace> needed. tscircuit also checks the distance. A capacitor between a power pin and ground may be at most 1 mm from the pins it connects to, measured from pad centre to pad centre. If it is further, the build stops with an error. maxDecouplingTraceLength changes that limit: next to a SOIC pin even an 0402 part is about 1.9 mm away, so this example allows 2 mm.
+
+Good to know: Besides the 100 nF capacitors at the pins, a board usually has one or two larger capacitors, 4.7 to 10 µF, where power enters. These are called bulk capacitors. They do not need to sit as close.
+
+Not the same as Placement: Placement is where every part goes. For a decoupling capacitor the place is the whole point: next to its pin.
+
+### Return path
+
+Also called: return current, current loop, ground return.
+
+Current always flows in a loop. What goes out along a signal trace comes back through ground: that is the return path. For a fast signal, the return current flows in the ground copper directly under the trace, following it like a shadow. If a gap or a slot in the ground copper lies across the way, the return current has to go around it. The big loop that this makes sends out noise and picks up noise. Keep solid ground under every fast trace, from one end to the other.
+
+How the person may say it:
+- Keep solid ground copper under the whole length of the clock trace. Nothing may cut the ground under it.
+- Do not route any trace across the ground layer under U1. Go around it on the top layer.
+- Where USB_DP changes layer, put a ground via right beside its via, so the return current can change layer too.
+- Look at the ground layer and list every signal trace that passes over a gap in it.
+
+Good to know: Slow signals such as buttons, LEDs and I2C are forgiving. The rule matters for clocks, USB, radio and switching power supplies.
+
+Not the same as Ground plane: The ground plane is the copper. The return path is the route the current takes through it.
+
+Not the same as Controlled impedance: Both need solid ground under the trace. Impedance is about the shape of the trace. The return path is about the ground staying whole.
+
+## Placement
+
+Where parts go on the board, and how to say it.
+
+### Placement
+
+Also called: component placement, floor plan, layout, positioning.
+
+Placement is deciding where each part sits on the board. It comes before routing, and it decides how well routing will go. Start with the parts whose place is fixed: connectors on the edge, mounting holes, buttons, anything that must line up with a case. Then put the main chip in the middle and the parts that serve it close around it. Arrange the rest in zones that follow the signal: where it comes in, where it is processed, where it goes out.
+
+How the person may say it:
+- Place the USB connector on the left edge, centred, with its opening facing out. Do not move it after that.
+- Place U1 at x = 0, y = 2 mm, measured from the centre of the board.
+- Place C1 within 2 mm of pin 8 of U1, and R3 right next to LED1.
+- Place all the parts but do not route yet. Show me the board and wait for my answer.
+
+```tsx
+export default () => (
+  <board width="30mm" height="20mm">
+    <pinheader name="J1" pinCount={4} pitch="2.54mm" pcbX={-12} pcbY={0} pcbRotation={90} />
+    <chip name="U1" footprint="soic8" pcbX={0} pcbY={0} />
+    <capacitor name="C1" capacitance="100nF" footprint="0603" pcbX={0} pcbY={5} />
+    <led name="LED1" color="green" footprint="0603" pcbX={10} pcbY={4} />
+    <resistor name="R1" resistance="330" footprint="0603" pcbX={10} pcbY={-4} />
+  </board>
+)
+```
+
+Code note: pcbX and pcbY give the centre of a part in millimetres, measured from the centre of the board. +X is right and +Y is up. A part with no pcbX and pcbY is placed for you: tscircuit puts it next to the pin it is connected to.
+
+Good to know: A good placement shows in the ratsnest: the lines are short and few of them cross. If routing fails, move parts before you change any rule.
+
+Not the same as Autorouter: Placement puts the parts down. The autorouter then draws the traces between them. A bad placement cannot be fixed by routing.
+
+Not the same as Origin and coordinates: Placement is the decision. Coordinates are the numbers you use to write it down.
+
+### Rotation
+
+Also called: orientation, angle, pcbRotation.
+
+Rotation is the angle by which a part is turned on the board. It is given in degrees and counted counter-clockwise, seen from the top side. At 0° the part sits the way its footprint was drawn: for most chips that puts pin 1 at the top left. Rotation is used to point a connector outward, to bring a pin closer to what it connects to, and to make polarised parts all face the same way.
+
+How the person may say it:
+- Rotate U1 by 90° counter-clockwise.
+- Turn U1 so that pin 1 is at the bottom left.
+- Turn J1 so its opening faces the left edge of the board.
+- Give all the LEDs the same rotation, with the cathode toward the top of the board.
+
+```tsx
+export default () => (
+  <board width="40mm" height="14mm">
+    <chip name="U1" footprint="soic8" pcbX={-14} pcbY={0} />
+    <chip name="U2" footprint="soic8" pcbX={-4} pcbY={0} pcbRotation={90} />
+    <chip name="U3" footprint="soic8" pcbX={6} pcbY={0} pcbRotation={180} />
+    <chip name="U4" footprint="soic8" pcbX={15} pcbY={0} pcbRotation={270} />
+  </board>
+)
+```
+
+Code note: pcbRotation is in degrees and turns the part counter-clockwise. A two-pin part such as a resistor lies flat at 0, with pin 1 on the left. On a <group>, pcbRotation turns all the parts of the group together, around the centre of the group.
+
+Where pin 1 goes:
+
+| pcbRotation | Pin 1 of a chip |
+|---|---|
+| 0 | Top left |
+| 90 | Bottom left |
+| 180 | Bottom right |
+| 270 | Top right |
+
+For a part whose footprint has pin 1 at the top left, such as soic8. Seen from the top side.
+
+At the factory: The assembly machine has its own idea of 0° for each kind of part, and it does not always agree with the footprint. That is why a factory shows you a picture of the placed parts before it builds. Check the polarised parts in it: diodes, LEDs, chips and electrolytic capacitors.
+
+Not the same as Top side and bottom side: Rotation turns a part while it stays on the same side. Moving a part to the bottom side flips it over.
+
+Not the same as Pin 1 and polarity: Pin 1 is a mark on the part. Rotation decides which corner of the board that mark points to.
+
+### Group and subcircuit
+
+Also called: module, block, sub-circuit, reusable block.
+
+A group is a set of parts that belong together, such as a regulator with its capacitors, or a sensor with its pull-up resistors. Inside the group, each part has a position measured from the centre of the group. Move the group, and all its parts move with it. A subcircuit is a group that keeps its part names to itself: the same block can be used several times on one board without the names clashing.
+
+How the person may say it:
+- Put U2, C3, C4 and L1 in one group called power. Place them compactly, then place the group at the top left of the board.
+- Move the whole power group 5 mm to the right. Do not change anything inside it.
+- Make the LED driver a subcircuit in its own file, and use it 4 times in a row, 8 mm apart.
+
+```tsx
+export default () => (
+  <board width="30mm" height="16mm">
+    <group name="FILTER" pcbX={-8} pcbY={2}>
+      <resistor name="R1" resistance="1k" footprint="0603" pcbX={0} pcbY={2} />
+      <capacitor name="C1" capacitance="100nF" footprint="0603" pcbX={0} pcbY={-2} />
+      <trace from="R1.pin2" to="C1.pin2" />
+    </group>
+    <group name="DIVIDER" pcbX={8} pcbY={-2}>
+      <resistor name="R2" resistance="10k" footprint="0603" pcbX={0} pcbY={2} />
+      <resistor name="R3" resistance="10k" footprint="0603" pcbX={0} pcbY={-2} />
+      <trace from="R2.pin2" to="R3.pin2" />
+    </group>
+  </board>
+)
+```
+
+Code note: Inside a <group>, pcbX and pcbY are measured from the centre of the group, not from the centre of the board. Here R1 is at 0, 2 in a group at −8, 2, so it lands at −8, 4 on the board. In a <subcircuit> the names are local: two copies can each have their own R1.
+
+Good to know: In tscircuit a subcircuit is usually a small function in its own file. That file is the natural unit to ask an agent for: one block, built and checked on its own, then placed on the board.
+
+Not the same as Automatic layout: A group says which parts belong together. Automatic layout is one way to arrange the parts inside it.
+
+Not the same as Footprint: A footprint is the copper pattern of one part. A group is several parts placed together.
+
+### Automatic layout
+
+Also called: auto-placement, pack, flex, grid, pcbPack, pcbFlex, pcbGrid.
+
+Automatic layout arranges parts for you, so you do not have to give every position. There are three ways. Pack puts each part next to the pin it is connected to. Flex puts parts in one row or one column with an equal gap. Grid puts them in rows and columns. They are good for a first placement and for regular patterns such as a row of LEDs. For the few parts whose place really matters, give the position yourself.
+
+How the person may say it:
+- Do not give positions yet. Let the parts pack around U1, and show me the result.
+- Place R1 to R8 in one row, 1.5 mm apart, along the bottom edge.
+- Arrange the 12 LEDs in a grid of 4 columns and 3 rows, 5 mm from centre to centre.
+- Keep the positions the automatic layout chose, and write them into the code as pcbX and pcbY.
+
+```tsx
+export default () => (
+  <board width="40mm" height="20mm">
+    <group name="LEDS" pcbX={-10} pcbY={0} pcbGrid pcbGridCols={3} pcbGridGap="2mm">
+      <led name="LED1" color="red" footprint="0603" />
+      <led name="LED2" color="red" footprint="0603" />
+      <led name="LED3" color="red" footprint="0603" />
+      <led name="LED4" color="red" footprint="0603" />
+      <led name="LED5" color="red" footprint="0603" />
+      <led name="LED6" color="red" footprint="0603" />
+    </group>
+    <group name="RES" pcbX={10} pcbY={0} pcbFlex pcbFlexDirection="column" pcbGap="1.5mm">
+      <resistor name="R1" resistance="330" footprint="0603" />
+      <resistor name="R2" resistance="330" footprint="0603" />
+      <resistor name="R3" resistance="330" footprint="0603" />
+    </group>
+  </board>
+)
+```
+
+Code note: The layout props go on a <group>, and the group itself is placed with pcbX and pcbY. A grid fills row by row, starting at the top left. Packing is also what happens to any part that has no position: it is put beside the pin it connects to. Parts with no connections are packed in a column, which can run off a small board, so read the errors after building.
+
+Three ways to arrange a group:
+
+| Prop on the group | What it does | Its gap |
+|---|---|---|
+| pcbPack | Each part goes next to the pin it connects to | pcbPackGap |
+| pcbFlex | One row or one column: pcbFlexDirection="row" or "column" | pcbGap |
+| pcbGrid | Rows and columns: pcbGridCols={3} | pcbGridGap, or pcbGridRowGap and pcbGridColumnGap |
+
+A gap is the free space between two parts, not the distance between their centres.
+
+Not the same as Placement: Placement is the decision of where parts go. Automatic layout is a tool that makes part of that decision for you.
+
+Not the same as Autorouter: Automatic layout arranges the parts. The autorouter draws the traces.
+
+### Keep-out
+
+Also called: keepout zone, keep-out area, exclusion zone, antenna keep-out.
+
+A keep-out is an area you close off. Nothing may be routed through it, nothing may be placed in it, and copper pours stay out of it. The most common one is under an antenna: copper near an antenna spoils its range, so the datasheet of every radio module shows an area to keep clear, on every layer. Keep-outs are also used under a part that must not touch copper, around a mounting screw, and next to high voltage.
+
+How the person may say it:
+- Add a keep-out under the antenna of U1: 18 × 6 mm, on all layers. No copper, no traces and no parts.
+- Keep a circle of 3.5 mm radius around each mounting hole free of parts and traces.
+- Keep the area under the display free of parts taller than 2 mm. Traces are allowed there.
+- List everything that touches a keep-out.
+
+```tsx
+export default () => (
+  <board width="24mm" height="16mm">
+    <keepout shape="rect" pcbX={0} pcbY={5} width="12mm" height="4mm" />
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-9} pcbY={5} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={9} pcbY={5} />
+    <trace from="R1.pin2" to="R2.pin1" />
+    <trace from="R1.pin1" to="net.GND" />
+    <copperpour layer="top" connectsTo="net.GND" />
+  </board>
+)
+```
+
+Code note: A <keepout> is a rect with width and height, or a circle with radius. The trace goes around it, the pour leaves a hole for it, and a part placed inside it is an error. It applies to the top layer only unless you add layers={["top", "bottom"]}: with the top layer alone, the autorouter is free to pass underneath on the bottom. allowTraces and allowPlacements each let one kind of thing back in.
+
+At the factory: Take the size of an antenna keep-out from the datasheet of the module, not from a guess. Many modules are meant to hang over the edge of the board, so that the antenna has no board under it at all.
+
+Not the same as Clearance: Clearance is a small gap that every piece of copper keeps from its neighbours. A keep-out is one named area that you draw yourself.
+
+Not the same as Courtyard: A courtyard is the space one part needs for itself. A keep-out is an area that belongs to no part and stays empty.
+
+Not the same as Cutout and slot: A keep-out leaves the board in place and keeps things off it. A cutout removes the board material.
+
+## Rules and checks
+
+What a factory can make, and the mistakes a check should catch.
+
+### Design rule check
+
+Also called: DRC, rule check, board check, design check.
+
+A design rule check, or DRC, is a program that measures the whole board and compares it with the rules. It looks for copper that is too close together, parts that overlap, parts that hang over the edge, and connections that were never routed. Each problem it finds is reported as an error, with the place and the numbers. In tscircuit the check runs every time the board is built. A board is not ready for the factory until the check comes back empty.
+
+How the person may say it:
+- Build the board and show me every error and warning, word for word. Do not summarise them.
+- Fix each error by moving parts or traces. Do not switch a check off and do not loosen a rule to make an error go away.
+- Fix the placement errors first and build again. Only then look at the routing errors.
+- Run the full check one last time and confirm that there are zero errors.
+
+```tsx
+export default () => (
+  <board width="16mm" height="10mm">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-7.4} pcbY={0} />
+    <resistor name="R2" resistance="1k" footprint="0805" pcbX={3} pcbY={0} />
+    <resistor name="R3" resistance="1k" footprint="0805" pcbX={5} pcbY={0.6} />
+    <trace from="R1.pin2" to="R2.pin1" />
+  </board>
+)
+```
+
+```sh
+# build the board: every error is printed, and the exit code is 1 if there is one
+tsci build index.circuit.tsx
+
+# look at one kind of problem at a time
+tsci check placement index.circuit.tsx
+tsci check shorts index.circuit.tsx
+```
+
+Code note: This board is wrong on purpose. Building it prints: "SMT pad R1.pin1 violates copper-to-board-edge clearance (measured 0.000mm, required 0.200mm)", "Component R1 extends outside board boundaries by 0.88mm. Try moving it 0.88mm right to fit within the board edge." and "R2 overlaps R3: 1 footprint overlap, 1 pad clearance violation, 1 courtyard conflict. Move the components apart." Then it says that autorouting was skipped: tscircuit does not route a board that has placement errors, so the trace is reported as missing too.
+
+Good to know: One real mistake often causes several errors. Here, three placement errors stop the routing, and that adds three more. Fix the first error in the list, build again, and see what is left.
+
+Not the same as Design rules: The design rules are the numbers. The design rule check is the program that measures the board against them.
+
+Not the same as Circuit JSON: The check produces the errors. Circuit JSON is the file they are written into, together with the rest of the board.
+
+### Design rules
+
+Also called: fab rules, manufacturing limits, capabilities, minimum trace and space, DFM rules.
+
+Design rules are a short list of limits: the thinnest trace, the smallest gap, the smallest hole, and so on. They come from the factory, because each factory can only make things down to a certain size. A board that breaks a rule may be refused, or made badly. Choose the factory first, read its limits, and then design with some margin above them: a board drawn exactly at the limit is the hardest and the most expensive to make.
+
+How the person may say it:
+- Design rules for this board: traces 0.2 mm or wider, clearance 0.2 mm, vias 0.6 / 0.3 mm, copper 0.3 mm from the board edge.
+- This board will be made by JLCPCB, standard 2-layer service. Ask me for its limits if you are not sure of them. Do not guess.
+- Tell me the thinnest trace, the smallest gap and the smallest via on the board, and compare each with the rule.
+- You may go down to 0.15 mm traces only between the pads of U1. Everywhere else the normal rules apply.
+
+```tsx
+export default () => (
+  <board width="16mm" height="10mm" minTraceWidth="0.2mm" minBoardEdgeClearance="0.3mm">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-5} pcbY={0} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={5} pcbY={0} />
+    <trace from="R1.pin2" to="R2.pin1" />
+  </board>
+)
+```
+
+Code note: minTraceWidth on <board> is the width the autorouter gives a trace that has no width of its own: here 0.2 mm, where it would be 0.15 mm. minBoardEdgeClearance is checked: a pad nearer to the edge is reported as an error. With no rules given, tscircuit checks against its own: 0.2 mm from copper to the board edge and 0.1 mm between pads. Be careful: a thickness you write on a <trace> is used as it is, even when it is thinner than minTraceWidth, and no error is reported. <board> also takes fabricatorPreset, such as "jlcpcb_standard". In the version this page was built with, it adds the layer stackup of that service to the circuit JSON and leaves the checks as they are.
+
+Typical rules for a simple two-layer board:
+
+| Rule | Common low-cost limit | Safe default |
+|---|---|---|
+| Trace width | about 0.13 mm | 0.2 mm |
+| Clearance between copper | about 0.13 mm | 0.2 mm |
+| Via hole | about 0.3 mm | 0.3 mm |
+| Via copper diameter | about 0.5 mm | 0.6 mm |
+| Annular ring | about 0.13 mm | 0.15 mm |
+| Copper to board edge | about 0.2 mm | 0.3 mm |
+| Silkscreen text height | about 0.8 mm | 1.0 mm |
+
+The limits are rough numbers for popular prototype services. They differ from factory to factory and change over time, so read the capabilities page of your factory before you go below the safe default.
+
+At the factory: Thicker copper needs wider traces and gaps. So do the inner layers of some services. Read the limits for the exact service you will order, not only for the factory.
+
+Not the same as Design rule check: The rules are the limits you set. The design rule check is the test that finds where the board breaks them.
+
+Not the same as Clearance: Clearance is one of the design rules. The design rules are the whole list.
+
+### Short circuit and open circuit
+
+Also called: short, open, unrouted, missing connection, bridge, broken trace.
+
+A short circuit is copper that joins two nets that should be separate. An open circuit is the opposite: two pins that should be joined, with no copper between them. Both are found by comparing the copper on the board with the list of nets. A short between power and ground can burn a trace or a part. An open usually just means the board does nothing. Neither should ever reach the factory, because both are found by a check that takes a second.
+
+How the person may say it:
+- Build the board and tell me how many shorts and how many unrouted connections it has. I expect zero of each.
+- There is a short between V3_3 and GND. Find the exact place where the two touch and show me the coordinates.
+- 2 connections are still open. Route them, or tell me why they cannot be routed.
+
+```tsx
+export default () => (
+  <board width="20mm" height="14mm">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-6} pcbY={0} />
+    <resistor name="R2" resistance="1k" footprint="0603" pcbX={6} pcbY={0} />
+    <resistor name="R3" resistance="1k" footprint="0603" pcbX={0} pcbY={-4} pcbRotation={90} />
+    <resistor name="R4" resistance="1k" footprint="0603" pcbX={0} pcbY={4} pcbRotation={90} />
+    <trace from="R1.pin2" to="R2.pin1" pcbStraightLine />
+    <trace from="R3.pin2" to="R4.pin1" pcbStraightLine />
+  </board>
+)
+```
+
+```sh
+tsci check shorts index.circuit.tsx
+```
+
+Code note: These two traces are forced to be straight lines, so they cross on the same layer. The build reports the short as pcb_trace_error: "PCB trace R1.pin2 to R2.pin1 overlaps with R3.pin2 to R4.pin1 (accidental contact)". An open is reported as pcb_trace_missing_error: "Trace [R1.pin2 to R2.pin1] is not connected (it has no PCB trace)". The autorouter does not make shorts by itself. They come from routes fixed by hand, and from parts placed on top of each other.
+
+At the factory: Factories test bare boards for shorts and opens, but only against your own files. If the files say two nets are joined, the factory will make them joined.
+
+Not the same as Solder bridge and mask dam: A short circuit is in the design: the copper itself is wrong. A solder bridge happens during assembly, on a board that was designed correctly.
+
+Not the same as Ratsnest: An open circuit is a connection that is missing from the finished board. The ratsnest shows the connections that are still to be routed while you work.
+
+### Solder bridge and mask dam
+
+Also called: bridging, solder short, mask web, solder mask sliver, mask bridge.
+
+A solder bridge is a blob of solder that joins two pins which should be separate. It happens during soldering, mostly on chips whose pins are close together. A mask dam is the thin strip of solder mask between two neighbouring pads. Solder does not stick to mask, so the dam keeps the solder of each pad on its own pad. When pads are too close, the strip becomes too thin to make, the factory leaves it out, and bridges become likely.
+
+How the person may say it:
+- Keep a strip of solder mask between every pair of neighbouring pads. Tell me where the gap is too small for one.
+- Do not use a pitch below 0.5 mm on this board, so that mask fits between the pads.
+- Keep vias at least 0.3 mm away from pads and cover them with mask, so they cannot pull solder across.
+
+At the factory: A mask dam usually needs to be about 0.1 mm wide, and the mask opening is a little larger than the pad on each side. So the copper gap between two pads must be about 0.2 mm or more for a dam to fit. The number depends on the factory and even on the colour of the mask: check it.
+
+Good to know: A bridge is repaired by dragging a clean, hot iron tip along the pins, with flux. It is much easier to prevent one than to find one under a chip with no legs.
+
+Not the same as Short circuit and open circuit: A solder bridge is made in assembly, by solder. A short circuit is drawn into the design, in copper.
+
+Not the same as Solder mask: Solder mask is the coating on the whole board. A mask dam is the narrow piece of it that is left between two pads.
+
+Not the same as Tombstoning: A bridge joins two pins that should be apart. Tombstoning lifts one end of a part off its pad.
+
+### Tombstoning
+
+Also called: tombstone, Manhattan effect, drawbridging, lifted part.
+
+Tombstoning is a soldering fault of small two-pad parts. In the oven, the solder on one pad melts a moment before the other. Liquid solder pulls, so it drags the part upright onto that pad, and the other end is left in the air. The cause is almost always uneven heat: one pad is joined to a lot of copper, which heats slowly, and the other to a thin trace, which heats fast. Parts of size 0402 and smaller are the most likely to do it.
+
+How the person may say it:
+- For every 0402 and 0603 part, give both pads the same amount of copper: traces of the same width on each side.
+- Where a pad of a small part sits in a copper pour, connect it with a thermal relief, not with solid copper.
+- List every small part that has one pad in a pour or on a wide trace and the other on a thin trace.
+
+At the factory: Use the pad sizes that the footprint recommends. Pads that are too long give the solder more leverage to lift the part.
+
+Not the same as Thermal relief: Tombstoning is the fault. A thermal relief is one way to prevent it: it stops a big copper area from keeping one pad cold.
+
+Not the same as Solder bridge and mask dam: Tombstoning leaves a pin with no connection. A solder bridge makes a connection that should not exist.
+
+### Circuit JSON
+
+Also called: circuit.json, build output, soup.
+
+Circuit JSON is what tscircuit produces when it builds your code. It is one long list. Each item describes one thing: a part and its value, where that part sits on the board, a pad, a trace with every corner of its path, a via, the board itself. Every problem the checks find is an item in the same list. All the other outputs are made from this file: the PCB view, the schematic and the Gerber files. It matters to an agent for a simple reason: an agent cannot see the picture, but it can read this list and work with exact numbers.
+
+How the person may say it:
+- Build the board and read the circuit JSON. List every item whose type ends in _error, with its message.
+- From the circuit JSON, give me a table of every part with its centre, its rotation and its layer.
+- From the circuit JSON, list every pcb_trace with its layer, its width and its number of vias.
+- After moving C1, show me its old and new position from the circuit JSON.
+
+```sh
+# build: writes dist/index/circuit.json, and dist/index/errors.json if there are errors
+tsci build index.circuit.tsx
+
+# or write the circuit JSON to a file you name
+tsci export index.circuit.tsx -f circuit-json -o board.circuit.json
+```
+
+Some of the items in the list:
+
+| Type | What it describes |
+|---|---|
+| source_component | A part: its name and its value |
+| pcb_component | Where that part is on the board: centre and layer |
+| pcb_smtpad, pcb_plated_hole | One pad or one plated hole, with its position and size |
+| pcb_trace | One trace: every point of its route, with width and layer |
+| pcb_via | One via: position, hole and copper diameter, layers |
+| pcb_board | The board: size, thickness, number of layers |
+| anything ending in _error | A problem that a check found, with a message |
+
+There are also items ending in _warning. They do not stop a build, but read them: a pin with no trace is reported that way.
+
+Good to know: The file is large, even for a small board. Ask the agent to search it for what it needs, such as all the errors or one part, and not to read it from top to bottom.
+
+Not the same as Gerber files: Circuit JSON is for you and the agent: it knows parts, nets and errors. Gerber files are for the factory: they hold only shapes to be made in copper, mask and ink.
+
+Not the same as Design rule check: The design rule check finds the problems. Circuit JSON is where they are written down.
+
+## Making the board
+
+Files, soldering and assembly: turning the design into a real board.
+
+### Gerber files
+
+Also called: gerbers, fabrication files, manufacturing files, RS-274X, drill file, Excellon.
+
+Gerber files are what you send to a factory to have a board made. Each file is a flat picture of one layer: the copper of the top side, the copper of the bottom side, the solder mask, the silkscreen, the solder paste and the outline of the board. One more file, the drill file, lists every hole with its position and size. The files are packed in one zip. They hold only shapes: a Gerber file does not know what a net or a part is.
+
+How the person may say it:
+- Export the Gerber files of index.circuit.tsx and tell me the names of the files in the zip.
+- Before you export, build the board and show me every error and warning. Export only if there are none.
+- Open the zip and check that it has a copper file for each of the 2 layers, an outline file and a drill file.
+
+```sh
+# writes index.circuit-gerbers.zip next to the file
+tsci export index.circuit.tsx -f gerbers
+
+# a picture of the board, to look at before you order
+tsci export index.circuit.tsx -f pcb-svg
+```
+
+The files in the zip:
+
+| File | What it holds |
+|---|---|
+| F_Cu.gbr, B_Cu.gbr | Copper of the top and of the bottom layer |
+| F_Mask.gbr, B_Mask.gbr | Openings in the solder mask |
+| F_SilkScreen.gbr, B_SilkScreen.gbr | Silkscreen ink |
+| F_Paste.gbr, B_Paste.gbr | Openings in the solder paste stencil |
+| Edge_Cuts.gbr | The outline of the board |
+| drill-L1-L2.drl | Every drilled hole. Only there if the board has holes |
+| bom.csv | The bill of materials |
+| pick_and_place.csv | The position of every part |
+
+These are the names tscircuit writes. F means front, the top side. B means back, the bottom side.
+
+At the factory: Always look at the exported files in a Gerber viewer before you pay. Most factories show a preview when you upload the zip. Check the outline, the holes and that the text reads the right way round.
+
+Not the same as Circuit JSON: Circuit JSON is the whole design: parts, nets, traces. Gerber files are only the finished shapes, made from it for the factory.
+
+Not the same as Pick-and-place file: Gerber files are for making the bare board. The pick-and-place file is for putting the parts on it.
+
+### Bill of materials
+
+Also called: BOM, parts list, bom.csv.
+
+The bill of materials, or BOM, is the list of all the parts that go on the board. Each line gives the reference designators, the value, the footprint and a part number that someone can order. An assembly factory needs it together with the pick-and-place file. A value alone is not enough: "100 nF" matches thousands of parts. An exact part number from the supplier removes the guess. A part marked "do not place" keeps its pads on the board but is left out of the list.
+
+How the person may say it:
+- Use JLCPCB part C25804 for R1.
+- For every part without a part number, suggest one that JLCPCB has in stock as a basic part, and wait for my answer.
+- Mark R7 as do not place. Keep its pads on the board.
+- Show me the BOM as a table: designators, value, footprint, part number and quantity.
+
+```tsx
+export default () => (
+  <board width="24mm" height="12mm">
+    <resistor
+      name="R1" resistance="10k" footprint="0603" pcbX={-7} pcbY={0}
+      supplierPartNumbers={{ jlcpcb: ["C25804"] }}
+    />
+    <capacitor
+      name="C1" capacitance="100nF" footprint="0603" pcbX={0} pcbY={0}
+      manufacturerPartNumber="CL10B104KB8NNNC"
+    />
+    <resistor name="R2" resistance="0" footprint="0603" pcbX={7} pcbY={0} doNotPlace />
+  </board>
+)
+```
+
+Code note: supplierPartNumbers names the part at one supplier. manufacturerPartNumber names it at its maker. doNotPlace keeps the pads on the board and takes the part out of bom.csv and pick_and_place.csv. When a part has no number at all, tscircuit can look for a matching part by itself, so read the numbers in the BOM before you order.
+
+The columns of bom.csv:
+
+| Column | Example | Meaning |
+|---|---|---|
+| Designator | R1 | The name of the part on the board |
+| Comment | 10k | The value, or the manufacturer part number if you gave one |
+| Value | 10k | The value |
+| Footprint | res0603 | The footprint |
+| JLCPCB Part # | C25804 | The number to order by |
+
+As tscircuit writes it into the Gerber zip. The column names follow the template of JLCPCB.
+
+At the factory: Assembly services keep a list of common parts that they always have loaded, often called basic parts. Choosing from that list is cheaper and faster than asking for a part they must fetch.
+
+Not the same as Pick-and-place file: The BOM says what each part is. The pick-and-place file says where each part goes.
+
+Not the same as Reference designator: A reference designator names one part on the board. The BOM is the list of all of them.
+
+### Pick-and-place file
+
+Also called: centroid file, CPL, placement file, position file, XY file.
+
+A pick-and-place machine picks each part from a reel and puts it on the board. The pick-and-place file tells it where: one line for each part, with its reference designator, the X and Y position of its centre, its rotation, and whether it sits on the top or the bottom side. The factory needs this file and the bill of materials to assemble a board. It is made from the design, so you never write it by hand.
+
+How the person may say it:
+- Export the pick-and-place file and show me its first 10 lines.
+- List every polarised part with its rotation: diodes, LEDs, chips and electrolytic capacitors.
+- Keep every part on the top side, so the board needs only one pass through the machine.
+
+The columns of pick_and_place.csv:
+
+| Column | Example | Meaning |
+|---|---|---|
+| Designator | C1 | The name of the part |
+| Mid X | -2.860 | X of the centre of the part, in mm |
+| Mid Y | 0.000 | Y of the centre of the part, in mm |
+| Layer | top | The side the part is on: top or bottom |
+| Rotation | 180 | The angle in degrees, counter-clockwise |
+
+As tscircuit writes it into the Gerber zip. Positions are measured from the origin of the board, the same as pcbX and pcbY.
+
+At the factory: The most common assembly fault is a part turned the wrong way, because the 0° of the footprint and the 0° of the part on its reel do not agree. The factory shows a picture of the placed parts before it builds. Look at pin 1 of every chip and at every diode in it.
+
+Not the same as Bill of materials: The pick-and-place file says where each part goes. The BOM says what each part is.
+
+Not the same as Gerber files: Gerber files describe the bare board. The pick-and-place file describes the parts on it.
+
+### Solder paste and stencil
+
+Also called: paste, stencil, paste layer, solder stencil, aperture.
+
+Solder paste is a grey paste of tiny solder balls mixed with flux. A stencil is a thin sheet of steel with an opening over every surface-mount pad. The stencil is laid on the board, paste is wiped across it with a blade, and the stencil is lifted off. Each pad is left with a small block of paste, just the right amount to solder one pin. The paste layer of the design is the drawing of those openings.
+
+How the person may say it:
+- Make the paste openings of U1 0.05 mm smaller than the pads on every side.
+- Put no solder paste on the test points and on the pads of J3, which I solder by hand.
+- Split the paste on the centre pad of U2 into a grid of 4 small squares.
+
+```tsx
+export default () => (
+  <board width="20mm" height="12mm">
+    <chip
+      name="U1" pcbX={0} pcbY={0}
+      footprint={
+        <footprint>
+          <smtpad portHints={["pin1"]} shape="rect" width="2mm" height="2mm" pcbX={-4} pcbY={0} />
+          <smtpad portHints={["pin2"]} shape="rect" width="2mm" height="2mm" pcbX={0} pcbY={0}
+            solderPasteMargin="-0.3mm" />
+          <smtpad portHints={["pin3"]} shape="rect" width="2mm" height="2mm" pcbX={4} pcbY={0}
+            noSolderPaste />
+        </footprint>
+      }
+    />
+  </board>
+)
+```
+
+Code note: Every <smtpad> gets a paste opening by itself. solderPasteMargin changes its size on each side: a negative number makes the opening smaller than the pad. noSolderPaste leaves the pad without paste. defaultSolderPasteMargin on <board> sets the margin for all pads at once.
+
+At the factory: A stencil is about 0.1 to 0.15 mm thick, and that thickness sets how much paste every pad gets. Too much paste on fine pins joins them together. Too little gives a weak joint.
+
+Not the same as Solder mask: Solder mask is the coating that stays on the board and keeps solder off. Solder paste is the solder itself, put on the pads just before assembly.
+
+Not the same as Surface finish: The surface finish is a thin coating put on the pads when the board is made. Solder paste is added later, when the parts go on.
+
+### Reflow soldering
+
+Also called: reflow, reflow oven, SMT assembly, PCBA, hot plate soldering.
+
+Reflow soldering solders every surface-mount part of a board in one go. First, solder paste is printed on the pads. Second, the parts are placed in the paste, which is sticky enough to hold them. Third, the whole board is heated in an oven until the paste melts and turns into solid joints. Melted solder pulls small parts straight onto their pads. Hand soldering with an iron does one joint at a time, and suits through-hole parts and repairs. Wave soldering passes the underside of the board over a wave of melted solder, for boards with many through-hole parts.
+
+How the person may say it:
+- This board will be reflow soldered. Keep all surface-mount parts on the top side.
+- I will solder this board by hand. Use 0805 or larger parts and no packages with pads underneath.
+- The surface-mount parts are assembled by the factory. I solder the connectors myself, so leave room for an iron around them.
+
+At the factory: Parts on both sides need two passes through the oven and cost more. Parts with pads underneath, such as QFN and BGA, can only be soldered by reflow or with hot air.
+
+Not the same as Solder paste and stencil: Solder paste is the material. Reflow is the step that melts it.
+
+Not the same as Tombstoning: Reflow is the process. Tombstoning is one of the faults that can happen during it.
+
+### Surface finish
+
+Also called: pad finish, plating, HASL, ENIG, OSP, immersion gold.
+
+Bare copper turns dull in air within days, and solder does not stick to dull copper. So the factory covers every pad that the solder mask leaves open with a thin coating: the surface finish. You choose it when you order. HASL is a layer of solder and is the cheapest. ENIG is a very thin layer of gold over nickel: it is flat, which small and fine parts need. OSP is a thin clear film, flat and cheap, but it does not keep for long.
+
+How the person may say it:
+- The board will be ordered with lead-free HASL. Tell me if any part on it needs a flatter finish.
+- U1 is a QFN with 0.4 mm pitch. Note in the README that this board must be ordered with ENIG.
+
+Common surface finishes:
+
+| Finish | Surface | Cost | Use it for |
+|---|---|---|---|
+| HASL, with lead | A little uneven | Lowest | Hand soldering and large parts. Not allowed in products sold in many countries |
+| HASL, lead-free | A little uneven | Low | Most boards with parts of 0.65 mm pitch or wider |
+| ENIG (gold) | Flat | Higher | Fine pitch, QFN and BGA, edge contacts, boards stored for a long time |
+| OSP | Flat | Low | Boards assembled by machine soon after they are made |
+
+Prices and limits differ between factories. Check the order page of yours.
+
+At the factory: The finish is chosen on the order form, not in the design files. Write it down next to the design, so the next order uses the same one.
+
+Not the same as Solder mask: Solder mask covers the copper you do not solder to. The surface finish covers the copper you do solder to.
+
+Not the same as Copper weight: Copper weight is how thick the copper itself is. The surface finish is a far thinner coating on top of it.
+
+### Panel
+
+Also called: panelization, array, mouse bites, V-score, V-cut, breakaway tab, rails.
+
+A panel is one sheet that holds several boards. Factories and assembly machines handle one large sheet more easily than many small boards. The boards are held in the panel in one of two ways. With tab routing, a slot is cut around each board and small tabs are left to hold it. A row of small holes across each tab, called mouse bites, lets it snap off. With V-scoring, a V-shaped groove is cut along straight lines on both sides, and the boards break along it. Strips along the edges, called rails, give the machine something to hold.
+
+How the person may say it:
+- Put 4 of these boards on a panel, 2 × 2, with 2 mm between them and 5 mm rails on all sides.
+- Hold the boards with tabs and mouse bites. Put no tab next to the USB connector.
+- Keep parts and traces at least 1 mm from any edge that has a tab or a V-score.
+
+```tsx
+const Blinker = (props) => (
+  <board name={props.name} width="20mm" height="12mm">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-4} pcbY={0} />
+    <led name="LED1" color="red" footprint="0603" pcbX={4} pcbY={0} />
+    <trace from="R1.pin2" to="LED1.anode" />
+  </board>
+)
+
+export default () => (
+  <panel
+    layoutMode="grid" row={2} col={2}
+    boardGap="2mm" edgePadding="5mm"
+    panelizationMethod="tab-routing" mouseBites
+  >
+    <Blinker name="B1" />
+    <Blinker name="B2" />
+    <Blinker name="B3" />
+    <Blinker name="B4" />
+  </panel>
+)
+```
+
+Code note: A <panel> holds several <board> elements. layoutMode="grid" with row and col arranges them: without it every board needs its own position. boardGap is the space between boards and edgePadding is the width of the rails. panelizationMethod="tab-routing" cuts the slots and leaves the tabs, and mouseBites adds the row of holes. Without panelizationMethod the boards are only placed side by side.
+
+At the factory: Many factories make the panel for you if you ask, often for free. Build your own only when you need control over it. V-scores work only on straight lines that run right across the panel, so a board with a curved outline needs tabs.
+
+Not the same as Board outline: The board outline is the shape of one board. A panel is the sheet that several boards are made in.
+
+Not the same as Cutout and slot: A cutout is a hole that stays in the finished board. The slots of a panel are there only to let the boards come apart.
+
+### Fiducial
+
+Also called: fiducial mark, fiducial marker, optical target, alignment mark.
+
+A fiducial is a small round dot of bare copper, about 1 mm across, with no solder mask and no other copper around it. The camera of the assembly machine looks for these dots to learn exactly where the board is and how it is turned. Then it can place every part in the right spot. A board needs three, in three corners. Three dots that do not form a symmetric pattern also tell the machine if the board was put in the wrong way round.
+
+How the person may say it:
+- Add three fiducials, 1 mm across, in three corners of the board, at least 3 mm from the edge.
+- Keep copper, silkscreen and solder mask 1 mm away from each fiducial.
+- Add two more fiducials at opposite corners of U1.
+
+```tsx
+export default () => (
+  <board width="24mm" height="16mm">
+    <fiducial name="FID1" padDiameter="1mm" soldermaskPullback="1mm" pcbX={-10} pcbY={6} />
+    <fiducial name="FID2" padDiameter="1mm" soldermaskPullback="1mm" pcbX={10} pcbY={6} />
+    <fiducial name="FID3" padDiameter="1mm" soldermaskPullback="1mm" pcbX={-10} pcbY={-6} />
+    <chip name="U1" footprint="soic8" pcbX={0} pcbY={0} />
+  </board>
+)
+```
+
+Code note: padDiameter is the size of the copper dot. soldermaskPullback is how far the solder mask stays back from it on every side: 0.5 mm if you leave it out. A fiducial gets no solder paste.
+
+At the factory: If the factory builds the panel, it often adds its own fiducials on the rails. Ask before you spend board space on them. For a board you assemble by hand, fiducials are not needed.
+
+Not the same as Test point: A fiducial is for a camera and connects to nothing. A test point is for a probe and is part of a net.
+
+Not the same as Mounting hole: A fiducial is a dot of copper that a camera reads. A mounting hole is a hole that a screw goes through.
+
+Not the same as Via: A via is a plated hole that joins layers. A fiducial is flat copper with no hole.
+
+### Test point
+
+Also called: TP, test pad, probe point, probe pad.
+
+A test point is a small bare pad or pin connected to one net, made so that you can touch it with the probe of a meter or an oscilloscope. Without test points, the only places to measure are the pins of the parts, and those are often tiny or hidden under the part. Give a test point to every power rail, to ground, and to each signal you will want to see while the board is being tested. Each one gets a name in the silkscreen.
+
+How the person may say it:
+- Add test points for 3V3, 5V and GND, and for SDA, SCL, TX and RX. Name each one in silkscreen.
+- Make the test points round pads, 1.5 mm across, on the top side, at least 2.5 mm apart.
+- Make the GND test point a through-hole loop that a probe clip can hold.
+- Add a row of 5 pads, 2.54 mm apart, for SWDIO, SWCLK, RESET, 3V3 and GND.
+
+```tsx
+export default () => (
+  <board width="24mm" height="12mm">
+    <resistor name="R1" resistance="1k" footprint="0603" pcbX={-6} pcbY={0} />
+    <testpoint name="TP1" footprintVariant="pad" padShape="circle" padDiameter="1.5mm" pcbX={2} pcbY={0} />
+    <testpoint name="TP2" footprintVariant="through_hole" holeDiameter="1mm" pcbX={8} pcbY={0} />
+    <trace from="R1.pin2" to="TP1.pin1" />
+    <trace from="R1.pin1" to="TP2.pin1" />
+  </board>
+)
+```
+
+Code note: A <testpoint> has one pin, pin1. footprintVariant="pad" gives a flat pad: round with padDiameter, or padShape="rect" with width and height. footprintVariant="through_hole" gives a plated hole with holeDiameter. A test point is not a part to buy, so it does not appear in the bill of materials.
+
+At the factory: A flat pad costs nothing. A test pin that you solder in is a part that must be bought and placed. Factories that test boards with a bed of spring pins want all test points on one side, usually the bottom.
+
+Not the same as Fiducial: A test point is part of a net and is touched by a probe. A fiducial connects to nothing and is read by a camera.
+
+Not the same as Via: A via exists to change layer. An exposed via can serve as a test point, but a real test point is bigger and has a name.
+
+Not the same as Pad: A pad holds a part. A test point is a pad with no part on it, kept free for a probe.

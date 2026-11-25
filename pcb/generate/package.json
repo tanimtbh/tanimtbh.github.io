@@ -1,0 +1,15 @@
+{
+  "name": "pcb-terms-generate",
+  "private": true,
+  "type": "module",
+  "description": "Builds the pictures and data of the PCB terms site. tscircuit is only needed to run the code snippets.",
+  "scripts": {
+    "build": "node build.mjs",
+    "preview": "node preview.mjs"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.0",
+    "react": "^19.0.0",
+    "tscircuit": "0.0.3293"
+  }
+}

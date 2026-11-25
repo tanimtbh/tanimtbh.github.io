@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PCB Terms</title>
+  <meta name="description" content="A visual glossary of circuit board and routing terms, with example prompts for AI agents that write tscircuit.">
+  <script>
+    // Apply the saved theme before the page paints, so it never flashes.
+    try {
+      var saved = localStorage.getItem('theme');
+      if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+    } catch (e) {}
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect x='3' y='5' width='22' height='18' rx='3' fill='%232c7a55' stroke='%231c5239' stroke-width='1.4'/%3E%3Cpath d='M8 17h5l5-5h2' fill='none' stroke='%23f0a54a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='17' r='2.2' fill='%23ffe293'/%3E%3Ccircle cx='20' cy='12' r='2.2' fill='%23ffe293'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <button class="icon-btn" id="menu-btn" type="button" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">
+      <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <a class="topbar-title" href="#/">PCB Terms</a>
+  </header>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="#/">
+      <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
+        <rect x="3" y="5" width="22" height="18" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+        <path d="M8 17h5l5-5h2" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="8" cy="17" r="2" fill="var(--accent)"/>
+        <circle cx="20" cy="12" r="2" fill="var(--accent)"/>
+      </svg>
+      <span>
+        <strong>PCB Terms</strong>
+        <small>A visual glossary</small>
+      </span>
+    </a>
+
+    <div class="search">
+      <svg class="search-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input id="q" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
+             placeholder="Search, e.g. hole between layers" aria-label="Search terms" aria-controls="nav">
+      <kbd class="search-key" id="search-key" title="Press / to search">/</kbd>
+      <button class="search-clear" id="search-clear" type="button" aria-label="Clear search" hidden>
+        <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <nav id="nav" class="nav" aria-label="Terms"></nav>
+
+    <div class="sidebar-foot">
+      <button class="theme-btn" id="theme-btn" type="button"></button>
+    </div>
+  </aside>
+
+  <main id="main" tabindex="-1">
+    <p class="loading">Loading…</p>
+  </main>
+
+  <noscript><p class="noscript">This glossary needs JavaScript to show its pages.</p></noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
