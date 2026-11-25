@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tanim</title>
+  <meta name="description" content="Tanim architects and builds software for things that have to keep running: devices, gateways, cloud, and the AI harnesses and tools around them.">
+  <style>
+    :root {
+      --bg: #f6f4ef;
+      --ink: #1a1a18;
+      --muted: #6b6a64;
+      --line: #dedbd2;
+      --wire: #bdb9ac;
+      --accent: #c2410c;
+      --led: #2f9e44;
+      --glow: #f59f00;
+      --name: clamp(2.75rem, 12vw, 4.5rem);
+      --gutter: 1.75rem;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121211;
+        --ink: #ecebe6;
+        --muted: #8f8d86;
+        --line: #2a2a27;
+        --wire: #4b4a44;
+        --accent: #fb923c;
+        --led: #51cf66;
+        --glow: #ffd43b;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: clamp(3rem, 14vh, 9rem) 1.25rem 3rem;
+      overflow-x: hidden;
+    }
+
+    main {
+      position: relative;
+      width: 100%;
+      max-width: calc(34rem + var(--gutter));
+      align-self: flex-start;
+      padding-right: var(--gutter);
+    }
+
+    .mono {
+      font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    h1 {
+      font-size: var(--name);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .lede {
+      margin-top: 1.25rem;
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 26rem;
+      text-wrap: balance;
+    }
+
+    /* Section heading: label, then a wire that runs through a device to the bus. */
+    h2 {
+      display: flex;
+      align-items: center;
+      height: 60px;
+      margin: 2rem 0 -20px;
+      font-weight: 400;
+    }
+    h2 > span { transition: color 0.15s; }
+    .wire, .stub { height: 1px; background: var(--wire); }
+    .wire { flex: 1; margin-left: 0.75rem; }
+    .stub {
+      width: calc(var(--gutter) / 2);
+      margin-right: calc(var(--gutter) / -2);
+      transition: background 0.15s;
+    }
+
+    svg { fill: none; stroke: var(--ink); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+    svg * { vector-effect: non-scaling-stroke; }
+    svg .solid { fill: var(--bg); }
+    .dev { flex: none; width: 36px; height: 60px; }
+    .dev .w { stroke: var(--wire); stroke-width: 1; transition: stroke 0.15s; }
+
+    .glass { transition: fill 0.2s, filter 0.2s; }
+    .cog { transform-origin: 12px 10px; }
+    .teeth { stroke-width: 2.6; stroke-linecap: butt; }
+    .tip { fill: var(--ink); }
+    .arc { opacity: 0; }
+
+    /* A section switches on when the radar finds you near it. */
+    section.on h2 > span { color: var(--ink); }
+    section.on .stub { background: var(--ink); transition-delay: 0.3s; }
+    section.on .dev .w { stroke: var(--ink); transition-delay: 0.3s; }
+    section.on .glass {
+      fill: var(--glow);
+      filter: drop-shadow(0 0 5px var(--glow));
+      transition-delay: 0.35s;
+    }
+    section.on .cog { animation: spin 2.4s linear 0.35s infinite; }
+    section.on .arc { animation: ping 1.3s ease-out 0.35s infinite; }
+    section.on .arc.far { animation-delay: 0.55s; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes ping { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
+
+    /* The sky: a clear sheet over the whole page where the radar waves are drawn. Clicks pass through it. */
+    .sky {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* The rig: radar dish on top, bus wire down the side, ground at the bottom. */
+    .rig {
+      position: absolute;
+      top: calc(var(--name) / 2);
+      bottom: 0;
+      right: 0;
+      width: var(--gutter);
+      pointer-events: none;
+    }
+    .rig::before, .live {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: calc(50% - 0.5px);
+      width: 1px;
+    }
+    .rig::before { bottom: 11px; background: var(--wire); }
+    .live { height: 0; background: var(--ink); transition: height 0.35s ease; }
+    .cam { position: absolute; top: calc(var(--name) * -1); left: calc(50% - var(--name)); width: calc(var(--name) * 2); height: calc(var(--name) * 2); }
+    .bolt { fill: var(--ink); }
+    /* The dish's mount: a tilt gear on the dish, its small drive gear, and a pan gear seen from the side. */
+    .gear-teeth { stroke-width: 2.2; stroke-linecap: butt; }
+    .pan-teeth { stroke-width: 1; stroke-linecap: butt; }
+    /* The feed horn at the dish's focus: dark while a section is signalled, and it flashes when an echo comes home. */
+    .rec { transition: fill 0.15s, stroke 0.15s; }
+    .rig.tx .rec { fill: var(--ink); }
+    .rig.rx .rec { fill: var(--accent); stroke: var(--accent); transition: none; }
+    .gnd { position: absolute; bottom: 0; left: 0; width: 100%; height: 12px; stroke: var(--muted); }
+
+    ul { list-style: none; }
+
+    li a {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      column-gap: 1rem;
+      align-items: baseline;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--line);
+      color: inherit;
+      text-decoration: none;
+    }
+    li strong { font-weight: 600; transition: color 0.15s; }
+    li span { grid-column: 1; color: var(--muted); font-size: 0.95rem; }
+    li i {
+      grid-row: 1;
+      grid-column: 2;
+      font-style: normal;
+      color: var(--muted);
+      transition: transform 0.15s, color 0.15s;
+    }
+    li a:hover strong, li a:hover i { color: var(--accent); }
+    li a:hover i { transform: translateX(4px); }
+
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
+
+    .rows > * {
+      display: grid;
+      grid-template-columns: 5.5rem 1fr;
+      column-gap: 1rem;
+      align-items: baseline;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--line);
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+    .rows > * > span:last-child {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 0.6rem;
+      transition: color 0.15s;
+    }
+    .rows a:hover span:last-child { color: var(--accent); }
+    .rows small { color: var(--muted); font-size: 0.85rem; }
+
+    footer {
+      margin-top: 3rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+    }
+
+    #up { font-variant-numeric: tabular-nums; }
+
+    .led {
+      display: inline-block;
+      width: 0.5rem;
+      height: 0.5rem;
+      margin-right: 0.4rem;
+      border-radius: 50%;
+      background: var(--led);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { opacity: 0.3; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before { transition: none !important; }
+      .led, section.on .cog, section.on .arc { animation: none; }
+      section.on .arc { opacity: 1; }
+      .sky { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Tanim</h1>
+    <p class="lede">I architect and build software for things that have to keep running: devices, gateways, cloud, and the AI harnesses and tools around them.</p>
+
+    <section>
+      <h2 class="mono">
+        <span>skills</span><i class="wire"></i>
+        <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
+          <path class="w" d="M0 20H24"/>
+          <path class="glass" d="M9 13.4A6.2 6.2 0 1 1 15 13.4Z"/>
+          <path d="M10.5 13.4V10l1.5-2 1.5 2v3.4"/>
+          <rect class="solid" x="9.5" y="13.4" width="5" height="4" rx="0.5"/>
+          <path d="M12 17.4V20"/>
+        </svg>
+        <i class="stub"></i>
+      </h2>
+      <div class="rows">
+        <div>
+          <span class="mono">ai</span>
+          <span>Context engineering, AI harnesses, vector DBs, graph DBs</span>
+        </div>
+        <div>
+          <span class="mono">embedded</span>
+          <span>Firmware, IoT, STM32, ESP32, Raspberry Pi <small>deep experience</small></span>
+        </div>
+        <div>
+          <span class="mono">always</span>
+          <span>Solving engineering problems</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="mono">
+        <span>work</span><i class="wire"></i>
+        <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
+          <path class="w" d="M0 20H24"/>
+          <path d="M12 10V20"/>
+          <g class="cog">
+            <path class="teeth" d="M12 5.4V2.8M15.25 6.75l1.84-1.84M16.6 10h2.6M15.25 13.25l1.84 1.84M12 14.6v2.6M8.75 13.25l-1.84 1.84M7.4 10H4.8M8.75 6.75L6.91 4.91"/>
+            <circle class="solid" cx="12" cy="10" r="4.6"/>
+            <circle cx="12" cy="10" r="1.3"/>
+          </g>
+        </svg>
+        <i class="stub"></i>
+      </h2>
+      <ul>
+        <li>
+          <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">
+            <strong>Dispenser</strong>
+            <span>Device control that survives its own failures, built on the actor model.</span>
+            <i aria-hidden="true">→</i>
+          </a>
+        </li>
+        <li>
+          <a href="https://github.com/tanimtbh/nimai" target="_blank" rel="noopener">
+            <strong>Nimai</strong>
+            <span>A Telegram bot with an agent for a brain and a graph for a memory.</span>
+            <i aria-hidden="true">→</i>
+          </a>
+        </li>
+        <li>
+          <a href="https://knitnox.github.io/knitnox/" target="_blank" rel="noopener">
+            <strong>Knitnox</strong>
+            <span>A self-hosted AI harness for a small group, in one Go binary.</span>
+            <i aria-hidden="true">→</i>
+          </a>
+        </li>
+        <li>
+          <a href="cad/">
+            <strong>CAD Terms</strong>
+            <span>A visual glossary of CAD and 3D-printing words.</span>
+            <i aria-hidden="true">→</i>
+          </a>
+        </li>
+        <li>
+          <a href="pcb/">
+            <strong>PCB Terms</strong>
+            <span>A visual glossary of circuit board and routing words.</span>
+            <i aria-hidden="true">→</i>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="mono">
+        <span>contact</span><i class="wire"></i>
+        <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
+          <path class="w" d="M0 20H24"/>
+          <path d="M12 20V7M9 20l3-5 3 5"/>
+          <circle class="tip" cx="12" cy="5.5" r="1.5"/>
+          <path class="arc" d="M8 2.5a4.5 4.5 0 0 0 0 6M16 2.5a4.5 4.5 0 0 1 0 6"/>
+          <path class="arc far" d="M5 0.5a8 8 0 0 0 0 10M19 0.5a8 8 0 0 1 0 10"/>
+        </svg>
+        <i class="stub"></i>
+      </h2>
+      <div class="rows">
+        <a href="mailto:tanimtbh@gmail.com">
+          <span class="mono">email</span>
+          <span>tanimtbh@gmail.com</span>
+        </a>
+        <a href="https://wa.me/351920798728" target="_blank" rel="noopener">
+          <span class="mono">whatsapp</span>
+          <span>+351 920 798 728 <small>messages only, no calls</small></span>
+        </a>
+        <a href="https://www.linkedin.com/in/md-mizanur-rahman-4103311a2" target="_blank" rel="noopener">
+          <span class="mono">linkedin</span>
+          <span>in/md-mizanur-rahman-4103311a2</span>
+        </a>
+        <a href="https://github.com/tanimtbh" target="_blank" rel="noopener">
+          <span class="mono">github</span>
+          <span>tanimtbh</span>
+        </a>
+      </div>
+    </section>
+
+    <footer class="mono">
+      <span>Aveiro, Portugal</span>
+      <span><span class="led"></span>up <span id="up">00:00:00</span>, no crashes</span>
+    </footer>
+
+    <!-- Decorative rig: a radar dish on a two-axis motor mount. It tracks the pointer and signals the nearest section. -->
+    <div class="rig" aria-hidden="true">
+      <i class="live"></i>
+      <svg class="cam" viewBox="0 0 96 96">
+        <defs>
+          <clipPath id="pan-clip"><rect x="37.4" y="66" width="21.2" height="4.6"/></clipPath>
+        </defs>
+        <!-- pan axis: a motor, with its gear seen from the side -->
+        <rect class="solid" x="40" y="70.6" width="16" height="13" rx="2"/>
+        <path d="M40 74.6H56M45 78v3M48 78v3M51 78v3"/>
+        <rect class="solid" x="37" y="66" width="22" height="4.6" rx="1"/>
+        <g clip-path="url(#pan-clip)">
+          <path class="pan-teeth" d="M34 66v4.6M37 66v4.6M40 66v4.6M43 66v4.6M46 66v4.6M49 66v4.6M52 66v4.6M55 66v4.6M58 66v4.6M61 66v4.6"/>
+        </g>
+        <!-- tilt axis: a small motor on the arm drives the gear fixed to the dish -->
+        <rect class="solid" x="51" y="56" width="8.5" height="7.2" rx="1.6"/>
+        <path class="solid" d="M43.5 66 45.2 50a2.9 2.9 0 0 1 5.6 0L52.5 66z"/>
+        <!-- the radar dish, seen from the side: a boom, the dish, and struts that hold the feed horn at its focus.
+             It swings in front of the mount, so it is drawn over the arm and under its own gear. -->
+        <g class="head" transform="rotate(180 48 48)">
+          <rect class="solid" x="42" y="44.6" width="17" height="6.8" rx="2"/>
+          <path d="M67 33 79 48 67 63"/>
+          <path class="solid" d="M67 31Q46 48 67 65Z"/>
+          <circle class="solid rec" cx="79" cy="48" r="2"/>
+        </g>
+        <g class="tilt" transform="rotate(0 48 48)">
+          <path class="gear-teeth" d="M54.2 48h2M52.38 52.38l1.42 1.42M48 54.2v2M43.62 52.38l-1.42 1.42M41.8 48h-2M43.62 43.62l-1.42-1.42M48 41.8v-2M52.38 43.62l1.42-1.42"/>
+          <circle class="solid" cx="48" cy="48" r="6.2"/>
+          <path d="M48 44.4v1.8M48 49.8v1.8M44.4 48h1.8M49.8 48h1.8"/>
+        </g>
+        <g class="pinion" transform="rotate(0 48 59.6)">
+          <path class="gear-teeth" d="M49.76 57.17l.94-1.29M50.85 60.53l1.52.49M48 62.6v1.6M45.15 60.53l-1.52.49M46.24 57.17l-.94-1.29"/>
+          <circle class="solid" cx="48" cy="59.6" r="3"/>
+          <circle class="bolt" cx="48" cy="59.6" r="0.9"/>
+        </g>
+        <circle class="bolt" cx="48" cy="48" r="1.6"/>
+      </svg>
+      <svg class="gnd" viewBox="0 0 28 12">
+        <path d="M6 1H22M9.5 5.5h9M12.5 10h3"/>
+      </svg>
+    </div>
+  </main>
+
+  <!-- Decorative: the radar's waves, drawn over the whole page. -->
+  <canvas class="sky" aria-hidden="true"></canvas>
+
+  <script>
+    // Tiny uptime counter: how long this page has been running.
+    const up = document.getElementById('up');
+    const start = Date.now();
+    const pad = n => String(n).padStart(2, '0');
+    setInterval(() => {
+      const s = Math.floor((Date.now() - start) / 1000);
+      up.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+    }, 1000);
+
+    // The dish turns toward the pointer; the section it finds you near gets a signal.
+    const rig = document.querySelector('.rig');
+    const head = rig.querySelector('.head');
+    const tilt = rig.querySelector('.tilt');
+    const pinion = rig.querySelector('.pinion');
+    const panTeeth = rig.querySelector('.pan-teeth');
+    const live = rig.querySelector('.live');
+    const sections = [...document.querySelectorAll('section')];
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const touch = matchMedia('(hover: none)').matches;
+    const NEAR = 28; // px above or below a section that still counts as close
+    let point = null, anchor = null, angle = 180, goal = 180, raf = 0;
+    let turned = 0; // how far the dish has turned in total, in degrees: it drives the gears
+    let finger = false; // a finger is on the screen right now
+
+    function aim() {
+      const d = ((goal - angle + 540) % 360) - 180;
+      const step = calm || Math.abs(d) < 0.2 ? d : d * 0.15;
+      angle = step === d ? goal : angle + step;
+      turned += step;
+      head.setAttribute('transform', `rotate(${angle.toFixed(1)} 48 48)`);
+      // the big gear is fixed to the dish, the small one turns the other way and faster (8 teeth drive 5)
+      tilt.setAttribute('transform', `rotate(${turned.toFixed(1)} 48 48)`);
+      pinion.setAttribute('transform', `rotate(${(-turned * 1.6).toFixed(1)} 48 59.6)`);
+      // the pan gear is seen from the side, so its teeth slide past: one tooth every 3 units
+      panTeeth.setAttribute('transform', `translate(${((((turned * 0.1) % 3) + 3) % 3).toFixed(2)} 0)`);
+      raf = angle === goal ? 0 : requestAnimationFrame(aim);
+    }
+
+    function update() {
+      if (anchor) {
+        const r = anchor.getBoundingClientRect();
+        point = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      } else if (touch && !finger) {
+        // No finger on a touch screen: watch the middle of the screen instead.
+        point = { x: innerWidth / 2, y: innerHeight * 0.45 };
+      }
+
+      const box = rig.getBoundingClientRect();
+      const px = box.left + box.width / 2, py = box.top;
+      let hit = null;
+      if (point) {
+        goal = Math.atan2(point.y - py, point.x - px) * 180 / Math.PI;
+        let best = NEAR;
+        for (const s of sections) {
+          const r = s.getBoundingClientRect();
+          if (point.x < r.left - 120 || point.x > r.right + 120) continue;
+          const d = Math.max(r.top - point.y, point.y - r.bottom, 0);
+          if (d < best) { best = d; hit = s; }
+        }
+      } else {
+        goal = 180; // idle: look back at the name
+      }
+
+      for (const s of sections) s.classList.toggle('on', s === hit);
+      rig.classList.toggle('tx', !!hit);
+      if (hit) {
+        const h = hit.querySelector('h2').getBoundingClientRect();
+        live.style.height = `${h.top + h.height / 2 - py}px`;
+      } else {
+        live.style.height = '0';
+      }
+      if (!raf) raf = requestAnimationFrame(aim);
+    }
+
+    addEventListener('pointermove', e => {
+      if (e.pointerType === 'touch') return;
+      anchor = null;
+      point = { x: e.clientX, y: e.clientY };
+      update();
+    });
+    document.documentElement.addEventListener('pointerleave', () => {
+      if (!touch) { anchor = null; point = null; update(); }
+    });
+
+    // A finger is followed the same way as the mouse. Touch events are used for
+    // this, not pointer events, because they keep coming while the page scrolls.
+    function follow(e) {
+      const t = e.touches[0];
+      if (!t) return;
+      finger = true;
+      anchor = null;
+      point = { x: t.clientX, y: t.clientY };
+      update();
+    }
+    function release(e) {
+      if (e.touches.length) return;
+      finger = false;
+      point = null;
+      update();
+    }
+    addEventListener('touchstart', follow, { passive: true });
+    addEventListener('touchmove', follow, { passive: true });
+    addEventListener('touchend', release, { passive: true });
+    addEventListener('touchcancel', release, { passive: true });
+    addEventListener('focusin', e => { anchor = e.target; update(); });
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+
+    // Radar waves. The dish sends out a circular pulse again and again. When a
+    // pulse reaches the pointer, the pointer bounces it back as an echo: a small
+    // ripple at the pointer that fades at once. The echo then travels home unseen,
+    // and the dish's feed horn flashes when it arrives.
+    const SPEED = 300;  // how fast a wave travels, in px per second
+    const PERIOD = 0.9; // seconds between pulses
+    const BEAM = 0.55;  // half-width of the bright part of a pulse, in radians: where the dish points
+    const STRENGTH = 0.45; // how visible the outgoing waves are: 0 is invisible, 1 is strong
+    const ECHO = 18;   // how big the echo ripple gets at the pointer, in px
+    const BLINK = 0.4;  // seconds the echo ripple takes to grow and fade away
+    const sky = document.querySelector('.sky');
+    const pen = sky.getContext('2d');
+    let pulses = [], echoes = [], last = 0, since = PERIOD, heard = 0;
+    let ink = '', accent = '';
+
+    function colors() {
+      const css = getComputedStyle(document.documentElement);
+      ink = css.getPropertyValue('--ink').trim();
+      accent = css.getPropertyValue('--accent').trim();
+    }
+
+    function fit() {
+      const k = devicePixelRatio || 1;
+      sky.width = Math.round(sky.clientWidth * k);
+      sky.height = Math.round(sky.clientHeight * k);
+      pen.setTransform(k, 0, 0, k, 0, 0);
+    }
+
+    // One wave is a short train: a leading front and two fainter fronts behind it.
+    function wave(x, y, r, alpha, from = 0, to = Math.PI * 2) {
+      for (let i = 0; i < 3; i++) {
+        const rr = r - i * 7;
+        if (rr <= 0 || alpha <= 0) break;
+        pen.globalAlpha = alpha / (i + 1);
+        pen.beginPath();
+        pen.arc(x, y, rr, from, to);
+        pen.stroke();
+      }
+    }
+
+    function sweep(now) {
+      const dt = Math.min((now - last) / 1000, 0.05); // a tab that was hidden does not jump ahead
+      last = now;
+      const w = sky.clientWidth, h = sky.clientHeight;
+      pen.clearRect(0, 0, w, h);
+
+      // Waves live in page coordinates, so they scroll with the page like the dish does.
+      const sx = scrollX, sy = scrollY;
+      const box = rig.getBoundingClientRect();
+      const vx = box.left + box.width / 2, vy = box.top;
+      const ox = vx + sx, oy = vy + sy;
+      // a pulse dies when it has passed the farthest corner of the screen
+      const reach = Math.hypot(Math.max(vx, w - vx), Math.max(vy, h - vy));
+      // What the waves can bounce off: the mouse, a finger, or the focused link.
+      const target = point && (anchor || !touch || finger) ? { x: point.x + sx, y: point.y + sy } : null;
+
+      since += dt;
+      if (since >= PERIOD) {
+        since %= PERIOD;
+        pulses.push({ x: ox, y: oy, r: 0, dir: angle * Math.PI / 180, gap: null, hit: false });
+      }
+
+      pen.lineWidth = 1;
+      pen.strokeStyle = ink;
+      for (const p of pulses) {
+        p.r += SPEED * dt;
+        if (target) {
+          // gap is how far the front is past the target: it turns positive as the front crosses it
+          const gap = p.r - Math.hypot(target.x - p.x, target.y - p.y);
+          if (!p.hit && p.gap !== null && p.gap < 0 && gap >= 0) {
+            p.hit = true;
+            // trip is how long the echo needs to get back to the dish
+            echoes.push({ x: target.x, y: target.y, age: 0, trip: Math.hypot(target.x - ox, target.y - oy) / SPEED, done: false });
+          }
+          p.gap = gap;
+        } else {
+          p.gap = null;
+        }
+        const fade = STRENGTH * Math.min(p.r / 40, 1) * Math.max(1 - p.r / reach, 0);
+        const x = p.x - sx, y = p.y - sy;
+        wave(x, y, p.r, 0.16 * fade);                                        // the whole circle, faint
+        wave(x, y, p.r, 0.2 * fade, p.dir - BEAM, p.dir + BEAM);             // brighter where the dish pointed
+        wave(x, y, p.r, 0.2 * fade, p.dir - BEAM / 2, p.dir + BEAM / 2);
+      }
+      pulses = pulses.filter(p => p.r < reach);
+
+      pen.lineWidth = 1.2;
+      pen.strokeStyle = accent;
+      for (const e of echoes) {
+        e.age += dt;
+        if (!e.done && e.age >= e.trip) { e.done = true; heard = now; }
+        const k = e.age / BLINK; // 0 when the pulse hits, 1 when the ripple is gone
+        if (k >= 1) continue;
+        // the ripple grows fast at first and slows as it fades: one ring, with a fainter one inside it
+        const r = ECHO * (1 - (1 - k) * (1 - k));
+        for (const [size, alpha] of [[1, 0.8], [0.5, 0.4]]) {
+          pen.globalAlpha = alpha * (1 - k);
+          pen.beginPath();
+          pen.arc(e.x - sx, e.y - sy, r * size, 0, Math.PI * 2);
+          pen.stroke();
+        }
+      }
+      echoes = echoes.filter(e => e.age < Math.max(e.trip, BLINK));
+
+      rig.classList.toggle('rx', now - heard < 160); // the feed horn flashes when an echo gets home
+      pen.globalAlpha = 1;
+      requestAnimationFrame(sweep);
+    }
+
+    if (!calm) {
+      colors();
+      fit();
+      matchMedia('(prefers-color-scheme: dark)').addEventListener('change', colors);
+      addEventListener('resize', fit);
+      requestAnimationFrame(now => { last = now; heard = -1e9; requestAnimationFrame(sweep); });
+    }
+  </script>
+</body>
+</html>
