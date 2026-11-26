@@ -2,29 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tanim</title>
-  <meta name="description" content="Tanim architects and builds software for things that have to keep running: devices, gateways, cloud, and the AI harnesses and tools around them.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Tanim · Complete systems that keep running</title>
+  <meta name="description" content="Tanim architects and builds complete systems that have to keep running, hardware and software as one: devices, firmware, gateways, cloud, and the AI harnesses and tools around them.">
+  <meta property="og:title" content="Tanim · Complete systems that keep running">
+  <meta property="og:description" content="Hardware and software as one: devices, firmware, gateways, cloud, and the AI harnesses and tools around them.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a1a18'/%3E%3Cpath d='M9 10h14M16 10v13' stroke='%23f6f4ef' stroke-width='3.2' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='23' r='2.4' fill='%23fb923c'/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script>
+    // Which sensor sits on the mount this time: a camera or a radar dish, half and half.
+    // It is chosen here, before the page is drawn, so the wrong one never shows.
+    // "?rig=camera" or "?rig=radar" in the address picks one on purpose.
+    (function () {
+      var asked = new URLSearchParams(location.search).get('rig');
+      document.documentElement.dataset.rig =
+        asked === 'camera' || asked === 'radar' ? asked : Math.random() < 0.5 ? 'camera' : 'radar';
+    })();
+  </script>
   <style>
+    /* IBM Plex: a typeface drawn around the meeting of people and machines. The files
+       are in fonts/, with their licence, so the page asks no other site for them. */
+    @font-face {
+      font-family: "IBM Plex Sans";
+      font-weight: 400;
+      font-display: swap;
+      src: url("fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "IBM Plex Sans";
+      font-weight: 600;
+      font-display: swap;
+      src: url("fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "IBM Plex Mono";
+      font-weight: 400;
+      font-display: swap;
+      src: url("fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "IBM Plex Mono";
+      font-weight: 500;
+      font-display: swap;
+      src: url("fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+    }
+
     :root {
+      color-scheme: light dark;
       --bg: #f6f4ef;
       --ink: #1a1a18;
-      --muted: #6b6a64;
+      --muted: #65645e;
       --line: #dedbd2;
       --wire: #bdb9ac;
+      --dot: #e6e3da;
       --accent: #c2410c;
       --led: #2f9e44;
       --glow: #f59f00;
-      --name: clamp(2.75rem, 12vw, 4.5rem);
+      --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+      --name: clamp(3rem, 14vw, 4.5rem);
       --gutter: 1.75rem;
+      --top: clamp(2.5rem, 10vh, 6rem);
+      --side: 1.25rem;
     }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #121211;
         --ink: #ecebe6;
-        --muted: #8f8d86;
+        --muted: #96948d;
         --line: #2a2a27;
         --wire: #4b4a44;
+        --dot: #1f1f1d;
         --accent: #fb923c;
         --led: #51cf66;
         --glow: #ffd43b;
@@ -33,47 +85,102 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* The sensor's drawing box is wider than the gutter it sits in, so on a phone it pokes
+       past the right edge. Cut it off at the edge of the page so the page cannot scroll
+       sideways. It has to be set on both: on body alone a phone still scrolls.
+       "hidden" is for older browsers that do not know "clip". */
+    html, body { overflow-x: hidden; overflow-x: clip; }
+
+    /* The type grows a little with the screen: 17px on a phone, 18px on a laptop.
+       It is set in percent, so a reader's own text-size setting still counts. */
+    html {
+      font-size: clamp(106.25%, 100% + 0.15vw, 112.5%);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
     body {
-      background: var(--bg);
+      /* a faint grid of dots, like drafting paper or a bare prototyping board */
+      background: var(--bg) radial-gradient(circle, var(--dot) 1px, transparent 1.4px) 0 0 / 1.5rem 1.5rem;
       color: var(--ink);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: var(--sans);
       line-height: 1.6;
       min-height: 100vh;
+      min-height: 100svh;
       display: flex;
       justify-content: center;
-      padding: clamp(3rem, 14vh, 9rem) 1.25rem 3rem;
-      overflow-x: hidden;
+      padding: var(--top) max(var(--side), env(safe-area-inset-right)) max(2.5rem, env(safe-area-inset-bottom)) max(var(--side), env(safe-area-inset-left));
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      -webkit-tap-highlight-color: transparent;
     }
 
     main {
       position: relative;
       width: 100%;
-      max-width: calc(34rem + var(--gutter));
+      max-width: calc(36rem + var(--gutter));
       align-self: flex-start;
       padding-right: var(--gutter);
     }
 
+    /* Small labels are set in the mono face, like the print on a circuit board. */
     .mono {
-      font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
-      font-size: 0.8rem;
+      font-family: var(--mono);
+      font-size: 0.76rem;
       color: var(--muted);
-      letter-spacing: 0.02em;
+      letter-spacing: 0.03em;
     }
 
     h1 {
       font-size: var(--name);
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: -0.04em;
       line-height: 1;
     }
 
     .lede {
       margin-top: 1.25rem;
-      font-size: 1.15rem;
+      font-size: 1.17rem;
+      line-height: 1.5;
       color: var(--muted);
-      max-width: 26rem;
-      text-wrap: balance;
+      max-width: 29rem;
+      text-wrap: pretty;
     }
+    .lede .lead { color: var(--ink); }
+
+    /* Jump links: a small panel of buttons, each with a status light. */
+    .jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.6rem;
+    }
+    .jump a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 2.5rem;
+      padding: 0 0.85rem 0 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .jump a::before {
+      content: "";
+      width: 0.4rem;
+      height: 0.4rem;
+      border-radius: 50%;
+      background: var(--wire);
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .jump a:hover, .jump a.on { color: var(--ink); border-color: var(--wire); }
+    .jump a.on::before { background: var(--glow); box-shadow: 0 0 6px var(--glow); }
+    .jump a:active { border-color: var(--ink); }
+
+    section { scroll-margin-top: 0.5rem; }
 
     /* Section heading: label, then a wire that runs through a device to the bus. */
     h2 {
@@ -81,7 +188,9 @@
       align-items: center;
       height: 60px;
       margin: 2rem 0 -20px;
-      font-weight: 400;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
     h2 > span { transition: color 0.15s; }
     .wire, .stub { height: 1px; background: var(--wire); }
@@ -98,28 +207,39 @@
     .dev { flex: none; width: 36px; height: 60px; }
     .dev .w { stroke: var(--wire); stroke-width: 1; transition: stroke 0.15s; }
 
-    .glass { transition: fill 0.2s, filter 0.2s; }
+    .glass { transition: fill 0.2s; }
+    /* The lamp's glow is a soft disc behind the glass. It is drawn as a gradient, not with
+       a CSS filter, because phone browsers do not all apply filters to parts of a drawing. */
+    .halo { stroke: none; opacity: 0; transition: opacity 0.2s; }
+    #halo stop { stop-color: var(--glow); }
     .cog { transform-origin: 12px 10px; }
     .teeth { stroke-width: 2.6; stroke-linecap: butt; }
     .tip { fill: var(--ink); }
     .arc { opacity: 0; }
 
-    /* A section switches on when the camera sees you near it. */
+    /* A section switches on when the sensor finds you near it. */
     section.on h2 > span { color: var(--ink); }
     section.on .stub { background: var(--ink); transition-delay: 0.3s; }
     section.on .dev .w { stroke: var(--ink); transition-delay: 0.3s; }
-    section.on .glass {
-      fill: var(--glow);
-      filter: drop-shadow(0 0 5px var(--glow));
-      transition-delay: 0.35s;
-    }
+    section.on .glass { fill: var(--glow); transition-delay: 0.35s; }
+    section.on .halo { opacity: 1; transition-delay: 0.35s; }
     section.on .cog { animation: spin 2.4s linear 0.35s infinite; }
     section.on .arc { animation: ping 1.3s ease-out 0.35s infinite; }
     section.on .arc.far { animation-delay: 0.55s; }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes ping { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
 
-    /* The rig: camera on top, bus wire down the side, ground at the bottom. */
+    /* The sky: a clear sheet over the whole page where the radar waves are drawn. Clicks pass through it. */
+    .sky {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* The rig: the sensor on top, bus wire down the side, ground at the bottom. */
     .rig {
       position: absolute;
       top: calc(var(--name) / 2);
@@ -139,19 +259,29 @@
     .live { height: 0; background: var(--ink); transition: height 0.35s ease; }
     .cam { position: absolute; top: calc(var(--name) * -1); left: calc(50% - var(--name)); width: calc(var(--name) * 2); height: calc(var(--name) * 2); }
     .bolt { fill: var(--ink); }
-    /* The camera's mount: a tilt gear on the camera, its small drive gear, and a pan gear seen from the side. */
+    /* The mount: a tilt gear on the sensor, its small drive gear, and a pan gear seen from the side. */
     .gear-teeth { stroke-width: 2.2; stroke-linecap: butt; }
     .pan-teeth { stroke-width: 1; stroke-linecap: butt; }
-    .rec { transition: fill 0.15s; }
+    /* Both sensors are in the page: the one that was not chosen is not drawn. */
+    .head-dish, [data-rig="radar"] .head-cam { display: none; }
+    [data-rig="radar"] .head-dish { display: inline; }
+    /* The camera's record light, or the dish's feed horn: dark while a section is signalled.
+       The feed horn also flashes when an echo comes home. */
+    .rec { transition: fill 0.15s, stroke 0.15s; }
     .rig.tx .rec { fill: var(--ink); }
+    .rig.rx .rec { fill: var(--accent); stroke: var(--accent); transition: none; }
     .gnd { position: absolute; bottom: 0; left: 0; width: 100%; height: 12px; stroke: var(--muted); }
 
     ul { list-style: none; }
 
+    a, button { touch-action: manipulation; }
+
+    /* Work: a name, what part of a system it is, and one line about it. */
     li a {
       display: grid;
-      grid-template-columns: 1fr auto;
-      column-gap: 1rem;
+      grid-template-columns: 1fr auto auto;
+      column-gap: 0.75rem;
+      row-gap: 0.15rem;
       align-items: baseline;
       padding: 1rem 0;
       border-bottom: 1px solid var(--line);
@@ -159,29 +289,33 @@
       text-decoration: none;
     }
     li strong { font-weight: 600; transition: color 0.15s; }
-    li span { grid-column: 1; color: var(--muted); font-size: 0.95rem; }
-    li i {
-      grid-row: 1;
-      grid-column: 2;
-      font-style: normal;
-      color: var(--muted);
-      transition: transform 0.15s, color 0.15s;
+    li em { font-style: normal; white-space: nowrap; }
+    li span { grid-column: 1 / -1; color: var(--muted); font-size: 0.94rem; max-width: 32rem; }
+    .go {
+      align-self: center;
+      width: 0.9rem;
+      height: 0.9rem;
+      stroke: var(--muted);
+      transition: transform 0.15s, stroke 0.15s;
     }
-    li a:hover strong, li a:hover i { color: var(--accent); }
-    li a:hover i { transform: translateX(4px); }
+    li a:hover strong, li a:active strong { color: var(--accent); }
+    li a:hover .go, li a:active .go { stroke: var(--accent); }
+    li a:hover .go { transform: translateX(3px); }
+    li a[target]:hover .go { transform: translate(2px, -2px); }
 
-    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
+    a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
 
     .rows > * {
       display: grid;
-      grid-template-columns: 5.5rem 1fr;
+      grid-template-columns: 5.25rem 1fr;
       column-gap: 1rem;
       align-items: baseline;
-      padding: 0.7rem 0;
+      padding: 0.8rem 0;
       border-bottom: 1px solid var(--line);
       color: inherit;
       text-decoration: none;
       overflow-wrap: anywhere;
+      text-wrap: pretty; /* no single word left alone on the last line */
     }
     .rows > * > span:last-child {
       display: flex;
@@ -190,16 +324,32 @@
       column-gap: 0.6rem;
       transition: color 0.15s;
     }
-    .rows a:hover span:last-child { color: var(--accent); }
-    .rows small { color: var(--muted); font-size: 0.85rem; }
+    .rows a:hover span:last-child, .rows a:active span:last-child { color: var(--accent); }
+    .rows small { color: var(--muted); font-size: 0.83rem; }
 
     footer {
-      margin-top: 3rem;
+      margin-top: 2.5rem;
       display: flex;
       justify-content: space-between;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 0.5rem 1rem;
+      gap: 0.25rem 1.25rem;
     }
+
+    /* The switch that swaps the camera for the radar, and back. */
+    #swap {
+      min-height: 2.5rem;
+      border: 0;
+      background: none;
+      font: inherit;
+      letter-spacing: inherit;
+      color: inherit;
+      cursor: pointer;
+    }
+    /* as wide as the longer of the two names, so a swap does not shift the footer */
+    #swap b { display: inline-block; min-width: 6ch; font-weight: 500; color: var(--ink); }
+    #swap u { text-decoration: underline dotted; text-underline-offset: 0.25em; transition: color 0.15s; }
+    #swap:hover u, #swap:active u { color: var(--accent); }
 
     #up { font-variant-numeric: tabular-nums; }
 
@@ -214,137 +364,212 @@
     }
     @keyframes pulse { 50% { opacity: 0.3; } }
 
+    /* Phone: each label sits above its line, so the line gets the full width. */
+    @media (max-width: 30rem) {
+      .rows > * { grid-template-columns: 1fr; row-gap: 0.1rem; padding: 0.75rem 0; }
+      .lede { font-size: 1.1rem; }
+    }
+
+    /* Laptop and wider: two columns. The name and the summary stay in view on the left
+       while the sections scroll past on the right, below the sensor. */
+    @media (min-width: 64rem) {
+      :root {
+        --name: 5.25rem;
+        --gutter: 2.25rem;
+        --top: clamp(3rem, 12vh, 7rem);
+        --side: 2rem;
+      }
+      main {
+        max-width: 64rem;
+        display: grid;
+        grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+        grid-template-areas: "intro content" "foot foot";
+        column-gap: clamp(3rem, 5vw, 4.5rem);
+      }
+      .intro { grid-area: intro; align-self: start; position: sticky; top: var(--top); }
+      /* the first heading starts below the sensor's mount */
+      .content { grid-area: content; padding-top: calc(var(--name) * 1.3 - 1.75rem); }
+      footer { grid-area: foot; margin-top: 3.5rem; }
+      .lede { font-size: 1.22rem; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
+    }
     @media (prefers-reduced-motion: reduce) {
       *, *::before { transition: none !important; }
       .led, section.on .cog, section.on .arc { animation: none; }
       section.on .arc { opacity: 1; }
+      .sky { display: none; }
     }
   </style>
 </head>
 <body>
+  <!-- The two arrows used by the work list: one for a page on this site, one for a link that leaves it. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="go-in" viewBox="0 0 16 16"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></symbol>
+    <symbol id="go-out" viewBox="0 0 16 16"><path d="M4 12 12 4M5.5 4H12v6.5"/></symbol>
+  </svg>
+
   <main>
-    <h1>Tanim</h1>
-    <p class="lede">I architect and build software for things that have to keep running: devices, gateways, cloud, and the AI harnesses and tools around them.</p>
+    <header class="intro">
+      <h1>Tanim</h1>
+      <p class="lede"><span class="lead">I architect and build complete systems that have to keep running.</span> Hardware and software as one: devices, firmware, gateways, cloud, and the AI harnesses and tools around them.</p>
+      <nav class="jump mono" aria-label="Sections">
+        <a href="#skills" data-for="skills">skills</a>
+        <a href="#work" data-for="work">work</a>
+        <a href="#contact" data-for="contact">contact</a>
+      </nav>
+    </header>
 
-    <section>
-      <h2 class="mono">
-        <span>skills</span><i class="wire"></i>
-        <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
-          <path class="w" d="M0 20H24"/>
-          <path class="glass" d="M9 13.4A6.2 6.2 0 1 1 15 13.4Z"/>
-          <path d="M10.5 13.4V10l1.5-2 1.5 2v3.4"/>
-          <rect class="solid" x="9.5" y="13.4" width="5" height="4" rx="0.5"/>
-          <path d="M12 17.4V20"/>
-        </svg>
-        <i class="stub"></i>
-      </h2>
-      <div class="rows">
-        <div>
-          <span class="mono">ai</span>
-          <span>Context engineering, AI harnesses, vector DBs, graph DBs</span>
+    <div class="content">
+      <section id="skills">
+        <h2 class="mono">
+          <span>skills</span><i class="wire"></i>
+          <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
+            <defs>
+              <radialGradient id="halo">
+                <stop offset="0.45" stop-opacity="0.6"/>
+                <stop offset="1" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <path class="w" d="M0 20H24"/>
+            <circle class="halo" cx="12" cy="8" r="12.5" fill="url(#halo)"/>
+            <path class="glass" d="M9 13.4A6.2 6.2 0 1 1 15 13.4Z"/>
+            <path d="M10.5 13.4V10l1.5-2 1.5 2v3.4"/>
+            <rect class="solid" x="9.5" y="13.4" width="5" height="4" rx="0.5"/>
+            <path d="M12 17.4V20"/>
+          </svg>
+          <i class="stub"></i>
+        </h2>
+        <!-- The rows follow a signal through a whole system: from the device up to the AI. -->
+        <div class="rows">
+          <div>
+            <span class="mono">devices</span>
+            <span>Firmware in C, STM32, ESP32, Raspberry Pi <small>deep experience</small></span>
+          </div>
+          <div>
+            <span class="mono">gateways</span>
+            <span>Modbus RTU, MQTT, fault-tolerant actor-model design</span>
+          </div>
+          <div>
+            <span class="mono">cloud</span>
+            <span>Python, FastAPI, REST APIs, React, Next.js</span>
+          </div>
+          <div>
+            <span class="mono">ai</span>
+            <span>Context engineering, AI harnesses, vector DBs, graph DBs</span>
+          </div>
+          <div>
+            <span class="mono">automation</span>
+            <span>AI-driven, from CAD model to print, PCB to firmware, custom hardware to cloud, and day-to-day software <small>still learning with every build</small></span>
+          </div>
+          <div>
+            <span class="mono">always</span>
+            <span>Solving engineering problems</span>
+          </div>
         </div>
-        <div>
-          <span class="mono">embedded</span>
-          <span>Firmware, IoT, STM32, ESP32, Raspberry Pi <small>deep experience</small></span>
-        </div>
-        <div>
-          <span class="mono">always</span>
-          <span>Solving engineering problems</span>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <section>
-      <h2 class="mono">
-        <span>work</span><i class="wire"></i>
-        <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
-          <path class="w" d="M0 20H24"/>
-          <path d="M12 10V20"/>
-          <g class="cog">
-            <path class="teeth" d="M12 5.4V2.8M15.25 6.75l1.84-1.84M16.6 10h2.6M15.25 13.25l1.84 1.84M12 14.6v2.6M8.75 13.25l-1.84 1.84M7.4 10H4.8M8.75 6.75L6.91 4.91"/>
-            <circle class="solid" cx="12" cy="10" r="4.6"/>
-            <circle cx="12" cy="10" r="1.3"/>
-          </g>
-        </svg>
-        <i class="stub"></i>
-      </h2>
-      <ul>
-        <li>
-          <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">
-            <strong>Dispenser</strong>
-            <span>Device control that survives its own failures, built on the actor model.</span>
-            <i aria-hidden="true">→</i>
-          </a>
-        </li>
-        <li>
-          <a href="https://github.com/tanimtbh/nimai" target="_blank" rel="noopener">
-            <strong>Nimai</strong>
-            <span>A Telegram bot with an agent for a brain and a graph for a memory.</span>
-            <i aria-hidden="true">→</i>
-          </a>
-        </li>
-        <li>
-          <a href="https://knitnox.github.io/knitnox/" target="_blank" rel="noopener">
-            <strong>Knitnox</strong>
-            <span>A self-hosted AI harness for a small group, in one Go binary.</span>
-            <i aria-hidden="true">→</i>
-          </a>
-        </li>
-        <li>
-          <a href="cad/">
-            <strong>CAD Terms</strong>
-            <span>A visual glossary of CAD and 3D-printing words.</span>
-            <i aria-hidden="true">→</i>
-          </a>
-        </li>
-        <li>
-          <a href="pcb/">
-            <strong>PCB Terms</strong>
-            <span>A visual glossary of circuit board and routing words.</span>
-            <i aria-hidden="true">→</i>
-          </a>
-        </li>
-      </ul>
-    </section>
+      <section id="work">
+        <h2 class="mono">
+          <span>work</span><i class="wire"></i>
+          <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
+            <path class="w" d="M0 20H24"/>
+            <path d="M12 10V20"/>
+            <g class="cog">
+              <path class="teeth" d="M12 5.4V2.8M15.25 6.75l1.84-1.84M16.6 10h2.6M15.25 13.25l1.84 1.84M12 14.6v2.6M8.75 13.25l-1.84 1.84M7.4 10H4.8M8.75 6.75L6.91 4.91"/>
+              <circle class="solid" cx="12" cy="10" r="4.6"/>
+              <circle cx="12" cy="10" r="1.3"/>
+            </g>
+          </svg>
+          <i class="stub"></i>
+        </h2>
+        <ul>
+          <li>
+            <a href="https://github.com/tanimtbh/dispenser_fault_tolerant_app" target="_blank" rel="noopener">
+              <strong>Dispenser</strong>
+              <em class="mono">device control</em>
+              <svg class="go" aria-hidden="true"><use href="#go-out"/></svg>
+              <span>Device control that survives its own failures, built on the actor model.</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/tanimtbh/nimai" target="_blank" rel="noopener">
+              <strong>Nimai</strong>
+              <em class="mono">ai agent</em>
+              <svg class="go" aria-hidden="true"><use href="#go-out"/></svg>
+              <span>A Telegram bot with an agent for a brain and a graph for a memory.</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://knitnox.github.io/knitnox/" target="_blank" rel="noopener">
+              <strong>Knitnox</strong>
+              <em class="mono">ai harness</em>
+              <svg class="go" aria-hidden="true"><use href="#go-out"/></svg>
+              <span>A self-hosted AI harness for a small group, in one Go binary.</span>
+            </a>
+          </li>
+          <li>
+            <a href="cad/">
+              <strong>CAD Terms</strong>
+              <em class="mono">mechanical</em>
+              <svg class="go" aria-hidden="true"><use href="#go-in"/></svg>
+              <span>A visual glossary of CAD and 3D-printing words.</span>
+            </a>
+          </li>
+          <li>
+            <a href="pcb/">
+              <strong>PCB Terms</strong>
+              <em class="mono">electronics</em>
+              <svg class="go" aria-hidden="true"><use href="#go-in"/></svg>
+              <span>A visual glossary of circuit board and routing words.</span>
+            </a>
+          </li>
+        </ul>
+      </section>
 
-    <section>
-      <h2 class="mono">
-        <span>contact</span><i class="wire"></i>
-        <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
-          <path class="w" d="M0 20H24"/>
-          <path d="M12 20V7M9 20l3-5 3 5"/>
-          <circle class="tip" cx="12" cy="5.5" r="1.5"/>
-          <path class="arc" d="M8 2.5a4.5 4.5 0 0 0 0 6M16 2.5a4.5 4.5 0 0 1 0 6"/>
-          <path class="arc far" d="M5 0.5a8 8 0 0 0 0 10M19 0.5a8 8 0 0 1 0 10"/>
-        </svg>
-        <i class="stub"></i>
-      </h2>
-      <div class="rows">
-        <a href="mailto:tanimtbh@gmail.com">
-          <span class="mono">email</span>
-          <span>tanimtbh@gmail.com</span>
-        </a>
-        <a href="https://wa.me/351920798728" target="_blank" rel="noopener">
-          <span class="mono">whatsapp</span>
-          <span>+351 920 798 728 <small>messages only, no calls</small></span>
-        </a>
-        <a href="https://www.linkedin.com/in/md-mizanur-rahman-4103311a2" target="_blank" rel="noopener">
-          <span class="mono">linkedin</span>
-          <span>in/md-mizanur-rahman-4103311a2</span>
-        </a>
-        <a href="https://github.com/tanimtbh" target="_blank" rel="noopener">
-          <span class="mono">github</span>
-          <span>tanimtbh</span>
-        </a>
-      </div>
-    </section>
+      <section id="contact">
+        <h2 class="mono">
+          <span>contact</span><i class="wire"></i>
+          <svg class="dev" viewBox="0 0 24 40" aria-hidden="true">
+            <path class="w" d="M0 20H24"/>
+            <path d="M12 20V7M9 20l3-5 3 5"/>
+            <circle class="tip" cx="12" cy="5.5" r="1.5"/>
+            <path class="arc" d="M8 2.5a4.5 4.5 0 0 0 0 6M16 2.5a4.5 4.5 0 0 1 0 6"/>
+            <path class="arc far" d="M5 0.5a8 8 0 0 0 0 10M19 0.5a8 8 0 0 1 0 10"/>
+          </svg>
+          <i class="stub"></i>
+        </h2>
+        <div class="rows">
+          <a href="mailto:tanimtbh@gmail.com">
+            <span class="mono">email</span>
+            <span>tanimtbh@gmail.com</span>
+          </a>
+          <a href="https://wa.me/351920798728" target="_blank" rel="noopener">
+            <span class="mono">whatsapp</span>
+            <span>+351 920 798 728 <small>messages only, no calls</small></span>
+          </a>
+          <a href="https://www.linkedin.com/in/md-mizanur-rahman-4103311a2" target="_blank" rel="noopener">
+            <span class="mono">linkedin</span>
+            <span>in/md-mizanur-rahman-4103311a2</span>
+          </a>
+          <a href="https://github.com/tanimtbh" target="_blank" rel="noopener">
+            <span class="mono">github</span>
+            <span>tanimtbh</span>
+          </a>
+        </div>
+      </section>
+    </div>
 
     <footer class="mono">
       <span>Aveiro, Portugal</span>
+      <button type="button" id="swap" hidden>sensor: <b>camera</b> · <u>swap</u></button>
       <span><span class="led"></span>up <span id="up">00:00:00</span>, no crashes</span>
     </footer>
 
-    <!-- Decorative rig: a camera on a two-axis motor mount. It watches the pointer and signals the nearest section. -->
+    <!-- Decorative rig: a sensor on a two-axis motor mount. It tracks the pointer and signals the nearest section.
+         The sensor is a camera or a radar dish. Both are drawn here, and only the chosen one is shown. -->
     <div class="rig" aria-hidden="true">
       <i class="live"></i>
       <svg class="cam" viewBox="0 0 96 96">
@@ -358,16 +583,24 @@
         <g clip-path="url(#pan-clip)">
           <path class="pan-teeth" d="M34 66v4.6M37 66v4.6M40 66v4.6M43 66v4.6M46 66v4.6M49 66v4.6M52 66v4.6M55 66v4.6M58 66v4.6M61 66v4.6"/>
         </g>
-        <!-- the camera -->
-        <g class="head" transform="rotate(180 48 48)">
+        <!-- the camera: it swings behind the mount, so it is drawn under the arm -->
+        <g class="head head-cam" transform="rotate(180 48 48)">
           <path class="solid" d="M74 43h6l5-3v16l-5-3h-6z"/>
           <rect class="solid" x="38" y="39" width="36" height="18" rx="4"/>
           <path d="M80 43v10M59 44.5v7M62 44.5v7"/>
           <circle class="rec" cx="67.5" cy="48" r="1.8"/>
         </g>
-        <!-- tilt axis: a small motor on the arm drives the gear fixed to the camera -->
+        <!-- tilt axis: a small motor on the arm drives the gear fixed to the sensor -->
         <rect class="solid" x="51" y="56" width="8.5" height="7.2" rx="1.6"/>
         <path class="solid" d="M43.5 66 45.2 50a2.9 2.9 0 0 1 5.6 0L52.5 66z"/>
+        <!-- the radar dish, seen from the side: a boom, the dish, and struts that hold the feed horn at its focus.
+             It swings in front of the mount, so it is drawn over the arm and under its own gear. -->
+        <g class="head head-dish" transform="rotate(180 48 48)">
+          <rect class="solid" x="42" y="44.6" width="17" height="6.8" rx="2"/>
+          <path d="M67 33 79 48 67 63"/>
+          <path class="solid" d="M67 31Q46 48 67 65Z"/>
+          <circle class="solid rec" cx="79" cy="48" r="2"/>
+        </g>
         <g class="tilt" transform="rotate(0 48 48)">
           <path class="gear-teeth" d="M54.2 48h2M52.38 52.38l1.42 1.42M48 54.2v2M43.62 52.38l-1.42 1.42M41.8 48h-2M43.62 43.62l-1.42-1.42M48 41.8v-2M52.38 43.62l1.42-1.42"/>
           <circle class="solid" cx="48" cy="48" r="6.2"/>
@@ -386,6 +619,9 @@
     </div>
   </main>
 
+  <!-- Decorative: the radar's waves, drawn over the whole page. It stays empty while the camera is on the mount. -->
+  <canvas class="sky" aria-hidden="true"></canvas>
+
   <script>
     // Tiny uptime counter: how long this page has been running.
     const up = document.getElementById('up');
@@ -396,28 +632,40 @@
       up.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
     }, 1000);
 
-    // The camera turns toward the pointer; the section it sees you near gets a signal.
+    // The sensor turns toward the pointer; the section it finds you near gets a signal.
+    const root = document.documentElement;
     const rig = document.querySelector('.rig');
-    const head = rig.querySelector('.head');
+    const heads = [...rig.querySelectorAll('.head')];
     const tilt = rig.querySelector('.tilt');
     const pinion = rig.querySelector('.pinion');
     const panTeeth = rig.querySelector('.pan-teeth');
     const live = rig.querySelector('.live');
     const sections = [...document.querySelectorAll('section')];
+    const jumps = [...document.querySelectorAll('.jump a')];
     const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const touch = matchMedia('(hover: none)').matches;
+    // A touch screen is in use. This starts as the browser's own guess, which is wrong on
+    // some phones, so the first real touch or mouse move corrects it.
+    let touch = matchMedia('(hover: none)').matches;
+    let keys = false; // the last thing the visitor used was the keyboard
+    let picked = null; // touch screens: the section a finger last touched
+    let held = false; // touch screens: picked came from a jump link, so it stays on until the next touch
+    let rest = 0; // touch screens: how far the page was scrolled when the finger lifted
     const NEAR = 28; // px above or below a section that still counts as close
-    let point = null, anchor = null, angle = 180, goal = 180, raf = 0;
-    let turned = 0; // how far the camera has turned in total, in degrees: it drives the gears
+    const HOME = 180; // the sensor's rest position: it looks back at the name
+    let kind = root.dataset.rig === 'radar' ? 'radar' : 'camera'; // which sensor is on the mount
+    let point = null, anchor = null, angle = HOME, goal = angle, raf = 0;
+    let turned = 0; // how far the sensor has turned in total, in degrees: it drives the gears
     let finger = false; // a finger is on the screen right now
+    let called = null; // the section whose jump link is under the pointer or has the focus
 
     function aim() {
       const d = ((goal - angle + 540) % 360) - 180;
       const step = calm || Math.abs(d) < 0.2 ? d : d * 0.15;
       angle = step === d ? goal : angle + step;
       turned += step;
-      head.setAttribute('transform', `rotate(${angle.toFixed(1)} 48 48)`);
-      // the big gear is fixed to the camera, the small one turns the other way and faster (8 teeth drive 5)
+      // both sensors are turned, so a swap shows the new one already pointing the right way
+      for (const h of heads) h.setAttribute('transform', `rotate(${angle.toFixed(1)} 48 48)`);
+      // the big gear is fixed to the sensor, the small one turns the other way and faster (8 teeth drive 5)
       tilt.setAttribute('transform', `rotate(${turned.toFixed(1)} 48 48)`);
       pinion.setAttribute('transform', `rotate(${(-turned * 1.6).toFixed(1)} 48 59.6)`);
       // the pan gear is seen from the side, so its teeth slide past: one tooth every 3 units
@@ -425,12 +673,42 @@
       raf = angle === goal ? 0 : requestAnimationFrame(aim);
     }
 
+    // The section on screen that is closest to a height on the screen, or null if none is on screen.
+    function nearest(y) {
+      let best = Infinity, found = null;
+      for (const s of sections) {
+        const r = s.getBoundingClientRect();
+        if (r.bottom <= 0 || r.top >= innerHeight) continue;
+        const d = Math.max(r.top - y, y - r.bottom, 0);
+        if (d < best) { best = d; found = s; }
+      }
+      return found;
+    }
+
+    // Touch screens have no pointer to hover with, so a section is chosen in another way.
+    // A finger picks the section it touches, and that one stays on while a fair part of it
+    // is still on screen. With nothing picked, the section in the reading area is on. So
+    // one section is always on as soon as any of them is on screen.
+    function watch() {
+      if (finger) {
+        picked = nearest(point.y);
+        held = false;
+      } else if (picked && !held) {
+        // Let go of it when it has mostly left the screen, or when the page has moved a
+        // good way by itself since the finger lifted, as it does after a flick.
+        const r = picked.getBoundingClientRect();
+        const gone = r.bottom < innerHeight * 0.25 || r.top > innerHeight * 0.75;
+        if (gone || Math.abs(scrollY - rest) > innerHeight * 0.3) picked = null;
+      }
+      return picked || nearest(innerHeight * 0.45);
+    }
+
     function update() {
       if (anchor) {
         const r = anchor.getBoundingClientRect();
         point = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
       } else if (touch && !finger) {
-        // No finger on a touch screen: watch the middle of the screen instead.
+        // No finger on a touch screen: the middle of the screen stands in for it.
         point = { x: innerWidth / 2, y: innerHeight * 0.45 };
       }
 
@@ -438,23 +716,31 @@
       const px = box.left + box.width / 2, py = box.top;
       let hit = null;
       if (point) {
-        goal = Math.atan2(point.y - py, point.x - px) * 180 / Math.PI;
-        let best = NEAR;
-        for (const s of sections) {
-          const r = s.getBoundingClientRect();
-          if (point.x < r.left - 120 || point.x > r.right + 120) continue;
-          const d = Math.max(r.top - point.y, point.y - r.bottom, 0);
-          if (d < best) { best = d; hit = s; }
+        // On a touch screen the sensor does not track: it stays on the name. Only the sections switch.
+        goal = touch ? HOME : Math.atan2(point.y - py, point.x - px) * 180 / Math.PI;
+        if (touch && !anchor) {
+          hit = watch();
+        } else {
+          let best = NEAR;
+          for (const s of sections) {
+            const r = s.getBoundingClientRect();
+            if (point.x < r.left - 120 || point.x > r.right + 120) continue;
+            const d = Math.max(r.top - point.y, point.y - r.bottom, 0);
+            if (d < best) { best = d; hit = s; }
+          }
         }
       } else {
-        goal = 180; // idle: look back at the name
+        goal = HOME; // idle: look back at the name
       }
+      // A jump link calls its own section, wherever the pointer is.
+      if (called) hit = called;
 
       for (const s of sections) s.classList.toggle('on', s === hit);
+      for (const a of jumps) a.classList.toggle('on', !!hit && a.dataset.for === hit.id);
       rig.classList.toggle('tx', !!hit);
       if (hit) {
         const h = hit.querySelector('h2').getBoundingClientRect();
-        live.style.height = `${h.top + h.height / 2 - py}px`;
+        live.style.height = `${Math.max(h.top + h.height / 2 - py, 0)}px`;
       } else {
         live.style.height = '0';
       }
@@ -463,19 +749,25 @@
 
     addEventListener('pointermove', e => {
       if (e.pointerType === 'touch') return;
+      touch = false; // a mouse or a pen is in use
       anchor = null;
       point = { x: e.clientX, y: e.clientY };
       update();
     });
+    addEventListener('keydown', () => { keys = true; });
+    addEventListener('pointerdown', () => { keys = false; });
     document.documentElement.addEventListener('pointerleave', () => {
       if (!touch) { anchor = null; point = null; update(); }
     });
 
-    // A finger is followed the same way as the mouse. Touch events are used for
-    // this, not pointer events, because they keep coming while the page scrolls.
+    // A finger is watched too: it picks sections, and the radar's waves bounce off it.
+    // Touch events are used for this, not pointer events, because they keep coming
+    // while the page scrolls.
     function follow(e) {
       const t = e.touches[0];
       if (!t) return;
+      touch = true;
+      keys = false;
       finger = true;
       anchor = null;
       point = { x: t.clientX, y: t.clientY };
@@ -484,6 +776,7 @@
     function release(e) {
       if (e.touches.length) return;
       finger = false;
+      rest = scrollY;
       point = null;
       update();
     }
@@ -491,10 +784,185 @@
     addEventListener('touchmove', follow, { passive: true });
     addEventListener('touchend', release, { passive: true });
     addEventListener('touchcancel', release, { passive: true });
-    addEventListener('focusin', e => { anchor = e.target; update(); });
+    // A link reached with the keyboard is watched like the pointer. A tapped or clicked
+    // link is not: it would hold the sensor's eye after the page has moved on.
+    addEventListener('focusin', e => {
+      if (!keys) return;
+      anchor = e.target;
+      update();
+    });
     addEventListener('scroll', update, { passive: true });
     addEventListener('resize', update);
+
+    // The jump links work like switches on a panel: point at one, or move the
+    // focus to it, and its section turns on. On a touch screen a tap picks the
+    // section instead, and it stays on while the page travels to it.
+    for (const a of jumps) {
+      const s = document.getElementById(a.dataset.for);
+      const call = on => { called = on ? s : called === s ? null : called; update(); };
+      a.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') call(true); });
+      a.addEventListener('pointerleave', () => call(false));
+      a.addEventListener('focus', () => { if (keys) call(true); });
+      a.addEventListener('blur', () => call(false));
+      a.addEventListener('click', () => {
+        if (!touch) return;
+        picked = s;
+        held = true;
+        update();
+      });
+    }
     update();
+
+    // Radar waves. The dish sends out a circular pulse again and again. When a
+    // pulse reaches the pointer, the pointer bounces it back as an echo: a small
+    // ripple at the pointer that fades at once. The echo then travels home unseen,
+    // and the dish's feed horn flashes when it arrives.
+    const SPEED = 300;  // how fast a wave travels, in px per second
+    const PERIOD = 0.9; // seconds between pulses
+    const BEAM = 0.55;  // half-width of the bright part of a pulse, in radians: where the dish points
+    const STRENGTH = 0.45; // how visible the outgoing waves are: 0 is invisible, 1 is strong
+    const ECHO = 18;   // how big the echo ripple gets at the pointer, in px
+    const BLINK = 0.4;  // seconds the echo ripple takes to grow and fade away
+    const sky = document.querySelector('.sky');
+    const pen = sky.getContext('2d');
+    let pulses = [], echoes = [], last = 0, since = PERIOD, heard = 0;
+    let ink = '', accent = '';
+    let sweeping = false; // the radar's drawing loop is running
+
+    function colors() {
+      const css = getComputedStyle(document.documentElement);
+      ink = css.getPropertyValue('--ink').trim();
+      accent = css.getPropertyValue('--accent').trim();
+    }
+
+    function fit() {
+      const k = Math.min(devicePixelRatio || 1, 2); // sharper than 2x costs a phone a lot and shows nothing
+      sky.width = Math.round(sky.clientWidth * k);
+      sky.height = Math.round(sky.clientHeight * k);
+      pen.setTransform(k, 0, 0, k, 0, 0);
+    }
+
+    // One wave is a short train: a leading front and two fainter fronts behind it.
+    function wave(x, y, r, alpha, from = 0, to = Math.PI * 2) {
+      for (let i = 0; i < 3; i++) {
+        const rr = r - i * 7;
+        if (rr <= 0 || alpha <= 0) break;
+        pen.globalAlpha = alpha / (i + 1);
+        pen.beginPath();
+        pen.arc(x, y, rr, from, to);
+        pen.stroke();
+      }
+    }
+
+    function sweep(now) {
+      const w = sky.clientWidth, h = sky.clientHeight;
+      pen.clearRect(0, 0, w, h);
+      if (kind !== 'radar') {
+        // The camera is back on the mount: wipe the sky and stop.
+        pulses = [];
+        echoes = [];
+        rig.classList.remove('rx');
+        sweeping = false;
+        return;
+      }
+      const dt = Math.min((now - last) / 1000, 0.05); // a tab that was hidden does not jump ahead
+      last = now;
+
+      // Waves live in page coordinates, so they scroll with the page like the dish does.
+      const sx = scrollX, sy = scrollY;
+      const box = rig.getBoundingClientRect();
+      const vx = box.left + box.width / 2, vy = box.top;
+      const ox = vx + sx, oy = vy + sy;
+      // a pulse dies when it has passed the farthest corner of the screen
+      const reach = Math.hypot(Math.max(vx, w - vx), Math.max(vy, h - vy));
+      // What the waves can bounce off: the mouse, a finger, or the focused link.
+      const target = point && (anchor || !touch || finger) ? { x: point.x + sx, y: point.y + sy } : null;
+
+      since += dt;
+      if (since >= PERIOD) {
+        since %= PERIOD;
+        pulses.push({ x: ox, y: oy, r: 0, dir: angle * Math.PI / 180, gap: null, hit: false });
+      }
+
+      pen.lineWidth = 1;
+      pen.strokeStyle = ink;
+      for (const p of pulses) {
+        p.r += SPEED * dt;
+        if (target) {
+          // gap is how far the front is past the target: it turns positive as the front crosses it
+          const gap = p.r - Math.hypot(target.x - p.x, target.y - p.y);
+          if (!p.hit && p.gap !== null && p.gap < 0 && gap >= 0) {
+            p.hit = true;
+            // trip is how long the echo needs to get back to the dish
+            echoes.push({ x: target.x, y: target.y, age: 0, trip: Math.hypot(target.x - ox, target.y - oy) / SPEED, done: false });
+          }
+          p.gap = gap;
+        } else {
+          p.gap = null;
+        }
+        const fade = STRENGTH * Math.min(p.r / 40, 1) * Math.max(1 - p.r / reach, 0);
+        const x = p.x - sx, y = p.y - sy;
+        wave(x, y, p.r, 0.16 * fade);                                        // the whole circle, faint
+        wave(x, y, p.r, 0.2 * fade, p.dir - BEAM, p.dir + BEAM);             // brighter where the dish pointed
+        wave(x, y, p.r, 0.2 * fade, p.dir - BEAM / 2, p.dir + BEAM / 2);
+      }
+      pulses = pulses.filter(p => p.r < reach);
+
+      pen.lineWidth = 1.2;
+      pen.strokeStyle = accent;
+      for (const e of echoes) {
+        e.age += dt;
+        if (!e.done && e.age >= e.trip) { e.done = true; heard = now; }
+        const k = e.age / BLINK; // 0 when the pulse hits, 1 when the ripple is gone
+        if (k >= 1) continue;
+        // the ripple grows fast at first and slows as it fades: one ring, with a fainter one inside it
+        const r = ECHO * (1 - (1 - k) * (1 - k));
+        for (const [size, alpha] of [[1, 0.8], [0.5, 0.4]]) {
+          pen.globalAlpha = alpha * (1 - k);
+          pen.beginPath();
+          pen.arc(e.x - sx, e.y - sy, r * size, 0, Math.PI * 2);
+          pen.stroke();
+        }
+      }
+      echoes = echoes.filter(e => e.age < Math.max(e.trip, BLINK));
+
+      rig.classList.toggle('rx', now - heard < 160); // the feed horn flashes when an echo gets home
+      pen.globalAlpha = 1;
+      requestAnimationFrame(sweep);
+    }
+
+    // Start the radar's drawing loop, if the radar is on the mount and it is not running yet.
+    function scan() {
+      if (calm || sweeping || kind !== 'radar') return;
+      sweeping = true;
+      since = PERIOD; // the first pulse leaves at once
+      colors();
+      fit();
+      requestAnimationFrame(now => { last = now; heard = -1e9; requestAnimationFrame(sweep); });
+    }
+
+    if (!calm) {
+      matchMedia('(prefers-color-scheme: dark)').addEventListener('change', colors);
+      addEventListener('resize', () => { if (sweeping) fit(); });
+    }
+    scan();
+
+    // The switch in the footer swaps the sensor by hand.
+    const swap = document.getElementById('swap');
+    const other = () => (kind === 'radar' ? 'camera' : 'radar');
+    function label() {
+      swap.querySelector('b').textContent = kind;
+      swap.setAttribute('aria-label', `Sensor: ${kind}. Swap it for the ${other()}.`);
+    }
+    swap.addEventListener('click', () => {
+      kind = other();
+      root.dataset.rig = kind;
+      label();
+      scan();   // starts the waves for the radar; for the camera the running loop stops by itself
+      update();
+    });
+    label();
+    swap.hidden = false;
   </script>
 </body>
 </html>
