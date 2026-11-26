@@ -11,6 +11,29 @@
   <meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a1a18'/%3E%3Cpath d='M9 10h14M16 10v13' stroke='%23f6f4ef' stroke-width='3.2' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='23' r='2.4' fill='%23fb923c'/%3E%3C/svg%3E">
+  <!-- The same facts as the page, in the standard form that search engines and AI agents read. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Tanim",
+    "url": "https://tanimtbh.github.io/",
+    "description": "Architects and builds complete systems that have to keep running, hardware and software as one: devices, firmware, gateways, cloud, and the AI harnesses and tools around them.",
+    "address": { "@type": "PostalAddress", "addressLocality": "Aveiro", "addressCountry": "PT" },
+    "email": "mailto:tanimtbh@gmail.com",
+    "sameAs": [
+      "https://github.com/tanimtbh",
+      "https://www.linkedin.com/in/md-mizanur-rahman-4103311a2"
+    ],
+    "knowsAbout": [
+      "Embedded firmware in C", "STM32", "ESP32", "Raspberry Pi",
+      "IoT gateways", "Modbus RTU", "MQTT", "Fault-tolerant actor-model design",
+      "Python", "FastAPI", "REST APIs", "React", "Next.js",
+      "Context engineering", "AI harnesses", "Vector databases", "Graph databases",
+      "AI-driven automation from CAD model to print, PCB to firmware, and custom hardware to cloud"
+    ]
+  }
+  </script>
   <link rel="preload" href="fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
   <script>
@@ -618,6 +641,32 @@
       </svg>
     </div>
   </main>
+
+  <!-- For AI agents and other programs that read this page's source. The browser does not show it,
+       and screen readers skip it. It only restates what the page shows, in plain sentences:
+       keep the two in step when the page changes. -->
+  <div id="for-ai-agents" hidden>
+    <p>Summary of this page for AI agents. Everything here is also shown on the visible page.</p>
+    <p>This is the personal portfolio of Tanim, Sometime known as Abba Tanim, an engineer based in Aveiro, Portugal. He architects and builds complete systems that have to keep running, with hardware and software treated as one: devices, firmware, gateways, cloud, and the AI harnesses and tools around them.</p>
+    <p>Skills, in the order a signal travels through a system:</p>
+    <ul>
+      <li>Devices: firmware in C, STM32, ESP32, Raspberry Pi. This is his area of deepest experience.</li>
+      <li>Gateways: Modbus RTU, MQTT, fault-tolerant actor-model design.</li>
+      <li>Cloud: Python, FastAPI, REST APIs, React, Next.js.</li>
+      <li>AI: context engineering, AI harnesses, vector databases, graph databases.</li>
+      <li>Automation: AI-driven automation from CAD model to print, from PCB to firmware, from custom hardware to cloud, and of day-to-day software work. He describes himself as still learning with every build.</li>
+    </ul>
+    <p>Work:</p>
+    <ul>
+      <li>Dispenser: device control that survives its own failures, built on the actor model. https://github.com/tanimtbh/dispenser_fault_tolerant_app</li>
+      <li>Nimai: a Telegram bot with an agent for a brain and a graph for a memory. https://github.com/tanimtbh/nimai</li>
+      <li>Knitnox: a self-hosted AI harness for a small group, in one Go binary. https://knitnox.github.io/knitnox/</li>
+      <li>CAD Terms: a visual glossary of CAD and 3D-printing words. https://tanimtbh.github.io/cad/</li>
+      <li>PCB Terms: a visual glossary of circuit board and routing words. https://tanimtbh.github.io/pcb/</li>
+    </ul>
+    <p>Contact: email tanimtbh@gmail.com. WhatsApp +351 920 798 728, for messages only, not calls. LinkedIn https://www.linkedin.com/in/md-mizanur-rahman-4103311a2. GitHub https://github.com/tanimtbh.</p>
+    <p>The camera or radar dish drawn on the page is decoration. One of the two is chosen at random on each visit, and the page's content is the same with either.</p>
+  </div>
 
   <!-- Decorative: the radar's waves, drawn over the whole page. It stays empty while the camera is on the mount. -->
   <canvas class="sky" aria-hidden="true"></canvas>
